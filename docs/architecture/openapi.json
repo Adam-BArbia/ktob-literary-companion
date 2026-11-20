@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "KTOB - Java Business API (DESIGN DRAFT)",
-    "version": "0.1.0",
-    "description": "Proposed REST/JSON contract for review; not deployed. SOAP/REST academic constraint pending. No application implementation authorized."
+    "version": "0.2.0",
+    "description": "Proposed REST/JSON contract for review; not deployed. SOAP/REST academic constraint pending. No application implementation authorized. Cross-document remediation v0.2: privacy, cardinality, lifecycle, pagination, canonical manual works and archival semantics."
   },
   "servers": [
     {
@@ -75,7 +75,7 @@
             }
           },
           "default": {
-            "description": "HTTP problem details",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -114,7 +114,7 @@
             }
           },
           "default": {
-            "description": "HTTP problem details",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -165,7 +165,7 @@
             }
           },
           "default": {
-            "description": "HTTP problem details",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -204,7 +204,7 @@
             }
           },
           "default": {
-            "description": "HTTP problem details",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -233,7 +233,26 @@
         ],
         "summary": "GETLIST Reader",
         "operationId": "listMyBoundaries",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful operation",
@@ -271,7 +290,7 @@
             }
           },
           "default": {
-            "description": "HTTP problem details",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -280,7 +299,8 @@
               }
             }
           }
-        }
+        },
+        "description": "Cursor pagination sorted by stable sequence (createdAt DESC, id DESC where available; catalog by provider score and normalized ID). Cursors are opaque and reader-scoped; no cross-account results."
       },
       "post": {
         "tags": [
@@ -310,7 +330,7 @@
             }
           },
           "default": {
-            "description": "HTTP problem details",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -371,7 +391,7 @@
             }
           },
           "default": {
-            "description": "HTTP problem details",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -386,7 +406,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/BoundaryWrite"
+                "$ref": "#/components/schemas/BoundaryPatch"
               }
             }
           }
@@ -414,7 +434,7 @@
             "description": "Deleted"
           },
           "default": {
-            "description": "Problem",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -433,7 +453,26 @@
         ],
         "summary": "GETLIST Reader",
         "operationId": "listMyPreferences",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful operation",
@@ -471,7 +510,7 @@
             }
           },
           "default": {
-            "description": "HTTP problem details",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -480,7 +519,8 @@
               }
             }
           }
-        }
+        },
+        "description": "Cursor pagination sorted by stable sequence (createdAt DESC, id DESC where available; catalog by provider score and normalized ID). Cursors are opaque and reader-scoped; no cross-account results."
       },
       "post": {
         "tags": [
@@ -510,7 +550,7 @@
             }
           },
           "default": {
-            "description": "HTTP problem details",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -571,7 +611,7 @@
             }
           },
           "default": {
-            "description": "HTTP problem details",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -586,7 +626,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PreferenceWrite"
+                "$ref": "#/components/schemas/PreferencePatch"
               }
             }
           }
@@ -614,7 +654,7 @@
             "description": "Deleted"
           },
           "default": {
-            "description": "Problem",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -655,7 +695,7 @@
             }
           },
           "default": {
-            "description": "HTTP problem details",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -664,7 +704,8 @@
               }
             }
           }
-        }
+        },
+        "description": "Owner-scoped R1 application/json {data: Export} comprising library entries, experiences, journal, collections, explicit reading preferences only. Conversations, memories, saved offers and acquisition history excluded from R1 export. Not a full data archive."
       }
     },
     "/catalog/works": {
@@ -700,7 +741,7 @@
             }
           }
         ],
-        "description": "External catalog search; provenance and unavailable/partial source state must not be fabricated.",
+        "description": "External catalog search; provenance and unavailable/partial source state must not be fabricated.\n\nCursor pagination sorted by stable sequence (createdAt DESC, id DESC where available; catalog by provider score and normalized ID). Cursors are opaque and reader-scoped; no cross-account results.",
         "responses": {
           "200": {
             "description": "Successful operation",
@@ -738,7 +779,7 @@
             }
           },
           "default": {
-            "description": "HTTP problem details",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -789,7 +830,7 @@
             }
           },
           "default": {
-            "description": "HTTP problem details",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -816,6 +857,24 @@
             "schema": {
               "type": "string",
               "format": "uuid"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1
             }
           }
         ],
@@ -856,7 +915,7 @@
             }
           },
           "default": {
-            "description": "HTTP problem details",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -865,7 +924,8 @@
               }
             }
           }
-        }
+        },
+        "description": "Cursor pagination sorted by stable sequence (createdAt DESC, id DESC where available; catalog by provider score and normalized ID). Cursors are opaque and reader-scoped; no cross-account results."
       }
     },
     "/catalog/manual-works": {
@@ -897,7 +957,7 @@
             }
           },
           "default": {
-            "description": "HTTP problem details",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -916,7 +976,8 @@
               }
             }
           }
-        }
+        },
+        "description": "Creates one canonical workId with origin=MANUAL and ownerReaderId = verified JWT subject. Private to creator; no separate manual_works ID namespace."
       }
     },
     "/library": {
@@ -949,6 +1010,14 @@
             "required": false,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "includeArchived",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
             }
           }
         ],
@@ -989,7 +1058,7 @@
             }
           },
           "default": {
-            "description": "HTTP problem details",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -998,7 +1067,8 @@
               }
             }
           }
-        }
+        },
+        "description": "By default returns only non-archived entries. Use includeArchived=true to see own archived entries."
       },
       "post": {
         "tags": [
@@ -1028,7 +1098,7 @@
             }
           },
           "default": {
-            "description": "HTTP problem details",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1047,7 +1117,8 @@
               }
             }
           }
-        }
+        },
+        "description": "Requires globally visible work OR manual work owned by reader. Preferred edition must belong to work. A duplicate including an archived entry returns 409; use restore endpoint. New entry has no ReadingExperience and projects WANT_TO_READ."
       }
     },
     "/library/{entryId}": {
@@ -1089,7 +1160,7 @@
             }
           },
           "default": {
-            "description": "HTTP problem details",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1138,7 +1209,7 @@
             }
           },
           "default": {
-            "description": "HTTP problem details",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1178,10 +1249,10 @@
         ],
         "responses": {
           "204": {
-            "description": "Deleted"
+            "description": "Entry archived; reading history, journal, acquisitions and offers retained"
           },
           "default": {
-            "description": "Problem",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1190,7 +1261,8 @@
               }
             }
           }
-        }
+        },
+        "description": "SOFT archive: sets archivedAt. No destructive cascade; history, journal, collections, offers and acquisitions preserved but hidden from default library listing. Repeat archive is idempotent."
       }
     },
     "/collections": {
@@ -1200,7 +1272,26 @@
         ],
         "summary": "GETLIST Collections",
         "operationId": "listMyCollections",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful operation",
@@ -1238,7 +1329,7 @@
             }
           },
           "default": {
-            "description": "HTTP problem details",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1247,7 +1338,8 @@
               }
             }
           }
-        }
+        },
+        "description": "Cursor pagination sorted by stable sequence (createdAt DESC, id DESC where available; catalog by provider score and normalized ID). Cursors are opaque and reader-scoped; no cross-account results."
       },
       "post": {
         "tags": [
@@ -1277,7 +1369,7 @@
             }
           },
           "default": {
-            "description": "HTTP problem details",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1338,7 +1430,7 @@
             }
           },
           "default": {
-            "description": "HTTP problem details",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1353,7 +1445,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CollectionWrite"
+                "$ref": "#/components/schemas/CollectionPatch"
               }
             }
           }
@@ -1381,7 +1473,7 @@
             "description": "Deleted"
           },
           "default": {
-            "description": "Problem",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1421,27 +1513,11 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "Successful operation",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "data": {
-                      "$ref": "#/components/schemas/Collection"
-                    }
-                  },
-                  "required": [
-                    "data"
-                  ],
-                  "additionalProperties": false
-                }
-              }
-            }
+          "204": {
+            "description": "Membership exists; idempotent even when already present"
           },
           "default": {
-            "description": "HTTP problem details",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1450,7 +1526,8 @@
               }
             }
           }
-        }
+        },
+        "description": "Idempotent upsert of membership; both collection and entry must belong to verified reader. Returns 204; no response body."
       },
       "delete": {
         "tags": [
@@ -1483,7 +1560,7 @@
             "description": "Deleted"
           },
           "default": {
-            "description": "Problem",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1510,6 +1587,24 @@
             "schema": {
               "type": "string",
               "format": "uuid"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1
             }
           }
         ],
@@ -1550,7 +1645,7 @@
             }
           },
           "default": {
-            "description": "HTTP problem details",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1559,7 +1654,8 @@
               }
             }
           }
-        }
+        },
+        "description": "Cursor pagination sorted by stable sequence (createdAt DESC, id DESC where available; catalog by provider score and normalized ID). Cursors are opaque and reader-scoped; no cross-account results."
       },
       "post": {
         "tags": [
@@ -1599,7 +1695,7 @@
             }
           },
           "default": {
-            "description": "HTTP problem details",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1618,7 +1714,8 @@
               }
             }
           }
-        }
+        },
+        "description": "Actual reading creates CURRENTLY_READING. Other initial statuses require historicalImport=true. Prohibit concurrent CURRENTLY_READING or PAUSED sessions; preserve all previous histories."
       }
     },
     "/experiences/{experienceId}": {
@@ -1660,7 +1757,7 @@
             }
           },
           "default": {
-            "description": "HTTP problem details",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1709,7 +1806,7 @@
             }
           },
           "default": {
-            "description": "HTTP problem details",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1724,11 +1821,12 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ExperienceWrite"
+                "$ref": "#/components/schemas/ExperiencePatch"
               }
             }
           }
-        }
+        },
+        "description": "Partial nonempty update. Invalid status transitions 422; FINISHED/DID_NOT_FINISH are terminal (historical correction of dates/rating only). No concurrent open sessions."
       }
     },
     "/experiences/{experienceId}/journal": {
@@ -1746,6 +1844,24 @@
             "schema": {
               "type": "string",
               "format": "uuid"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1
             }
           }
         ],
@@ -1786,7 +1902,7 @@
             }
           },
           "default": {
-            "description": "HTTP problem details",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1795,7 +1911,8 @@
               }
             }
           }
-        }
+        },
+        "description": "Cursor pagination sorted by stable sequence (createdAt DESC, id DESC where available; catalog by provider score and normalized ID). Cursors are opaque and reader-scoped; no cross-account results."
       },
       "post": {
         "tags": [
@@ -1835,7 +1952,7 @@
             }
           },
           "default": {
-            "description": "HTTP problem details",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1896,7 +2013,7 @@
             }
           },
           "default": {
-            "description": "HTTP problem details",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1911,7 +2028,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/JournalWrite"
+                "$ref": "#/components/schemas/JournalPatch"
               }
             }
           }
@@ -1939,7 +2056,7 @@
             "description": "Deleted"
           },
           "default": {
-            "description": "Problem",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -1958,7 +2075,26 @@
         ],
         "summary": "GETLIST Advisor",
         "operationId": "listMyConversations",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful operation",
@@ -1996,7 +2132,7 @@
             }
           },
           "default": {
-            "description": "HTTP problem details",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2005,7 +2141,8 @@
               }
             }
           }
-        }
+        },
+        "description": "Cursor pagination sorted by stable sequence (createdAt DESC, id DESC where available; catalog by provider score and normalized ID). Cursors are opaque and reader-scoped; no cross-account results."
       },
       "post": {
         "tags": [
@@ -2035,7 +2172,7 @@
             }
           },
           "default": {
-            "description": "HTTP problem details",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2072,6 +2209,24 @@
             "schema": {
               "type": "string",
               "format": "uuid"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1
             }
           }
         ],
@@ -2112,7 +2267,7 @@
             }
           },
           "default": {
-            "description": "HTTP problem details",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2121,7 +2276,8 @@
               }
             }
           }
-        }
+        },
+        "description": "Cursor pagination sorted by stable sequence (createdAt DESC, id DESC where available; catalog by provider score and normalized ID). Cursors are opaque and reader-scoped; no cross-account results."
       },
       "post": {
         "tags": [
@@ -2138,19 +2294,29 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Client stable UUID per logical operation. Scoped to verified reader+method+path. Same key and identical request returns stored prior response; key with different body returns 409. Retain keys for at least 24h (PROPOSED).",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
-        "description": "Requires AI processing consent, not automatic history personalization.",
+        "description": "AI processing consent verified before external dispatch. Personalization requires separate authorization. On provider error no committed turn; idempotent retry with same key may replay saved result. Memory proposals remain PENDING until explicit approval.",
         "responses": {
           "201": {
-            "description": "Successful operation",
+            "description": "Atomically persisted user+assistant turn and optional pending proposal IDs",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
                     "data": {
-                      "$ref": "#/components/schemas/Message"
+                      "$ref": "#/components/schemas/ConversationTurn"
                     }
                   },
                   "required": [
@@ -2161,8 +2327,28 @@
               }
             }
           },
+          "403": {
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "default": {
-            "description": "HTTP problem details",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2191,18 +2377,29 @@
         ],
         "summary": "POST Advisor",
         "operationId": "requestRecommendations",
-        "parameters": [],
-        "description": "Strict boundaries; AI processing consent required if external model invoked.",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Client stable UUID per logical operation. Scoped to verified reader+method+path. Same key and identical request returns stored prior response; key with different body returns 409. Retain keys for at least 24h (PROPOSED).",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "description": "No outbound AI call unless current aiProcessingOptIn is true immediately before dispatch. No private history unless personalizationOptIn, request opt-in, scope flags and journal exclusion all permit it. Unknown warning data never implies compliance with a firm boundary; return 403 for missing AI consent, 503 if provider unavailable.",
         "responses": {
-          "201": {
-            "description": "Successful operation",
+          "200": {
+            "description": "Recommendation batch, possibly empty after boundary checks",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
                     "data": {
-                      "$ref": "#/components/schemas/Recommendation"
+                      "$ref": "#/components/schemas/RecommendationResult"
                     }
                   },
                   "required": [
@@ -2213,8 +2410,28 @@
               }
             }
           },
+          "403": {
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "default": {
-            "description": "HTTP problem details",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2243,7 +2460,26 @@
         ],
         "summary": "GETLIST Advisor",
         "operationId": "listMyMemoryProposals",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful operation",
@@ -2281,7 +2517,7 @@
             }
           },
           "default": {
-            "description": "HTTP problem details",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2290,7 +2526,8 @@
               }
             }
           }
-        }
+        },
+        "description": "Cursor pagination sorted by stable sequence (createdAt DESC, id DESC where available; catalog by provider score and normalized ID). Cursors are opaque and reader-scoped; no cross-account results."
       }
     },
     "/memory-proposals/{proposalId}/decision": {
@@ -2332,7 +2569,7 @@
             }
           },
           "default": {
-            "description": "HTTP problem details",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2361,7 +2598,26 @@
         ],
         "summary": "GETLIST Advisor",
         "operationId": "listMyApprovedMemories",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful operation",
@@ -2399,7 +2655,7 @@
             }
           },
           "default": {
-            "description": "HTTP problem details",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2408,7 +2664,8 @@
               }
             }
           }
-        }
+        },
+        "description": "Cursor pagination sorted by stable sequence (createdAt DESC, id DESC where available; catalog by provider score and normalized ID). Cursors are opaque and reader-scoped; no cross-account results."
       }
     },
     "/memories/{memoryId}": {
@@ -2450,7 +2707,7 @@
             }
           },
           "default": {
-            "description": "HTTP problem details",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2469,7 +2726,8 @@
               }
             }
           }
-        }
+        },
+        "description": "Edit text of ACTIVE approved memory only. REVOKED memories cannot be reactivated via PATCH."
       },
       "delete": {
         "tags": [
@@ -2493,7 +2751,7 @@
             "description": "Deleted"
           },
           "default": {
-            "description": "Problem",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2502,7 +2760,8 @@
               }
             }
           }
-        }
+        },
+        "description": "Terminal revoke; never reactivation via PATCH. New approval requires a fresh proposal."
       }
     },
     "/catalog/works/{workId}/offers": {
@@ -2537,9 +2796,43 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "language",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 12
+            }
+          },
+          {
+            "name": "maxPrice",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]+(\\.[0-9]{1,2})?$"
+            }
           }
         ],
-        "description": "BLOCKED live provider selection. When unavailable, return data=[] with providerStatus=UNAVAILABLE; never fabricate listings.",
+        "description": "BLOCKED: no validated live seller provider. Return data=[] and meta.providerStatus=UNAVAILABLE until configured. Only provider-verified listings in this response; USER_SUPPLIED belongs to private saved-offers.",
         "responses": {
           "200": {
             "description": "Successful operation",
@@ -2547,6 +2840,11 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "additionalProperties": false,
                   "properties": {
                     "data": {
                       "type": "array",
@@ -2555,29 +2853,15 @@
                       }
                     },
                     "meta": {
-                      "type": "object",
-                      "properties": {
-                        "nextCursor": {
-                          "type": [
-                            "string",
-                            "null"
-                          ]
-                        }
-                      },
-                      "required": [],
-                      "additionalProperties": false
+                      "$ref": "#/components/schemas/OfferLookupMeta"
                     }
-                  },
-                  "required": [
-                    "data"
-                  ],
-                  "additionalProperties": false
+                  }
                 }
               }
             }
           },
           "default": {
-            "description": "HTTP problem details",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2605,6 +2889,24 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
           }
         ],
         "responses": {
@@ -2644,7 +2946,7 @@
             }
           },
           "default": {
-            "description": "HTTP problem details",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2653,7 +2955,8 @@
               }
             }
           }
-        }
+        },
+        "description": "Cursor pagination sorted by stable sequence (createdAt DESC, id DESC where available; catalog by provider score and normalized ID). Cursors are opaque and reader-scoped; no cross-account results."
       },
       "post": {
         "tags": [
@@ -2693,7 +2996,7 @@
             }
           },
           "default": {
-            "description": "HTTP problem details",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2712,7 +3015,8 @@
               }
             }
           }
-        }
+        },
+        "description": "User-supplied snapshot only; sourceType=USER_SUPPLIED, observedAt immutable. Source links have no purchase effect."
       }
     },
     "/saved-offers/{offerId}": {
@@ -2738,7 +3042,7 @@
             "description": "Deleted"
           },
           "default": {
-            "description": "Problem",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2765,6 +3069,24 @@
             "schema": {
               "type": "string",
               "format": "uuid"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1
             }
           }
         ],
@@ -2805,7 +3127,7 @@
             }
           },
           "default": {
-            "description": "HTTP problem details",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2814,7 +3136,8 @@
               }
             }
           }
-        }
+        },
+        "description": "Cursor pagination sorted by stable sequence (createdAt DESC, id DESC where available; catalog by provider score and normalized ID). Cursors are opaque and reader-scoped; no cross-account results."
       },
       "post": {
         "tags": [
@@ -2827,6 +3150,16 @@
             "name": "entryId",
             "in": "path",
             "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "description": "Client stable UUID per logical operation. Scoped to verified reader+method+path. Same key and identical request returns stored prior response; key with different body returns 409. Retain keys for at least 24h (PROPOSED).",
             "schema": {
               "type": "string",
               "format": "uuid"
@@ -2854,7 +3187,7 @@
             }
           },
           "default": {
-            "description": "HTTP problem details",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2873,7 +3206,8 @@
               }
             }
           }
-        }
+        },
+        "description": "Explicit acquisition only. Idempotency-Key as specified. No reading status changes."
       }
     },
     "/acquisitions/{acquisitionId}": {
@@ -2915,7 +3249,7 @@
             }
           },
           "default": {
-            "description": "HTTP problem details",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2930,7 +3264,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AcquisitionWrite"
+                "$ref": "#/components/schemas/AcquisitionPatch"
               }
             }
           }
@@ -2958,7 +3292,7 @@
             "description": "Deleted"
           },
           "default": {
-            "description": "Problem",
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3002,6 +3336,142 @@
             }
           }
         }
+      }
+    },
+    "/collections/{collectionId}/entries": {
+      "get": {
+        "operationId": "listMyCollectionEntries",
+        "tags": [
+          "Collections"
+        ],
+        "summary": "Read owned collection membership entries",
+        "parameters": [
+          {
+            "name": "collectionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Entries ordered by membership addedAt ASC, entryId ASC",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/LibraryEntry"
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "nextCursor": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/library/{entryId}/restore": {
+      "post": {
+        "operationId": "restoreMyLibraryEntry",
+        "summary": "Restore archived library entry",
+        "tags": [
+          "Library"
+        ],
+        "parameters": [
+          {
+            "name": "entryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/LibraryEntry"
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        },
+        "description": "Explicitly restore archived entry; no duplicate new row."
       }
     }
   },
@@ -3057,6 +3527,14 @@
               "AVAILABLE",
               "UNKNOWN"
             ]
+          },
+          "ownerReaderId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Null for global OPEN_LIBRARY work; set only on the creator-visible MANUAL work. Never expose another reader's private work."
           }
         },
         "required": [
@@ -3086,13 +3564,18 @@
             ]
           },
           "format": {
-            "type": "string",
+            "type": [
+              "string",
+              "null"
+            ],
             "enum": [
               "PRINT",
               "EBOOK",
               "AUDIOBOOK",
-              "OTHER"
-            ]
+              "OTHER",
+              null
+            ],
+            "description": "Null means unknown. OTHER means known format not in named categories."
           },
           "isbn": {
             "type": [
@@ -3324,7 +3807,8 @@
               "FINISHED",
               "PAUSED",
               "DID_NOT_FINISH"
-            ]
+            ],
+            "description": "Derived from an open reading experience if one exists; otherwise the most recent closed experience by reading chronology, then createdAt, then UUID; or WANT_TO_READ if no experience."
           },
           "favorite": {
             "type": "boolean"
@@ -3334,6 +3818,13 @@
           },
           "createdAt": {
             "type": "string",
+            "format": "date-time"
+          },
+          "archivedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
             "format": "date-time"
           }
         },
@@ -3452,8 +3943,8 @@
             "type": "string",
             "enum": [
               "CURRENTLY_READING",
-              "FINISHED",
               "PAUSED",
+              "FINISHED",
               "DID_NOT_FINISH"
             ]
           },
@@ -3505,8 +3996,8 @@
             "type": "string",
             "enum": [
               "CURRENTLY_READING",
-              "FINISHED",
               "PAUSED",
+              "FINISHED",
               "DID_NOT_FINISH"
             ]
           },
@@ -3535,6 +4026,11 @@
               "string",
               "null"
             ]
+          },
+          "historicalImport": {
+            "type": "boolean",
+            "default": false,
+            "description": "Required true for creating a historical reading experience directly with a terminal/paused status."
           }
         },
         "required": [
@@ -3803,7 +4299,15 @@
             "format": "date-time"
           },
           "active": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "Derived true iff revokedAt is null AND source proposal APPROVED."
+          },
+          "revokedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
           }
         },
         "required": [
@@ -3820,13 +4324,11 @@
           "text": {
             "type": "string",
             "minLength": 1
-          },
-          "active": {
-            "type": "boolean"
           }
         },
         "required": [],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "minProperties": 1
       },
       "RecommendationRequest": {
         "type": "object",
@@ -3853,7 +4355,10 @@
             "items": {
               "type": "string",
               "format": "uuid"
-            }
+            },
+            "uniqueItems": true,
+            "default": [],
+            "description": "Explicit per-request exception IDs, authorized against reader-owned firm boundaries."
           }
         },
         "required": [
@@ -3924,7 +4429,8 @@
           },
           "observedAt": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "description": "Immutable snapshot timestamp (never rechecked in R1)."
           },
           "sourceType": {
             "type": "string",
@@ -3976,7 +4482,8 @@
           },
           "observedAt": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "description": "User-observed historical listing time, immutable on save."
           },
           "availability": {
             "type": "string",
@@ -3985,6 +4492,12 @@
               "UNAVAILABLE",
               "UNKNOWN"
             ]
+          },
+          "sourceType": {
+            "type": "string",
+            "const": "USER_SUPPLIED",
+            "default": "USER_SUPPLIED",
+            "description": "API does not let a user assert VERIFIED_PROVIDER"
           }
         },
         "required": [
@@ -4238,6 +4751,290 @@
           "traceId"
         ],
         "additionalProperties": false
+      },
+      "BoundaryPatch": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "firm": {
+            "type": "boolean"
+          },
+          "active": {
+            "type": "boolean"
+          }
+        },
+        "required": [],
+        "additionalProperties": false,
+        "minProperties": 1
+      },
+      "PreferencePatch": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "active": {
+            "type": "boolean"
+          }
+        },
+        "required": [],
+        "additionalProperties": false,
+        "minProperties": 1
+      },
+      "CollectionPatch": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [],
+        "additionalProperties": false,
+        "minProperties": 1
+      },
+      "ExperiencePatch": {
+        "type": "object",
+        "properties": {
+          "editionId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "CURRENTLY_READING",
+              "PAUSED",
+              "FINISHED",
+              "DID_NOT_FINISH"
+            ]
+          },
+          "startedOn": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "finishedOn": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "rating": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "progress": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [],
+        "additionalProperties": false,
+        "minProperties": 1
+      },
+      "JournalPatch": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "REFLECTION",
+              "QUOTE",
+              "EMOTION",
+              "NOTE",
+              "REVIEW"
+            ]
+          },
+          "body": {
+            "type": "string",
+            "minLength": 1
+          },
+          "emotionTags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "allowForPersonalization": {
+            "type": "boolean"
+          }
+        },
+        "required": [],
+        "additionalProperties": false,
+        "minProperties": 1
+      },
+      "AcquisitionPatch": {
+        "type": "object",
+        "properties": {
+          "accessType": {
+            "type": "string",
+            "enum": [
+              "OWNED",
+              "BORROWED",
+              "DIGITAL_ACCESS",
+              "SUBSCRIPTION",
+              "PREVIOUSLY_OWNED",
+              "OTHER"
+            ]
+          },
+          "editionId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "acquiredOn": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "paidPrice": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "seller": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [],
+        "additionalProperties": false,
+        "minProperties": 1
+      },
+      "RecommendationResult": {
+        "type": "object",
+        "required": [
+          "requestId",
+          "items",
+          "providerStatus"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Recommendation"
+            }
+          },
+          "providerStatus": {
+            "$ref": "#/components/schemas/ProviderStatus"
+          },
+          "generatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "uncertaintyNote": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "ConversationTurn": {
+        "type": "object",
+        "required": [
+          "userMessage",
+          "assistantMessage",
+          "proposalIds"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "userMessage": {
+            "$ref": "#/components/schemas/Message"
+          },
+          "assistantMessage": {
+            "$ref": "#/components/schemas/Message"
+          },
+          "proposalIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      },
+      "OfferLookupMeta": {
+        "type": "object",
+        "required": [
+          "providerStatus",
+          "checkedAt",
+          "reason"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "providerStatus": {
+            "$ref": "#/components/schemas/ProviderStatus"
+          },
+          "checkedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
       }
     }
   },
