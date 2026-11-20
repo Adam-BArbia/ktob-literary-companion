@@ -1,63 +1,60 @@
-# Conceptual persistence model (NOT SQL)
+# Conceptual Supabase PostgreSQL model — design draft v0.2 (NOT SQL)
 
-Derived from [library classes](../uml/02-domain-library.puml) and [advisor/privacy classes](../uml/03-domain-advisor.puml). These are **candidate relations** and constraints for design review—not executable SQL or final migration names.
+Tables and constraints below are candidates. **No SQL, migrations, RLS policy or live database change has been performed.** Derived from [UML library](../uml/02-domain-library.puml) and [UML advisor](../uml/03-domain-advisor.puml).
 
-## Data boundaries
+## Ownership and canonical identity
 
-- **Supabase `auth.users`**: authoritative identity. Never duplicate passwords or use editable `user_metadata` for authorization.
-- **`app` schema**: proposed private tables, accessible only to constrained backend role; front-end uses Supabase Auth but not direct business-table CRUD.
-- **Reference/catalog data**: externally sourced works and editions, plus reader-private manual works; preserve provenance and optional/unknown fields.
-- **Reader-owned data**: all library, journal, preferences, memory, conversations, and acquisitions must have an unambiguous owner chain.
+`auth.users.id` is authoritative for each reader. Proposed private, **non-exposed** `app` schema holds all business tables. Spring Boot operates using a restricted database role and must independently verify Supabase access-token identity and owner-scoped access; service/admin database connections can bypass RLS, so RLS is not a substitute for Java ownership checks. Never expose `service_role` credentials to Angular.
 
-## Candidate entities and unique constraints
+**One works table, not two ID namespaces:** `app.catalog_works(work_id, origin, owner_reader_id, ...)`. When origin is `OPEN_LIBRARY`, `owner_reader_id IS NULL`, source ID/provenance recorded, available for reads; for `MANUAL`, owner UUID is required and work visible *only* to that owner. `catalog_editions(work_id,...)` and `library_entries(work_id,...)` use a normal FK to this **same** work table. No separate `manual_works` table; reader-local metadata overrides are deferred.
 
-| Concept | Key(s) and ownership | Constraint/invariant |
+`contributors(contributor_id,name,...)` identifies a person; `work_credits(work_id,contributor_id,role)` attaches AUTHOR/EDITOR/TRANSLATOR/OTHER per work. A contributor can be author on one work and translator on another. Credit uniqueness is per combination; metadata remains incomplete/unknown where relevant.
+
+## Candidate relations
+
+| Relation | Ownership path | Key requirements |
 |---|---|---|
-| reader_profiles | `reader_id` = Supabase Auth user UUID | Exactly one per user |
-| privacy_settings | `reader_id` | Defaults AI processing=false, personalization=false |
-| content_boundaries | `id`, `reader_id` | Explicitly selected; enforce across recommendations |
-| reading_preferences | `id`, `reader_id` | Distinguish reader-entered and AI-approved sources |
-| catalog_works | `work_id` | External identity may be missing; store provenance |
-| catalog_editions | `edition_id`, `work_id` | Zero or more editions per work |
-| contributors / work_contributors | composite association | A work can have multiple authors, translators etc. |
-| manual_works | `id`, `reader_id` | Private by default; never public by accident |
-| library_entries | `id`, `reader_id`, work reference | Unique (reader, work); `favorite` independent |
-| collections | `id`, `reader_id` | Reader-created; ordered display separately |
-| collection_entries | `collection_id`, `library_entry_id` | Unique pair; both must have same owner |
-| reading_experiences | `id`, `library_entry_id` | Each reread is new; preserve old sessions |
-| journal_entries | `id`, `experience_id` | Different journal kinds; independent AI exclusion |
-| conversations | `id`, `reader_id` | General or per-book primary; no R2 topic threads in R1 |
-| conversation_messages | `id`, `conversation_id` | Role, timestamp, content; no implicit journal entry |
-| memory_proposals | `id`, `reader_id`, `message_id` | Pending/approved/dismissed/revoked |
-| approved_memories | `id`, `reader_id`, `proposal_id` | Only reader-approved persisted memory |
-| recommendation_requests | `id`, `reader_id` | Mode, explicit personalization choice, timestamp |
-| recommendation_items | `id`, `request_id`, `work_id` | Explanations and provenance; suggestions may be uncertain |
-| boundary_exceptions | `id`, `request_id`, `boundary_id` | One request only; explicit reader act |
-| saved_offers | `id`, `library_entry_id` | Seller URL, observed time, historical price |
-| acquisition_records | `id`, `library_entry_id` | OWNED/BORROWED/DIGITAL etc.; independent from reading |
-| export_jobs [OPTIONAL] | `id`, `reader_id` | Only if synchronous R1 export proves insufficient |
+| `reader_profiles` | `reader_id = auth.users.id` | 1:1 |
+| `privacy_settings` | `reader_id` | Both AI consent flags + all scopes default false |
+| `content_boundaries` | direct `reader_id` | Firm and active flags |
+| `reading_preferences` | direct `reader_id` | Reader-entered / AI-approved provenance |
+| `catalog_works` | owner null if global, user ID if private manual | `work_id` unique, enforce origin/owner pair |
+| `catalog_editions` | work | Zero or more; format nullable when genuinely unknown |
+| `contributors`, `work_credits` | work credit | Role stored on credit, not contributor |
+| `library_entries` | direct `reader_id` | `UNIQUE(reader_id,work_id)`; nullable preferred edition; `archived_at` nullable |
+| `collections` | direct `reader_id` | Per-reader named collections |
+| `collection_entries` | collection + entry -> same reader | unique pair; ordered by `added_at,entry_id` |
+| `reading_experiences` | entry -> reader | status never WANT_TO_READ; preserve rerereads; no concurrent open |
+| `journal_entries` | experience -> entry -> reader | kind, body, tags, allow_for_personalization |
+| `conversations` | direct `reader_id` | kind GENERAL/BOOK_MAIN; optional work access check |
+| `conversation_messages` | conversation -> reader | role USER/ASSISTANT equivalent to READER/ASSISTANT UML |
+| `memory_proposals` | source assistant message -> conversation -> reader | one reader, lifecycle; no direct approval without action |
+| `approved_memories` | proposal and direct reader | unique proposal ID, approved_at; revoked_at null unless terminal |
+| `recommendation_requests` | direct reader | mode, use_personal_context, consent audit |
+| `recommendation_items` | recommendation request -> reader | 0..N, work ID, explanation, provenance and unknown warnings |
+| `boundary_exceptions` | request and boundary -> same reader | explicit exception, per request only |
+| `saved_offers` | library entry -> reader | observed_at immutable, seller URL, source_type, historical price |
+| `acquisition_records` | library entry -> reader | explicit access type; no shelf side effect |
+| `idempotency_records` [PROPOSED] | reader | unique reader, method, path and key; request fingerprint, response, expiry |
 
-## Critical relational invariants
+## Referential, uniqueness and lifecycle constraints
 
-1. A user can have **one library entry for a work** but multiple reading experiences (rereads); edition choice lives on the experience or acquisition.
-2. `WANT_TO_READ` is the default shelf projection when no reading experience exists. Shelf may be derived from the latest experience, avoiding conflicting independent status sources. This decision needs review when retroactive or concurrent reading is supported.
-3. Journals are optional; quote, feeling and reflection fields should preserve original wording and language, not impose sentiment classification.
-4. Manual works should be **private** to their creator unless deliberately published; API work IDs must not accidentally expose other users' private manual works.
-5. `collection_entries` cannot connect entries belonging to another reader; enforce in Java and ideally by database constraints or policies.
-6. AI memories require accepted proposals; raw chat content must never silently populate `approved_memories`.
-7. Clearing personalization consent prevents future context disclosure. Retention/deletion of existing conversations, messages and caches requires explicit policy.
-8. Saved offers have `observed_at` and provenance; no automatic or inferred order/purchase.
-9. Private resources should be scoped by verified `reader_id` before any read/update/delete; choose `404` for cross-account resource lookups.
-10. Destructive account deletion must address auth user, associated app records, exports and third-party stored traces according to the approved retention policy.
+1. Work global/private XOR origin: `OPEN_LIBRARY => owner_reader_id IS NULL`; `MANUAL => owner_reader_id IS NOT NULL`. Java always resolves private works against authenticated owner.
+2. `UNIQUE(library_entries.reader_id,library_entries.work_id)` includes archived entries. `preferred_edition_id` and experience/acquisition edition FK must point to an edition of the same work. Use application validation backed by composite references or an equivalent database constraint.
+3. Collection membership belongs to exactly the same reader as both collection and library entry. Use redundant `reader_id` constrained by composite FKs or equivalent transactional enforcement plus tested Java guard; prohibit cross-reader references.
+4. A library entry with no experience projects `WANT_TO_READ`. Store **only** valid reading experience statuses `CURRENTLY_READING`, `PAUSED`, `FINISHED`, `DID_NOT_FINISH`.
+5. Only one open experience (status CURRENTLY_READING or PAUSED) per library entry, through a partial unique index or equivalent transactional guard. Initial actual reading = CURRENTLY_READING; initial PAUSED/FINISHED/DID_NOT_FINISH requires explicit historical import. FINISHED and DID_NOT_FINISH are terminal.
+6. Derived shelf: use open experience if any; else select closed experience ordered by `COALESCE(finished_on,started_on)` descending NULLS LAST, `created_at` descending, `experience_id` descending; if no experience, WANT_TO_READ. Do not persist a separately authoritative shelf status.
+7. Rereads insert fresh experiences and do **not** change older notes/ratings. Optional journal entries use a per-entry `allow_for_personalization` flag defaulting false.
+8. Archive a library entry by setting `archived_at`; do **not** cascade-delete child experiences, journals, collection membership, saved offers or acquisitions. Default views omit archived entries, but they remain in R1 essentials export (clearly marked) unless user export filters are separately approved. Restoration clears `archived_at`.
+9. A `memory_proposal` is linked to an assistant message **owned by the same reader**; only an APPROVED proposal can create **one** corresponding approved memory. Revocation sets `revoked_at`, terminal; no generic reactivation.
+10. Boundary exception is unique per request and boundary, both owned by same reader. AI-generated guesses alone are never treated as verified content safety.
+11. Saved-offer `observed_at` is immutable. Money stored in numeric fixed precision, sent in HTTP DTOs as decimal strings. Price and ISO 4217 currency must be provided together or both null; non-negative price. Unknown availability must be representable.
+12. Deletion of an individual journal note or saved offer follows its documented endpoint; archiving a library entry does not delete children. Full reader/account deletion is **BLOCKED** pending a separate, audited purge/retention policy.
+13. R1 export queries exactly `library_entries` (including own archived), `reading_experiences`, `journal_entries`, `collections`, `reading_preferences` and emits five arrays. It does not claim to include conversations, memories, saved offers or acquisitions.
 
-## Data types (proposed)
+## Suggested types and future migration rules
 
-UUID primary keys; `timestamptz` UTC for technical timestamps; `date` for reading dates; `numeric(12,2)` for prices (or higher precision if needed); `text` for journal/quote content; JSONB only for truly flexible provenance, not to avoid modelling relationships. ISO 639 language tags where possible. Restrict external URLs to HTTPS where appropriate.
+UUID keys, `timestamptz` event times, `date` reading dates, `numeric(12,2)` prices, `text` for reflections, JSONB only for provenance/variable source fields. Restrict external URLs to trusted/validated `https:` where possible. In exposed schemas enable RLS; private schema should use least privilege, independent Java authorization and defense-in-depth RLS where practical. For service-role/bypass-RLS connections, explicitly scope SQL to verified reader.
 
-## Migration and access review
-
-- Use reviewed, versioned **Flyway** migrations after the model is approved.
-- Supabase docs suggest the Spring Data JPA **session pooler** for persistent IPv4-hosted services; transaction mode can conflict with prepared statements.
-- Disable Hibernate schema auto-updates in deployment. No migrations until approval.
-- Verify RLS for all exposed schemas and protection for privileged views/functions.
-- Plan export/delete integration tests with at least two different readers to prove isolation.
+After human approval: author versioned Flyway migrations, choose secure connection settings appropriate for Render/Supabase, write cross-reader isolation and referential tests. Do not create migrations before the design gate.

@@ -1,128 +1,61 @@
-# HTTP API contract catalogue (v0.1, PROPOSED)
+# KTOB HTTP contracts — design draft v0.2
 
-**Base path:** `/api/v1`. **Frontend:** Angular on Vercel. **Provider:** Spring Boot on Render. `openapi.json` is the machine-readable companion, with request/response types and operations.
+**Source of machine-readable paths:** [openapi.json](openapi.json). All paths below have the provisional `/api/v1` prefix. The OpenAPI document is a **design artifact**, not a live deployment.
 
-## Global rules
+## Global contract
 
-- HTTPS only; `Authorization: Bearer <Supabase access token>` required except health. Java validates signature, issuer, audience, expiry, subject, session policy (where applicable) and row ownership. Never accept `readerId` from a client as authority.
-- Success: `200` read/edit, `201` create, `204` delete. Body wraps successful resources in `{"data":...}` and collections may include `meta.nextCursor`.
-- Errors: RFC 9457 `application/problem+json` with `type,title,status,detail,code,traceId`; no hidden existence leaks on another user's resource (prefer `404`).
-- `400` invalid syntax, `401` no/invalid login, `403` denied consent/permission, `404` missing or not owned, `409` duplicate/conflict, `422` invalid business transition, `429` rate-limited, `502/503` upstream unavailable.
-- List endpoints accept bounded `limit` and opaque `cursor`. IDs = UUID; timestamps = RFC3339 UTC. Monetary amounts = decimal strings. `Idempotency-Key` recommended for AI message/recommendation requests and acquisition creation (strategy to approve).
-- Never use public links or record existence as evidence of ownership of a private item.
+- All business endpoints require `Authorization: Bearer <Supabase access token>`, validated by Java for issuer/signature/audience/expiry/subject. Only `GET /health` is public and non-sensitive.
+- Read/patch success `200`, creates `201`, delete `204`, idempotent collection-membership PUT `204`, recommendation request `200` (it returns a batch result); failures `application/problem+json` with `type,title,status,detail,code,traceId`.
+- `401` no/invalid token, `403` explicit processing consent absent, `404` no visible/owned resource, `409` duplicate or idempotency-key reuse with changed body, `422` invalid transitions/edition mismatch, `429` throttled, `503` AI dependency unavailable.
+- Partial PATCH bodies have distinct `*Patch` DTOs, at least one property required, not complete create DTOs.
+- Every list endpoint with `meta.nextCursor` accepts `limit` (1–100, default 25) and opaque `cursor`. Sort by `createdAt DESC,id DESC` where meaningful; collection members use `addedAt ASC,entryId ASC`; external catalog uses stable provider order and ID. Cursors are reader-scoped. An empty `nextCursor`/null means the last page.
+- `Idempotency-Key` is an optional UUID header on `POST /recommendations`, `POST /conversations/{id}/messages`, and `POST /library/{id}/acquisitions`. Store reader+method+path+key+request fingerprint for a proposed minimum 24 hours; identical replay yields prior result, conflicting payload yields `409`.
 
-## Endpoint inventory
+## R1 operations
 
-### Reader and privacy
-| Verb | Endpoint | Behavior |
-|---|---|---|
-| GET / PATCH | `/me` | Own profile only |
-| GET / PATCH | `/me/privacy` | AI processing, personalization, fine-grained scopes |
-| GET / POST | `/me/boundaries` | Content boundaries |
-| PATCH / DELETE | `/me/boundaries/{id}` | Change or remove owned boundary |
-| GET / POST | `/me/preferences` | Explicit literary preferences |
-| PATCH / DELETE | `/me/preferences/{id}` | Update/remove preference |
-| GET | `/me/export` | Bounded R1 export of reader-owned essentials |
-| DELETE | `/me` | Destructive account deletion **BLOCKED** pending re-auth and retention decision |
+| Module | Endpoints / rule |
+|---|---|
+| Reader | GET/PATCH `/me`; GET/PATCH `/me/privacy`; GET/POST `/me/boundaries`; PATCH/DELETE `/me/boundaries/{id}`; GET/POST `/me/preferences`; PATCH/DELETE `/me/preferences/{id}`; GET `/me/export` |
+| Catalog | GET `/catalog/works`; GET `/catalog/works/{workId}`; GET `/catalog/works/{workId}/editions`; POST `/catalog/manual-works` |
+| Library | GET/POST `/library`; GET/PATCH/DELETE `/library/{entryId}`; POST `/library/{entryId}/restore` |
+| Collections | GET/POST `/collections`; PATCH/DELETE `/collections/{collectionId}`; **GET** `/collections/{collectionId}/entries`; PUT/DELETE `/collections/{collectionId}/entries/{entryId}` |
+| Reading/journal | GET/POST `/library/{entryId}/experiences`; GET/PATCH `/experiences/{experienceId}`; GET/POST `/experiences/{experienceId}/journal`; PATCH/DELETE `/journal/{journalId}` |
+| Advisor | GET/POST `/conversations`; GET/POST `/conversations/{conversationId}/messages`; POST `/recommendations`; GET `/memory-proposals`; POST `/memory-proposals/{proposalId}/decision`; GET `/memories`; PATCH/DELETE `/memories/{memoryId}` |
+| Acquisition | GET `/catalog/works/{workId}/offers`; GET/POST `/library/{entryId}/saved-offers`; DELETE `/saved-offers/{offerId}`; GET/POST `/library/{entryId}/acquisitions`; PATCH/DELETE `/acquisitions/{acquisitionId}` |
+| Health | GET `/health` (public liveness only) |
 
-### Catalog and reader's library
-| Verb | Endpoint | Behavior |
-|---|---|---|
-| GET | `/catalog/works?q=&limit=&cursor=` | Open Library search, with provider status |
-| GET | `/catalog/works/{workId}` | Known metadata / uncertainty |
-| GET | `/catalog/works/{workId}/editions` | Available editions; often incomplete |
-| POST | `/catalog/manual-works` | Reader-private manual catalog fallback |
-| GET / POST | `/library` | Own list and add work |
-| GET / PATCH / DELETE | `/library/{entryId}` | Own entry; favorite and intent are independent |
-| GET / POST | `/collections` | Reader collections |
-| PATCH / DELETE | `/collections/{collectionId}` | Collection metadata |
-| PUT / DELETE | `/collections/{collectionId}/entries/{entryId}` | Add/remove own work |
+`DELETE /me` remains **BLOCKED** and is not published as an active OpenAPI operation until full account deletion, reauthentication, retention and purge semantics are approved.
 
-### Reading and journal
-| Verb | Endpoint | Behavior |
-|---|---|---|
-| GET / POST | `/library/{entryId}/experiences` | List/create a separate reading or reread |
-| GET / PATCH | `/experiences/{experienceId}` | Own dates, progress, status, rating |
-| GET / POST | `/experiences/{experienceId}/journal` | Own dated notes, quotes, emotion, per-entry AI exclusion |
-| PATCH / DELETE | `/journal/{journalId}` | Edit/remove journal item |
+## Contract examples
 
-### Literary advisor
-| Verb | Endpoint | Behavior |
-|---|---|---|
-| GET / POST | `/conversations` | General or per-book primary chat |
-| GET / POST | `/conversations/{conversationId}/messages` | Fetch/send messages (requires AI processing consent for model call) |
-| POST | `/recommendations` | Explained candidates, mode, strict boundary filter |
-| GET | `/memory-proposals` | Pending reader decisions |
-| POST | `/memory-proposals/{proposalId}/decision` | Explicit approve/edit or dismiss |
-| GET | `/memories` | Approved active memories |
-| PATCH / DELETE | `/memories/{memoryId}` | Edit/revoke own memory |
+**Manual work, separate from private library:** `POST /catalog/manual-works` with `{"title":"A privately recorded work","authors":["Unknown author"]}` returns one canonical `BookWork.id` (`origin=MANUAL`, `ownerReaderId` verified from token). Then `POST /library` with `{"workId":"<UUID>"}`. The latter checks work visibility, optional edition belongs to work, and `UNIQUE(readerId,workId)`; duplicate returns `409`. No ownership or reading start is inferred.
 
-### Offers and acquisition
-| Verb | Endpoint | Behavior |
-|---|---|---|
-| GET | `/catalog/works/{workId}/offers` | Verified listings **BLOCKED** until provider selected; empty/unavailable fallback |
-| GET / POST | `/library/{entryId}/saved-offers` | Reader's historical, sourced snapshots |
-| DELETE | `/saved-offers/{offerId}` | Unsave, not purchase |
-| GET / POST | `/library/{entryId}/acquisitions` | Real owned/borrowed/digital access events |
-| PATCH / DELETE | `/acquisitions/{acquisitionId}` | Correct own event |
+**Reading session:** `POST /library/{entryId}/experiences` with `{"status":"CURRENTLY_READING","startedOn":"2026-11-20"}` creates one open experience. Historical entry with `FINISHED` / `PAUSED` / `DID_NOT_FINISH` requires `"historicalImport":true`. `WANT_TO_READ` is only a projected library shelf; it is **not** a valid experience status. Invalid PATCH transition returns `422`.
 
-### Operational
-| Verb | Endpoint | Behavior |
-|---|---|---|
-| GET | `/health` | Safe liveness, not a leak of credentials or database state |
+**Journal exclusion:** `POST /experiences/{experienceId}/journal` with `{"kind":"REFLECTION","body":"A remembered scene","emotionTags":["wistful"],"allowForPersonalization":false}` saves a private note. This note is excluded from all personalized AI contexts regardless of broader flags.
 
-## Example 1 — Add book to library
-
-`POST /api/v1/library`
+**Recommendation batch:** `POST /recommendations` with `{"mode":"SURPRISE","prompt":"Gentle but different","usePersonalContext":false,"boundaryExceptionIds":[]}` requires **current AI-processing consent**, separate from personalization. On missing consent: `403` problem code `AI_PROCESSING_CONSENT_REQUIRED`, **no provider request**. On provider unavailable: `503`. On success `200`:
 ```json
-{"workId":"8321da6f-4f7e-4237-9512-6e8d79be725d","preferredEditionId":null}
+{"data":{"requestId":"c65b8e1d-30e3-4973-95a6-9a0899e0d6c6","items":[],"providerStatus":"OK","uncertaintyNote":"No candidates passed the current firm boundaries"}}
 ```
-`201`
+Items may be empty. Each candidate has a work identity, explanation, warning confidence and source/provenance where known. Exception IDs apply to **only this request**, never change stored boundaries. If warning data is unknown, the API never claims that an item definitely passes a firm restriction.
+
+**Conversation turn:** `POST /conversations/{conversationId}/messages` requires processing consent at dispatch and returns **`201 {data:ConversationTurn}`** containing `userMessage`, `assistantMessage`, `proposalIds[]`. Both messages and any proposed (not approved) memories are persisted atomically after a successful provider response. Consent denied `403`; AI unavailable `503`, no committed turn.
+
+**Approval and revocation:** `POST /memory-proposals/{id}/decision` accepts `APPROVE` or `DISMISS`. Approval creates at most one linked `ApprovedMemory` for the same reader. `PATCH /memories/{id}` changes **text only** while active; `DELETE /memories/{id}` terminally revokes. `active:true` is not a valid patch.
+
+**Collection membership:** `GET /collections/{collectionId}/entries?limit=25&cursor=...` reads same-reader entries ordered by membership creation and entry ID. `PUT /collections/{collectionId}/entries/{entryId}` returns `204` whether membership already existed; the ownership chain is mandatory.
+
+**Offer-unavailable response:** `GET /catalog/works/{workId}/offers?country=TN&format=PRINT&language=fr&maxPrice=50.00` (live verified provider **BLOCKED**) returns:
 ```json
-{"data":{"id":"a7c0b526-52b7-4daa-94dc-ec02569a0e16","workId":"8321da6f-4f7e-4237-9512-6e8d79be725d","shelfStatus":"WANT_TO_READ","favorite":false,"acquisitionIntention":false}}
+{"data":[],"meta":{"providerStatus":"UNAVAILABLE","checkedAt":null,"reason":"No validated seller provider configured","nextCursor":null}}
 ```
-A reader cannot add the same work twice; a duplicate returns `409` with the existing entry discoverable through their own library.
+Only actual verified provider results may use `VERIFIED_PROVIDER` here. `POST /library/{entryId}/saved-offers` records an immutable user-observed snapshot labelled `USER_SUPPLIED`. No R1 automatic recheck, inferred purchase or shelf change.
 
-## Example 2 — Log a reread
+**Archive:** `DELETE /library/{entryId}` is non-destructive soft archive (`204`). `POST /library/{entryId}/restore` makes the same record visible again (`200`). A second library add is `409` even if archived; past reading/journal/offers/acquisition remain.
 
-`POST /api/v1/library/{entryId}/experiences`
-```json
-{"status":"CURRENTLY_READING","editionId":null,"startedOn":"2026-11-20"}
-```
-Creates a new experience without replacing older finished experiences. A note can be posted to `/experiences/{experienceId}/journal` even without a progress update.
+**R1 export:** `GET /me/export` returns `200 application/json` with exactly `{data:{version,generatedAt,readerId,library,experiences,journal,collections,preferences}}`. This is an *essentials export*, **not a full archive**. Other data categories are outside R1 export scope.
 
-## Example 3 — Preserve a reflection without sharing with AI
+## Unresolved BLOCKED areas
 
-`POST /api/v1/experiences/{experienceId}/journal`
-```json
-{"kind":"REFLECTION","body":"A quiet scene that stays with me.","emotionTags":["wistful"],"allowForPersonalization":false}
-```
-The backend keeps this out of AI personalization even if global personalization is on.
-
-## Example 4 — Request recommendations
-
-`POST /api/v1/recommendations`
-```json
-{"mode":"SURPRISE","prompt":"Something surprising but gentle","usePersonalContext":false,"boundaryExceptionIds":[]}
-```
-Response contains sourced/qualified suggestions. If `aiProcessingOptIn=false`, use an explicitly labelled non-AI fallback or a clear consent-required error; never forward prompts or journal context without consent.
-
-## Example 5 — AI memory
-
-`POST /api/v1/memory-proposals/{proposalId}/decision`
-```json
-{"decision":"APPROVE","editedText":"I enjoy stories with reflective narrators."}
-```
-The approved memory can then be used *only when personalization is allowed*. Dismissal is not a negative literary preference.
-
-## Example 6 — Find a copy
-
-`GET /api/v1/catalog/works/{workId}/offers?country=TN&format=PRINT`
-```json
-{"data":[],"meta":{"providerStatus":"UNAVAILABLE","checkedAt":null,"reason":"No verified seller research provider configured"}}
-```
-Prices, stock, and sellers must never be fabricated.
-
-## Non-goals for v0.1
-
-No AI stream contracts, price alerts, advanced edition matching, family/shared accounts, PDF/EPUB import, or unspecified seller scrapers. Service registry/WSDL not authored until actual professor rubric is obtained. Exact R1 user export format still requires approval.
+Professor's SOAP/REST/SOA rubric; AI provider selection/quotas; validated seller source; full account deletion and complete archival export; product details (ratings, reading progress units, spoiler policy). See [review gate](06-review-gates.md).

@@ -1,46 +1,32 @@
-# Decisions and architecture review gates
+# KTOB review gates after consistency remediation
 
-## Blocking academic input (must verify)
+## Gate A — documentation remediation
 
-Obtain the actual university project rubric. Specifically determine whether **SOAP/WSDL** is mandatory, whether it requires a service registry, whether REST is allowed, whether the Java service must be distinct from the frontend, whether external service consumption must be demonstrated, and whether multiple *independently deployed* services are required. Lecture slides alone don't establish assessment requirements.
+All 16 UML sources are preserved with the original filenames. OpenAPI includes 57 deliberate R1 operations (55 originally audited + collection-member GET + library restore POST), with corrected DTOs, reading states, recommendation batch, offer metadata and consent controls. Cross-document matrix is at [07-consistency-matrix.md](07-consistency-matrix.md). **Technical validation is necessary but does not grant product approval.**
 
-## Product decisions awaiting explicit sign-off
+## Gate B — human architecture review (NOT yet approved)
 
-1. Rating scale and how unrated books display.
-2. Minimum profile fields.
-3. Exact AI processing consent and personalization scope granularity.
-4. Visibility/identity of manually entered works (recommend private per reader).
-5. Progress units per format (pages, %, minutes) and historical imports.
-6. Essential export format for R1 (JSON first recommended), and later full archive formats.
-7. Account deletion confirmation, reauthentication and retention strategy.
-8. Warning provenance confidence levels and behavior of uncertain boundaries.
-9. Whether `LibraryEntry.shelfStatus` derived from latest experience covers all shelf scenarios.
-10. Provider availability and legality for Tunisian copy-finding, and exact AI model limits.
+- [ ] Obtain professor's exact SOAP/REST/WSDL/service-registry/separate-deployment rubric (**BLOCKED**).
+- [ ] Approve one Spring Boot modular deployable versus required physical services.
+- [ ] Approve canonical work global/private visibility and handling of near-duplicate catalog works.
+- [ ] Approve shelf projection, historical imports, single-open reading and terminal states.
+- [ ] Approve non-destructive library archive/restore and what appears in collection lists and R1 exports.
+- [ ] Decide rating scale, progress format, profile fields, scope of manual entry and any spoilers.
+- [ ] Approve processing consent UX, personalization scopes, journal exclusions, AI provider contract/retention (**BLOCKED provider**).
+- [ ] Approve uncertain content-warning behavior and explicit request-scoped exceptions.
+- [ ] Select and independently verify a seller-research source/coverage/legal use (**BLOCKED**).
+- [ ] Approve memory proposal traceability and terminal revocation.
+- [ ] Approve R1 JSON essentials export and describe missing categories; decide future full archive.
+- [ ] Approve full account deletion: recent reauth, revocation, retention, third-party data (**BLOCKED**).
+- [ ] Review idempotency key retention and request-body replay behavior.
+- [ ] Run PlantUML parser/render checks and maintained OpenAPI validation in CI (see workflow), plus semantic parity checks.
+- [ ] Confirm no orphaned foreign keys/cross-reader collection/memory references.
+- [ ] Sign off that diagrams, API and conceptual persistence represent the same product rules.
 
-## Review checklist
+## Gate C — implementation authorization (NOT approved)
 
-- [ ] Confirm domain entities and UML multiplicities with the API models.
-- [ ] Confirm every reader data type has an ownership path.
-- [ ] Confirm create, update, delete, duplicate and error semantics of core endpoints.
-- [ ] Confirm identity comes only from validated access token.
-- [ ] Confirm AI processing and history personalization are separate permissions.
-- [ ] Confirm no journal entry is shared with AI if excluded, regardless of global consent.
-- [ ] Confirm rereads do not overwrite reading history or reviews.
-- [ ] Confirm firm boundaries can be overridden only explicitly for one request.
-- [ ] Confirm unsourced external offers cannot be misrepresented as verified.
-- [ ] Confirm account deletion and export scope.
-- [ ] Validate OpenAPI syntax and link it to acceptance tests.
-- [ ] Confirm professor SOAP/REST/SOA demonstration criteria.
-- [ ] Approve service contract **before** Spring Boot, Angular or SQL implementation.
+Only after Gate B explicit sign-off: scaffold Angular/Spring Boot, author reviewed Flyway migrations, configure Supabase and service secrets, set up Render/Vercel deployment and acceptance tests. **No application code or deployment is part of Gate A.**
 
-## Milestones
+## Semantic safety checks
 
-**Gate A — Design draft (this commit):** UML + conceptual service contracts.
-
-**Gate B — Architecture review:** resolve blockers, decide exact API payloads, DB constraints, consent and retention. Update and approve OpenAPI.
-
-**Gate C — Implementation authorized:** only after Gate B, scaffold Spring Boot/Angular, prepare versioned Supabase migrations, then connect Vercel/Render deployments.
-
-## Caution
-
-The word *complete* here means the **document inventory** and proposed R1 architecture surface are covered. It does not mean the product specification, professor rubric, production security or external service feasibility has been independently approved.
+AI processing consent checked before every outbound call; personalization checked separately and journal flags respected; no WANT_TO_READ ReadingExperience; no concurrent open readings; one private/manual work identity; exact-owner library membership; source contributor role; no destructive library cascades; endpoint pagination parity; no active memory reactivation; offers use immutable observedAt; no inferred acquisition. Unknown academic/provider facts remain labelled **BLOCKED**.

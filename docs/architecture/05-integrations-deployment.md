@@ -1,57 +1,31 @@
-# Providers, integration boundaries and deployment draft
+# External services and deployment — design draft v0.2
 
-## Topology
+## One modular runtime
 
-- **Vercel:** Angular compiled static frontend; browser communicates with Java over HTTPS and Supabase Auth for sign-in.
-- **Render Free:** one Spring Boot Docker web service, exposing `/api/v1` and limited `/health`. Module boundaries are in-process; this is not a network microservices deployment.
-- **Supabase:** PostgreSQL private schema + Supabase Auth. Spring Boot uses TLS and the supported direct/session pooled database connection.
-- **Book provider:** Open Library public API. **AI provider:** provisional Groq candidate, adapter hides model and availability. **Price provider:** unselected.
+Angular static frontend on Vercel communicates over HTTPS with **one** Spring Boot Java 21 deployment on Render Free. Supabase provides PostgreSQL and Supabase Auth. The Java process contains reader/privacy, export coordinator, library/journal/collections, catalog, advisor, acquisition and adapter modules; these are logical modules, **not** multiple deployed microservices. SOAP, WSDL or a service registry may be necessary if the professor explicitly requires them (**BLOCKED**).
 
-## Open Library adapter — PROPOSED
+## Open Library [PROPOSED]
 
-Use human-initiated metadata search: `GET https://openlibrary.org/search.json?q=...&limit=...` and documented work/edition endpoints. Honor app-identifying `User-Agent` contact header. Default requests are limited to **1/sec**, or **3/sec** when identified, subject to provider changes; employ caching and bounded page sizes. Open Library metadata is incomplete; return provenance and unknown states rather than invented details. No HTML scraping and no bulk mirrored dataset.
+The catalog adapter calls Open Library search/work/edition APIs with a properly identifying user agent, bounded pagination and caching/rate limits. Metadata may be incomplete; edition format may be null when unknown; contributor role is contextual to each work credit. Catalog source IDs are not guaranteed globally complete identifiers. If a catalog query fails or returns nothing, reader may **first create a private MANUAL work** under the same canonical work ID scheme, then add it to the private library. Never infer manual ownership from a user-submitted ID without verification.
 
-Reference: https://openlibrary.org/developers/api and https://openlibrary.org/dev/docs/api/search
+## AI adapter [PROPOSED / model BLOCKED]
 
-## AI adapter — PROVISIONAL
+AI provider selection and free-tier/retention feasibility remain unapproved. The adapter receives the request only after Java checks `aiProcessingOptIn` immediately before dispatch; even a non-personalized AI prompt requires permission. Further context is allowed only with `personalizationOptIn`, `usePersonalContext`, appropriate scope flags and per-journal exclusion. Degraded behavior for documented AI endpoints is `403` when consent absent and `503` when provider unavailable. Explicit distinct non-AI discovery may be added later, but these endpoints do not masquerade as such.
 
-- Provider/model chosen after free-tier/privacy tests, not assumed stable.
-- Store provider key in Render only; never frontend. Bound token budget, timeout, context size, daily quota. Never send disallowed journal entries.
-- AI response is **untrusted**: validate suggested work against catalog, enforce boundaries, provide source/uncertainty qualifiers. Don't treat a model's assertion of availability, price, content warning, or personal memory as proof.
-- If provider is unavailable: explicit degraded state or local non-AI discovery, never silent fabrication.
+A model-generated recommendation requires book identity resolution, confidence/provenance qualification and firm-boundary checks. Unknown source data is unknown, not proof of safety. A returned batch can contain zero qualified items.
 
-## Seller research — BLOCKED
+## Verified seller search [BLOCKED]
 
-No provider chosen. A verified offer needs a retrievable seller URL, observed time, format, country and stated currency/price if known. When missing, `providerStatus=UNAVAILABLE`, `data=[]`. Readers may save personally observed listings, labelled **user-supplied**, but these are not provider-verified and must not be presented as live prices. Source rights/robots/terms and regional coverage must be reviewed.
+No selected vendor or legal/coverage validation. `GET /catalog/works/{workId}/offers` accepts `country`, `format`, `language`, `maxPrice`, pagination; returns `{"data":[],"meta":{"providerStatus":"UNAVAILABLE","checkedAt":null,"reason":"No validated seller provider configured","nextCursor":null}}` when unconfigured. Never fabricate prices, merchants or availability. No AI hallucinated offer is a verified source.
 
-## Render resource budget and resilience
+A saved historical listing is `USER_SUPPLIED` with immutable `observedAt`, source URL, optional price/currency pair and availability enum. `VERIFIED_PROVIDER` is reserved for actual provider observations. Rechecking and alerts are **R2**. Neither offer saving nor seller navigation records acquisition.
 
-One Java process with careful heap sizing (to be measured, not assumed), Spring Boot startup/health probes, limits on concurrent AI work, provider connection timeouts, no unbounded database pool. Sleeping/cold starts are expected. Read/write queries must still work without AI or Open Library being online (except operations requiring them).
+## Reliability and free hosting
 
-## Deployment configuration candidates (names, NOT secrets)
+One low-memory Render instance, potentially sleeping and cold-starting. Use bounded DB pool, limited provider concurrency, timeouts, retry/backoff respecting provider quotas, and no unbounded jobs. Render free plan and Supabase free quotas must be reverified near deployment; the plan is not a guarantee of constant uptime. Auth and private journal operations should remain independently available when Open Library or AI fails, except workflows requiring that upstream.
 
-| Component | Name | Purpose |
-|---|---|---|
-| Angular | `SUPABASE_URL` | Public Supabase project address |
-| Angular | `SUPABASE_PUBLISHABLE_KEY` | Publishable frontend credential (public) |
-| Angular | `KTOB_API_URL` | HTTPS address of Java API |
-| Render | `DATABASE_JDBC_URL` | TLS PostgreSQL JDBC connection |
-| Render | `DATABASE_USERNAME` | Least-privilege service DB user |
-| Render | `DATABASE_PASSWORD` | Secret |
-| Render | `SUPABASE_ISSUER` | Exact token issuer |
-| Render | `SUPABASE_JWKS_URL` | Verified project's asymmetric signing keys (if enabled) |
-| Render | `ALLOWED_WEB_ORIGINS` | Strict CORS origins |
-| Render | `OPENLIBRARY_CONTACT` | App identification contact |
-| Render | `AI_PROVIDER_KEY` | Secret, only when provider is selected |
+Proposed config names (no secrets stored here): `KTOB_API_URL`, `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` for frontend; `DATABASE_JDBC_URL`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`, `SUPABASE_ISSUER`, `SUPABASE_JWKS_URL` where applicable, `OPENLIBRARY_CONTACT`, `AI_PROVIDER_KEY`, `ALLOWED_WEB_ORIGINS` for Render. Spring Boot JVM DB connection may require the Supabase **session pooler** for IPv4 hosting. Confirm its configuration before implementation.
 
-Actual Angular environment injection at build time and environment naming should be finalized during implementation. Do not commit credentials or `.env` files.
+## Validation scenarios for future implementation
 
-## Integration/availability tests (future)
-
-1. Authenticated reader A creates entry; reader B cannot access it by ID.
-2. Open Library returns zero matches or times out -> manual book fallback.
-3. AI disabled -> no outbound request; personalization disabled -> no history transmitted.
-4. AI proposes a memory -> cannot become approved without explicit reader action.
-5. Seller source unconfigured -> empty/unavailable status, never fake price.
-6. Service cold start -> frontend handles delayed first response gracefully.
-7. Database unreachable -> bounded failure with safe error, no leak of connection string.
+Two-reader IDOR tests; manual work privacy; idempotent membership; archived entry restoration; reread preserving old history; AI consent absence and revocation at dispatch; excluded journal entries; memory approval/revocation; batch recommendation with unknown warning; verified provider absence; nullable edition format; cold starts; safe DB failures. No live tests have been performed.
