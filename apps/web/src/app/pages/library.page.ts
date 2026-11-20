@@ -32,8 +32,8 @@ import { KtobApiService, LibraryEntry, apiFailure } from '../core/api/ktob-api.s
         @for (entry of entries(); track entry.id) {
           <article class="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-[#e7ded5] bg-white p-5">
             <div>
-              <p class="font-mono text-xs text-[#826e5e]">Work ID: {{ entry.workId }}</p>
-              <h2 class="mt-1 font-serif text-lg text-[#3e3029]">{{ entry.shelfStatus.replaceAll('_', ' ') }}</h2>
+              <h2 class="font-serif text-xl text-[#3e3029]">{{ workTitles()[entry.workId] || 'Book metadata unavailable' }}</h2>
+              <p class="mt-1 text-sm text-[#826e5e]">{{ entry.shelfStatus.replaceAll('_', ' ') }}</p>
               <p class="mt-1 text-xs text-[#86776c]">{{ entry.archivedAt ? 'Archived and read-only' : 'In your library' }}</p>
             </div>
             @if (entry.archivedAt) {
@@ -53,6 +53,7 @@ import { KtobApiService, LibraryEntry, apiFailure } from '../core/api/ktob-api.s
 export class LibraryPage implements OnInit {
   private readonly api = inject(KtobApiService);
   readonly entries = signal<LibraryEntry[]>([]);
+  readonly workTitles = signal<Record<string, string>>({});
   readonly busy = signal(false);
   readonly error = signal('');
   readonly showArchived = signal(false);
@@ -61,7 +62,17 @@ export class LibraryPage implements OnInit {
 
   async load(): Promise<void> {
     this.busy.set(true); this.error.set('');
-    try { this.entries.set((await this.api.listLibrary(this.showArchived())).data); }
+    try {
+      const entries = (await this.api.listLibrary(this.showArchived())).data;
+      this.entries.set(entries);
+      const titles: Record<string,string> = {};
+      const ids = [...new Set(entries.map(e => e.workId))];
+      await Promise.all(ids.map(async id => {
+        try { titles[id] = (await this.api.workById(id)).data.title; }
+        catch { titles[id] = 'Book metadata unavailable'; }
+      }));
+      this.workTitles.set(titles);
+    }
     catch (error) { this.entries.set([]); this.error.set(apiFailure(error)); }
     finally { this.busy.set(false); }
   }

@@ -17,6 +17,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.oauth2.core.*;
 import org.springframework.security.oauth2.jwt.*;
+import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -90,7 +91,10 @@ public class SecurityConfiguration {
             !jwksUrl.equals(issuer.replaceAll("/+$", "") + "/.well-known/jwks.json")) {
             throw new IllegalStateException("Supabase JWKS URL must match HTTPS issuer");
         }
-        NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(jwksUrl).build();
+        NimbusJwtDecoder decoder = NimbusJwtDecoder.withJwkSetUri(jwksUrl)
+            .jwsAlgorithm(SignatureAlgorithm.RS256)
+            .jwsAlgorithm(SignatureAlgorithm.ES256)
+            .build();
         OAuth2TokenValidator<Jwt> tenantValidator = jwt -> {
             boolean valid = jwt.getAudience() != null && jwt.getAudience().contains("authenticated")
                 && "authenticated".equals(jwt.getClaimAsString("role"));

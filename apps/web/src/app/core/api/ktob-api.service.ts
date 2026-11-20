@@ -60,6 +60,10 @@ export class KtobApiService {
     return this.request('GET', '/me');
   }
 
+  workById(id: string): Promise<ApiData<BookWork>> {
+    return this.request('GET', '/catalog/works/' + encodeURIComponent(id));
+  }
+
   searchWorks(query: string): Promise<ApiPage<BookWork>> {
     return this.request('GET', '/catalog/works',
       new HttpParams().set('q', query.trim()).set('limit', 20));
