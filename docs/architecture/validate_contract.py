@@ -273,8 +273,10 @@ check("SPOILER_CONFIRMATION_REQUIRED" in u09 and
       "chat and recommendation sequences must reject missing spoiler acknowledgement")
 
 gate = (ROOT / "docs/architecture/06-review-gates.md").read_text(encoding="utf-8")
-check("Gate C remains closed" in gate and "not" in gate.lower(),
-      "human architecture/implementation gate must remain closed")
+check("ready for local Sprint 0" in gate and
+      all(token in gate for token in ("B13", "B15", "B16")) and
+      "Independent feature gates remain CLOSED" in gate,
+      "local implementation is allowed only with B13/B15/B16 feature gates closed")
 review = (ROOT / "docs/architecture/08-gate-b-decision-review.md").read_text(encoding="utf-8")
 check("APPROVED by the reader" in review and "B13" in review and "BLOCKED" in review,
       "review register must distinguish approved R1 defaults from provider/deletion blockers")
