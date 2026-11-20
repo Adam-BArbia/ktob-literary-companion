@@ -1,19 +1,19 @@
 @startuml KTOB_16_state_offer
-title KTOB — Saved Offer Lifecycle
-[*] --> OBSERVED : verified source listing found
-OBSERVED --> SAVED : reader saves
-OBSERVED --> [*] : dismissed
-SAVED --> RECHECKED : reader revisits / refreshes
-RECHECKED --> SAVED : keep historical observation
-SAVED --> REMOVED : reader removes
-RECHECKED --> REMOVED : reader removes
+title KTOB - R1 Saved Offer Lifecycle
+[*] --> OBSERVED : seller listing found or entered
+OBSERVED --> SAVED : reader explicitly saves snapshot
+OBSERVED --> [*] : not saved
+SAVED --> REMOVED : DELETE /saved-offers/{id}
 REMOVED --> [*]
-note right of SAVED
-Saved price and availability are last observed,
-not live guarantees. Seller click is not purchase.
+note right of OBSERVED
+OBSERVED is a transient lookup state, not persisted.
+It is not a verified offer without an actual source.
 end note
-note right of RECHECKED
-Availability may change or be unknown.
-No automatic acquisition is inferred.
+note right of SAVED
+An offer keeps immutable observedAt provenance.
+R1 has no automatic recheck or price-change alerts.
+end note
+note bottom of REMOVED
+Seller click or removal never creates an acquisition.
 end note
 @enduml

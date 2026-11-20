@@ -1,38 +1,45 @@
 @startuml KTOB_08_sequence_reading_journal
-title KTOB — Update Reading and Add Private Journal Note
+title KTOB - Start, Update, Reread and Journal
 actor Reader
-participant "Angular UI" as UI
-participant "Java API" as API
-participant "Identity guard" as Guard
+participant "Angular" as UI
+participant "Spring API" as API
+participant "Auth guard" as Guard
 participant "Library / Journal" as Library
-database "Supabase Postgres" as DB
-Reader -> UI : Open a personal library entry
-Reader -> UI : Start or resume reading
-UI -> API : Create/update reading experience
-API -> Guard : validate owner
-Guard --> API : readerId
-API -> Library : record status/progress
-alt Rereading a previously finished work
- Library -> DB : create NEW reading experience
-else Continuing current experience
- Library -> DB : update chosen experience
+database "Supabase PostgreSQL" as DB
+Reader -> UI : Select owned library entry
+UI -> API : POST /library/{entryId}/experiences
+API -> Guard : verify identity and entry ownership
+Guard --> API : owned
+alt New current reading or reread
+ API -> Library : create CURRENTLY_READING experience
+ Library -> DB : ensure no other open experience
+ DB --> Library : new experience (history preserved)
+else Explicit historical import
+ API -> Library : validate historical flag and final status
+ Library -> DB : insert past experience, preserve existing
+ DB --> Library : new historical experience
 end
-DB --> Library : saved
-Library --> UI : experience record
-opt Reader writes a reflection
- Reader -> UI : Enter free-form note
- Reader -> UI : Set AI-context permission for note
- UI -> API : Save journal reflection
- API -> Guard : verify reader owns experience
- Guard --> API : allowed
- API -> Library : save reflection + exclusion flag
- Library -> DB : persist reflection
- DB --> Library : saved
- Library --> UI : journal note
+Library --> UI : 201 experience
+Reader -> UI : Update status / dates / progress
+UI -> API : PATCH /experiences/{id}
+API -> Guard : validate experience owner
+API -> Library : validate transition / no conflicting open record
+alt Transition invalid
+ Library --> UI : 422 invalid transition
+else Transition valid
+ Library -> DB : update selected experience only
+ Library --> UI : 200 experience
 end
-UI --> Reader : current experience and notes
+opt Reader saves reflection
+ Reader -> UI : Journal content + personalization exclusion
+ UI -> API : POST /experiences/{id}/journal
+ API -> Guard : check experience owner
+ API -> Library : save with allowForPersonalization flag
+ Library -> DB : insert note
+ Library --> UI : 201 journal entry
+end
 note over Library,DB
-Separate reading experiences preserve old ratings and dates.
-Notes are never required to update progress.
+Library shelf is derived, not persisted as experience status.
+Excluded notes never enter external AI context.
 end note
 @enduml

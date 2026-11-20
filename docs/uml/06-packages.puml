@@ -1,34 +1,35 @@
 @startuml KTOB_06_packages
-title KTOB — Backend Package Dependency Rules (conceptual)
-package "api" as API
+title KTOB - Logical Module Dependency Rules
+package "api" as Api
 package "security" as Security
-package "reader" as Reader
-package "library" as Library
+package "reader/privacy/export" as Reader
+package "library/journal/collections" as Library
 package "catalog" as Catalog
 package "advisor" as Advisor
 package "acquisition" as Acquisition
-package "integration" as Integration
+package "provider adapters" as Integration
 package "shared contracts" as Shared
-API ..> Security
-API ..> Reader
-API ..> Library
-API ..> Catalog
-API ..> Advisor
-API ..> Acquisition
+Api ..> Security
+Api ..> Reader
+Api ..> Library
+Api ..> Catalog
+Api ..> Advisor
+Api ..> Acquisition
 Reader ..> Shared
-Library ..> Reader : identity / permissions
-Library ..> Catalog : work identity
-Advisor ..> Reader : allowed context
-Advisor ..> Library : selected history
-Advisor ..> Catalog : suggested works
-Acquisition ..> Catalog : work/edition
-Catalog ..> Integration : book metadata
-Advisor ..> Integration : AI provider
-Acquisition ..> Integration : external offers (TBD)
+Reader ..> Library : export permitted records
+Reader ..> Advisor : export permitted preferences
+Library ..> Catalog : work contract
+Advisor ..> Reader : consent / boundaries
+Advisor ..> Library : permitted history
+Advisor ..> Catalog : works
+Acquisition ..> Catalog : work / edition
+Catalog ..> Integration : metadata
+Advisor ..> Integration : AI
+Acquisition ..> Integration : sellers [BLOCKED]
 Integration ..> Shared
 note bottom
-Dependencies express contracts, not shared mutable state.
-Business modules remain logical modules in one Spring Boot deployment.
-Avoid circular module dependencies during implementation.
+Dependency arrows indicate required interfaces.
+No circular module dependencies, direct cross-module
+persistence access or separate runtime instances.
 end note
 @enduml

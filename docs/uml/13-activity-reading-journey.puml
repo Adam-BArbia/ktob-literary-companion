@@ -1,44 +1,52 @@
 @startuml KTOB_13_activity_reading_journey
-title KTOB — Reader Journey (optional paths)
+title KTOB - Reader Journey (R1, optional paths)
 start
-:Sign in / optional onboarding;
-:Search or discover a book;
-if (Found appropriate work?) then (yes)
- :Select literary work;
+:Authenticate reader;
+if (Known catalog work?) then (yes)
+ :Choose an accessible work;
 else (no)
- :Create manual work entry;
+ :Create private manual work owned by reader;
 endif
-:Add work to personal library;
-if (Want to record reading?) then (yes)
- :Create or resume reading experience;
- :Optionally update progress and dates;
- if (Want to write?) then (yes)
-  :Save dated private reflection;
-  :Choose whether note may inform AI;
+:Add to personal library (WANT_TO_READ projection);
+if (Start actual reading?) then (yes)
+ :Create CURRENTLY_READING experience;
+ :Update dates, progress and status optionally;
+ if (Reflection?) then (yes)
+  :Save journal and explicit AI exclusion flag;
  endif
 else (no)
- :Keep on want-to-read or another shelf;
+ :Keep entry with no ReadingExperience;
 endif
-if (Want recommendations?) then (yes)
- :Provide current request / reading intention;
- if (Personalization allowed?) then (yes)
-  :Use permitted reading context;
+if (Recommendations or AI chat?) then (yes)
+ if (AI processing consent current?) then (yes)
+  if (Personalization allowed for this request?) then (yes)
+   :Select only authorized history and journal content;
+  else (no)
+   :Send request-only content;
+  endif
+  :Recheck processing consent before external dispatch;
+  if (Still allowed?) then (yes)
+   :Call AI, apply firm boundaries, return qualified result;
+  else (no)
+   :Return consent-required error; no AI call;
+  endif
  else (no)
-  :Use request without private history;
+  :Return consent-required error; no AI call;
  endif
- :Apply persistent boundaries;
- :Present explained recommendations;
 endif
-if (Want a copy?) then (yes)
- :Choose language, format, budget;
- :Search verified offers when provider exists;
- if (Suitable listing found?) then (yes)
-  :Optionally save offer;
+if (Find a copy?) then (yes)
+ if (Verified provider configured?) then (yes)
+  :Return sourced listings with observedAt;
+ else (no)
+  :Show provider-unavailable empty state;
+ endif
+ if (Reader saves a listing?) then (yes)
+  :Save historical offer without recording purchase;
  endif
  if (Actually acquired?) then (yes)
-  :Record owned / borrowed / accessed copy;
+  :Record acquisition without altering reading state;
  endif
 endif
-:Library and journal remain available;
+:Library, readings and collections remain reader-private;
 stop
 @enduml

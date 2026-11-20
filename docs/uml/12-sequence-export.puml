@@ -1,31 +1,29 @@
 @startuml KTOB_12_sequence_export
-title KTOB — Private Data Export
+title KTOB - Owner-scoped Essential R1 JSON Export
 actor Reader
-participant "Angular UI" as UI
-participant "Java API" as API
-participant "Identity guard" as Guard
-participant "Export module" as Export
-database "Supabase Postgres" as DB
-Reader -> UI : Export my reading history
-UI -> API : Request export (R1 essential data)
-API -> Guard : verify token and readerId
-alt Authorized
- Guard --> API : confirmed owner
- API -> Export : prepare reader-only archive
- Export -> DB : get owned library entries
- Export -> DB : get reading experiences, journal, collections
- Export -> DB : get permitted preference records
- DB --> Export : reader-scoped records
- Export --> API : portable readable/structured export
- API --> UI : downloadable export
- UI --> Reader : save personal copy
-else Invalid credentials
- Guard --> API : reject
- API --> UI : unauthorized
-end
+participant "Angular" as UI
+participant "Spring API" as API
+participant "Reader / Export module" as Export
+participant "Library contract" as Library
+participant "Advisor contract" as Advisor
+database "Supabase PostgreSQL" as DB
+Reader -> UI : Export my essentials
+UI -> API : GET /me/export
+API -> Export : verify JWT and choose current readerId
+Export -> Library : fetch owned library, reading, journal, collections
+Library -> DB : reader-scoped queries
+DB --> Library : records
+Library --> Export : 4 arrays
+Export -> Advisor : fetch explicit reading preferences only
+Advisor -> DB : reader-scoped preference query
+DB --> Advisor : records
+Advisor --> Export : preferences
+Export -> Export : assemble v1 JSON (5 arrays)
+Export --> UI : 200 application/json {data: Export}
+UI --> Reader : save personal copy
 note over Export,DB
-R1: essential library, journal, ratings, collections, preferences.
-Complete conversation + acquisition archive is R2.
-No other reader's data may appear.
+Does not claim full archive: chat, memory, offers,
+acquisition and deleted resources excluded in R1.
+No other reader's data is exportable.
 end note
 @enduml

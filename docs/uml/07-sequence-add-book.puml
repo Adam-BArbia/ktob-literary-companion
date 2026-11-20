@@ -1,46 +1,48 @@
 @startuml KTOB_07_sequence_add_book
-title KTOB — Search, Manual Fallback and Add to Library
+title KTOB - Add Catalog or Private Manual Work
 actor Reader
-participant "Angular UI" as UI
-participant "Java API" as API
-participant "Identity guard" as Guard
-participant "Catalog module" as Catalog
-participant "Open Library" as Open
-participant "Library module" as Library
-database "Supabase Postgres" as DB
-Reader -> UI : Search by title/author
-UI -> API : Search request
-API -> Catalog : search(query)
-Catalog -> Open : GET work metadata
-alt External API returns matching works
- Open --> Catalog : candidate works
- Catalog --> API : works and known metadata
- API --> UI : results
- Reader -> UI : Choose work
-else Empty, error, or wrong results
- Open --> Catalog : none / unavailable
- Catalog --> API : manual entry permitted
- API --> UI : manual entry option
- Reader -> UI : Enter title and optional details
+participant "Angular" as UI
+participant "Spring API" as API
+participant "Auth guard" as Guard
+participant "Catalog" as Catalog
+participant "Open Library adapter" as OL
+participant "Library" as Library
+database "Supabase PostgreSQL" as DB
+Reader -> UI : Search or enter work
+alt Catalog search selected
+ UI -> API : GET /catalog/works?q=...
+ API -> Catalog : search
+ Catalog -> OL : Query metadata
+ OL --> Catalog : matches or unavailable
+ Catalog --> UI : results / fallback
+else Private manual entry selected
+ UI -> API : POST /catalog/manual-works
+ API -> Guard : verify JWT
+ Guard --> API : readerId
+ API -> Catalog : create MANUAL work owned by readerId
+ Catalog -> DB : insert canonical work with owner_reader_id
+ DB --> Catalog : workId
+ Catalog --> UI : 201 workId
 end
-Reader -> UI : Add to personal library
-UI -> API : Add selected/manual work
-API -> Guard : authenticate + authorize reader
-Guard --> API : verified readerId
-API -> Library : addWork(readerId, work)
-Library -> DB : check existing work entry
-alt Work already in reader's library
- DB --> Library : existing entry
- Library --> API : existing entry; offer to view
-else New work entry
- Library -> DB : create work if necessary, then entry
+Reader -> UI : Add selected work
+UI -> API : POST /library (workId, preferredEditionId?)
+API -> Guard : verify JWT
+Guard --> API : readerId
+API -> Library : authorize work visible to reader
+Library -> DB : check work origin/owner, optional edition
+alt Private work owned by another reader OR invalid edition
+ DB --> Library : denied
+ Library --> UI : 404 work / 422 invalid edition
+else Existing entry incl. archived
+ DB --> Library : duplicate readerId + workId
+ Library --> UI : 409 duplicate (restore separately)
+else Valid new entry
+ Library -> DB : insert library entry; no reading experience
  DB --> Library : stored entry
- Library --> API : created
+ Library --> UI : 201 shelfStatus=WANT_TO_READ
 end
-API --> UI : entry / existing response
-UI --> Reader : personal library result
-note over UI,API
-Never auto-mark as owned or currently reading.
-Edition selection remains optional.
+note over UI,DB
+No inferred possession, reading start, or acquisition.
+Manual works are created BEFORE library insertion.
 end note
 @enduml

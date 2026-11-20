@@ -1,11 +1,12 @@
 @startuml KTOB_03_domain_advisor
-title KTOB — Advisor, Consent, Preferences and Memory Domain
+title KTOB - Advisor, Consent, Recommendation and Memory
 hide empty methods
 skinparam classAttributeIconSize 0
 class ReaderProfile {
  +readerId: UUID
 }
 class PrivacySettings {
+ +aiProcessingOptIn: Boolean
  +personalizationOptIn: Boolean
  +useReadingHistory: Boolean
  +useAllowedJournal: Boolean
@@ -17,7 +18,6 @@ class ReadingPreference {
  +category: String
  +description: String
  +source: PreferenceSource
- +active: Boolean
 }
 enum PreferenceSource {
  READER_ENTERED
@@ -31,26 +31,22 @@ class ContentBoundary {
 }
 class BoundaryException {
  +exceptionId: UUID
- +requestId: UUID
  +explicitlyAuthorized: Boolean
  +createdAt: DateTime
 }
 class Conversation {
  +conversationId: UUID
  +kind: ConversationKind
- +title: String
- +createdAt: DateTime
+ +workId: UUID [0..1]
 }
 enum ConversationKind {
  GENERAL
  BOOK_MAIN
- BOOK_TOPIC_R2
 }
 class Message {
  +messageId: UUID
  +role: MessageRole
  +body: Text
- +createdAt: DateTime
 }
 enum MessageRole {
  READER
@@ -71,13 +67,12 @@ class ApprovedMemory {
  +memoryId: UUID
  +text: Text
  +approvedAt: DateTime
- +active: Boolean
+ +revokedAt: DateTime [0..1]
 }
 class RecommendationRequest {
  +requestId: UUID
  +discoveryMode: DiscoveryMode
- +useHistoryForThisRequest: Boolean
- +createdAt: DateTime
+ +usePersonalContext: Boolean
 }
 enum DiscoveryMode {
  BALANCED
@@ -87,7 +82,12 @@ enum DiscoveryMode {
 class Recommendation {
  +recommendationId: UUID
  +explanation: Text
- +feedback: String [0..1]
+ +warningConfidence: WarningConfidence
+}
+enum WarningConfidence {
+ KNOWN
+ PARTIAL
+ UNKNOWN
 }
 class BookWork {
  +workId: UUID
@@ -98,31 +98,33 @@ class ReadingExperience {
 class JournalEntry {
  +journalId: UUID
 }
-ReaderProfile "1" *-- "1" PrivacySettings
-ReaderProfile "1" *-- "0..*" ReadingPreference
-ReaderProfile "1" *-- "0..*" ContentBoundary
-ReaderProfile "1" *-- "0..*" Conversation
-Conversation "1" *-- "0..*" Message
-Conversation "0..*" --> "0..1" BookWork : primary book >
+ReaderProfile "1" -- "1" PrivacySettings
+ReaderProfile "1" -- "0..*" ReadingPreference
+ReaderProfile "1" -- "0..*" ContentBoundary
+ReaderProfile "1" -- "0..*" Conversation
+Conversation "1" -- "0..*" Message
+Conversation "0..*" --> "0..1" BookWork : book context >
 Message "1" -- "0..*" MemoryProposal : suggests >
-MemoryProposal "0..1" --> "0..1" ApprovedMemory : accepted as >
+MemoryProposal "1" --> "0..1" ApprovedMemory : approved as >
 ReaderProfile "1" -- "0..*" ApprovedMemory
 ReaderProfile "1" -- "0..*" RecommendationRequest
-RecommendationRequest "1" *-- "0..*" Recommendation
+RecommendationRequest "1" -- "0..*" Recommendation : returns items >
 Recommendation "0..*" --> "1" BookWork
-RecommendationRequest "1" *-- "0..*" BoundaryException
+RecommendationRequest "1" -- "0..*" BoundaryException
 BoundaryException "0..*" --> "1" ContentBoundary
 JournalEntry "0..*" --> "1" ReadingExperience
-note right of MemoryProposal
-AI proposals are NOT permanent memories.
-An approval is explicit and editable.
+note right of PrivacySettings
+Both opt-ins default FALSE.
+Before dispatch, verify AI processing opt-in.
+Personalization requires separate authorization
+and journal-specific exclusion filtering.
 end note
-note right of BoundaryException
-Scoped to one recommendation request.
-Never silently alters persistent boundary.
+note bottom of ApprovedMemory
+One per approved proposal; revoked is terminal.
+No active=true generic PATCH reactivation.
 end note
-note bottom of PrivacySettings
-Defaults: personalizationOptIn=false.
-Context selection checks individual journal exclusions.
+note bottom of RecommendationRequest
+Request-scoped exceptions never edit preferences.
+Results are a batch, not one item.
 end note
 @enduml

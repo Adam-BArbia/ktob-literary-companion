@@ -1,5 +1,5 @@
 @startuml KTOB_02_domain_library
-title KTOB — Library and Reading Domain (conceptual UML)
+title KTOB - Library and Reading Domain (R1 conceptual)
 hide empty methods
 skinparam classAttributeIconSize 0
 class ReaderProfile {
@@ -9,49 +9,88 @@ class ReaderProfile {
 class BookWork {
  +workId: UUID
  +title: String
- +originalLanguage: String [0..1]
- +publicationYear: Integer [0..1]
+ +origin: WorkOrigin
+ +ownerReaderId: UUID [0..1]
  +externalCatalogId: String [0..1]
 }
 class Contributor {
  +contributorId: UUID
  +name: String
- +role: String
+}
+class WorkCredit {
+ +role: ContributorRole
+}
+enum ContributorRole {
+ AUTHOR
+ TRANSLATOR
+ EDITOR
+ OTHER
+}
+enum WorkOrigin {
+ OPEN_LIBRARY
+ MANUAL
 }
 class BookEdition {
  +editionId: UUID
  +language: String [0..1]
  +format: BookFormat [0..1]
  +isbn: String [0..1]
- +publisher: String [0..1]
- +translator: String [0..1]
  +narrator: String [0..1]
- +abridged: Boolean [0..1]
+}
+enum BookFormat {
+ PRINT
+ EBOOK
+ AUDIOBOOK
+ OTHER
 }
 class LibraryEntry {
  +entryId: UUID
  +favorite: Boolean
  +acquisitionIntention: Boolean
- +createdAt: DateTime
+ +archivedAt: DateTime [0..1]
+ +preferredEditionId: UUID [0..1]
+ +/shelfStatus: ShelfStatus
+}
+enum ShelfStatus {
+ WANT_TO_READ
+ CURRENTLY_READING
+ FINISHED
+ PAUSED
+ DID_NOT_FINISH
 }
 class ReadingExperience {
  +experienceId: UUID
  +status: ReadingStatus
+ +createdAt: DateTime
  +startedOn: Date [0..1]
  +finishedOn: Date [0..1]
  +rating: Decimal [0..1]
  +progress: String [0..1]
 }
+enum ReadingStatus {
+ CURRENTLY_READING
+ FINISHED
+ PAUSED
+ DID_NOT_FINISH
+}
 class JournalEntry {
  +journalId: UUID
- +createdAt: DateTime
+ +kind: JournalKind
  +body: Text
+ +emotionTags: String[]
  +allowForPersonalization: Boolean
+ +createdAt: DateTime
+}
+enum JournalKind {
+ REFLECTION
+ QUOTE
+ EMOTION
+ NOTE
+ REVIEW
 }
 class Collection {
  +collectionId: UUID
  +name: String
- +description: String [0..1]
 }
 class CollectionMembership {
  +addedAt: DateTime
@@ -60,32 +99,19 @@ class SavedOffer {
  +offerId: UUID
  +sourceUrl: URL
  +sellerName: String
+ +sourceType: OfferSource
+ +observedAt: DateTime
  +listedPrice: Decimal [0..1]
  +currency: String [0..1]
- +checkedAt: DateTime
- +availability: String [0..1]
+}
+enum OfferSource {
+ VERIFIED_PROVIDER
+ USER_SUPPLIED
 }
 class AcquisitionRecord {
  +acquisitionId: UUID
  +accessType: AccessType
  +acquiredOn: Date [0..1]
- +paidPrice: Decimal [0..1]
- +currency: String [0..1]
- +seller: String [0..1]
- +notes: Text [0..1]
-}
-enum ReadingStatus {
- WANT_TO_READ
- CURRENTLY_READING
- FINISHED
- PAUSED
- DID_NOT_FINISH
-}
-enum BookFormat {
- PRINT
- EBOOK
- AUDIOBOOK
- OTHER
 }
 enum AccessType {
  OWNED
@@ -96,26 +122,34 @@ enum AccessType {
  OTHER
 }
 
+ReaderProfile "1" -- "0..*" BookWork : owns manual works >
 ReaderProfile "1" -- "0..*" LibraryEntry : maintains >
-LibraryEntry "0..*" --> "1" BookWork : identifies >
-BookWork "0..*" -- "0..*" Contributor : credited author/editor >
-BookWork "1" *-- "0..*" BookEdition : editions >
-LibraryEntry "1" *-- "0..*" ReadingExperience : history >
-ReadingExperience "0..*" --> "0..1" BookEdition : read version >
-ReadingExperience "1" *-- "0..*" JournalEntry : reflections >
+LibraryEntry "0..*" --> "1" BookWork : canonical work >
+BookWork "1" -- "0..*" BookEdition : editions >
+BookWork "1" -- "0..*" WorkCredit : credited as >
+WorkCredit "0..*" --> "1" Contributor : person >
+LibraryEntry "1" -- "0..*" ReadingExperience : histories (preserved) >
+ReadingExperience "0..*" --> "0..1" BookEdition : version >
+ReadingExperience "1" -- "0..*" JournalEntry : reflections >
 ReaderProfile "1" -- "0..*" Collection : curates >
-Collection "1" *-- "0..*" CollectionMembership
+Collection "1" -- "0..*" CollectionMembership
 CollectionMembership "0..*" --> "1" LibraryEntry
-LibraryEntry "1" *-- "0..*" SavedOffer
-SavedOffer "0..*" --> "0..1" BookEdition : offered version >
-LibraryEntry "1" *-- "0..*" AcquisitionRecord
-AcquisitionRecord "0..*" --> "0..1" BookEdition : acquired version >
-note right of ReadingExperience
-A reread creates a new experience.
-Unknown dates and rating remain empty.
+LibraryEntry "1" -- "0..*" SavedOffer
+SavedOffer "0..*" --> "0..1" BookEdition
+LibraryEntry "1" -- "0..*" AcquisitionRecord
+AcquisitionRecord "0..*" --> "0..1" BookEdition
+note bottom of BookWork
+OPEN_LIBRARY work: ownerReaderId=null, globally readable.
+MANUAL work: ownerReaderId required, owner-only.
+One canonical work ID; local overrides deferred.
 end note
 note bottom of LibraryEntry
-One reader/work membership, no duplicate
-work entry for different editions.
+UNIQUE(readerId, workId). Deleting archives, not cascades.
+A shelf with no experience projects WANT_TO_READ.
+At most one open (CURRENTLY_READING or PAUSED) experience.
+end note
+note right of ReadingExperience
+Rereads create new records.
+WANT_TO_READ is NOT a ReadingStatus.
 end note
 @enduml

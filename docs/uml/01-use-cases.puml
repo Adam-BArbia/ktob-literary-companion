@@ -1,64 +1,68 @@
 @startuml KTOB_01_use_cases
-title KTOB — System Use Case Model (R1)
+title KTOB - Reader Use Cases (R1)
 left to right direction
 skinparam packageStyle rectangle
 actor Reader
-actor "Open Library API" as Catalog <<external>>
-actor "AI Provider" as AI <<external>>
-actor "Seller Research Source" as Sellers <<unconfirmed>>
+actor "Open Library [EXT]" as Catalog
+actor "AI provider [PROPOSED]" as AI
+actor "Seller source [BLOCKED]" as Seller
 rectangle "KTOB" {
- usecase "Sign in / register" as UCAuth
- usecase "Manage profile, consent\nand content boundaries" as UCPrivacy
- usecase "Search / discover a book" as UCSearch
- usecase "Manually enter a book" as UCManual
- usecase "Add work to library" as UCLibrary
- usecase "Manage reading status\nand favorites" as UCStatus
- usecase "Manage collections" as UCCollections
- usecase "Record / reread a book" as UCRead
- usecase "Write private reflections" as UCJournal
- usecase "Discuss a book\nor literature" as UCChat
- usecase "Review proposed AI memory" as UCMemory
- usecase "Request recommendations" as UCRecommend
- usecase "Find a copy" as UCFind
- usecase "Save seller offer" as UCSave
- usecase "Record acquisition" as UCAcquire
- usecase "Export personal records" as UCExport
- usecase "Use permitted personal context" as UCContext
- usecase "Apply boundaries" as UCBound
+ usecase "Sign in / register" as UAuth
+ usecase "Manage consent, profile\nand content boundaries" as UPrivacy
+ usecase "Search catalog" as USearch
+ usecase "Create private manual work" as UManual
+ usecase "Add work to own library" as UAdd
+ usecase "Archive or restore library entry" as UArchive
+ usecase "Manage favorite / acquisition intent" as UFavorite
+ usecase "Create and manage collections" as UCollect
+ usecase "Read collection members" as UMembers
+ usecase "Start reading / reread / import past reading" as URead
+ usecase "Write / exclude journal entry" as UJournal
+ usecase "Discuss book or literature" as UChat
+ usecase "Review memory proposal" as UMemory
+ usecase "Request recommendations" as URecommend
+ usecase "Use permitted context" as UContext
+ usecase "Apply content boundaries" as UBoundary
+ usecase "Search for verified offers" as UFind
+ usecase "Save observed offer" as USave
+ usecase "Record acquisition explicitly" as UAcquire
+ usecase "Export essential personal data" as UExport
 }
-Reader --> UCAuth
-Reader --> UCPrivacy
-Reader --> UCSearch
-Reader --> UCLibrary
-Reader --> UCStatus
-Reader --> UCCollections
-Reader --> UCRead
-Reader --> UCJournal
-Reader --> UCChat
-Reader --> UCMemory
-Reader --> UCRecommend
-Reader --> UCFind
-Reader --> UCSave
-Reader --> UCAcquire
-Reader --> UCExport
-UCManual ..> UCSearch : <<extend>>\nwhen not found
-UCLibrary ..> UCSearch : <<include>>
-UCRecommend ..> UCBound : <<include>>
-UCRecommend ..> UCContext : <<extend>>\nonly after opt-in
-UCChat ..> UCContext : <<extend>>\nonly after opt-in
-UCMemory ..> UCChat : <<extend>>\nreader approval
-UCSave ..> UCFind : <<extend>>\noptional
-UCAcquire ..> UCFind : <<extend>>\noptional and explicit
-Catalog --> UCSearch
-AI --> UCChat
-AI --> UCRecommend
-Sellers --> UCFind
-note right of UCAcquire
-No acquisition inferred from seller visit.
-No reading status implied by acquisition.
+Reader --> UAuth
+Reader --> UPrivacy
+Reader --> USearch
+Reader --> UManual
+Reader --> UAdd
+Reader --> UArchive
+Reader --> UFavorite
+Reader --> UCollect
+Reader --> UMembers
+Reader --> URead
+Reader --> UJournal
+Reader --> UChat
+Reader --> UMemory
+Reader --> URecommend
+Reader --> UFind
+Reader --> USave
+Reader --> UAcquire
+Reader --> UExport
+UContext ..> URecommend : <<extend>>\nwhen personalization authorized
+UBoundary ..> URecommend : <<include>>
+Catalog --> USearch
+AI --> UChat
+AI --> URecommend
+Seller --> UFind
+note right of UAdd
+Catalog search OR manual creation may precede add;
+neither is mandatory for an existing known work.
+A duplicate add returns 409.
 end note
-note bottom of UCPrivacy
-Each user's data is private.
-Personalization defaults to off.
+note bottom of UChat
+AI processing consent gates every provider call.
+Authorization to personalize is separate.
+end note
+note bottom of UAcquire
+Seller click / saving offer does not imply acquisition.
+Acquisition does not change reading status.
 end note
 @enduml

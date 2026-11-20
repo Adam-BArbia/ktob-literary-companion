@@ -1,45 +1,49 @@
 @startuml KTOB_10_sequence_memory
-title KTOB — Literary Conversation and AI Memory Approval
+title KTOB - AI Conversation Turn and Explicit Memory Approval
 actor Reader
-participant "Angular UI" as UI
-participant "Java API" as API
-participant "Privacy module" as Privacy
-participant "Advisor module" as Advisor
-database "Supabase Postgres" as DB
-participant "AI provider" as AI
-Reader -> UI : Discuss selected book / general literature
-UI -> API : Send message(conversationId, text)
-API -> Privacy : authenticate + check conversation ownership
-Privacy --> API : verified reader + AI data permissions
-API -> Advisor : append reader message
-Advisor -> DB : save message
-Advisor -> AI : conversation + only authorized context
-AI --> Advisor : reply + optional memory candidate
-Advisor -> DB : save assistant reply
-Advisor --> UI : answer
-opt Candidate insight identified
- Advisor -> DB : store PENDING proposal
- Advisor --> UI : unobtrusive proposal indicator
- Reader -> UI : Review pending suggestion
- alt Accept, possibly edit
-  UI -> API : approve proposal(edited text)
-  API -> Privacy : verify proposal ownership
-  Privacy --> API : authorized
-  API -> Advisor : save approved memory
-  Advisor -> DB : mark APPROVED + persist memory
- else Dismiss
-  UI -> API : dismiss proposal
-  API -> Advisor : mark DISMISSED
-  Advisor -> DB : update proposal
+participant "Angular" as UI
+participant "Spring API" as API
+participant "Reader / Privacy" as Privacy
+participant "Advisor" as Advisor
+database "Supabase PostgreSQL" as DB
+participant "AI adapter" as AI
+Reader -> UI : Send text to owned conversation
+UI -> API : POST /conversations/{id}/messages
+API -> Privacy : verify JWT, conversation owner, AI processing opt-in
+alt AI consent missing
+ Privacy --> UI : 403 consent-required problem; no provider call
+else Authorized
+ Privacy --> Advisor : processing authorized
+ Advisor -> Privacy : verify again at AI dispatch time
+ alt Consent revoked
+  Privacy --> UI : 403; no persisted turn / call
+ else Dispatch authorized
+  Advisor -> AI : user text + permitted conversation/context
+  alt Provider unavailable
+   AI --> Advisor : timeout / unavailable
+   Advisor --> UI : 503; no committed turn
+  else Provider reply
+   AI --> Advisor : reply + optional memory suggestions
+   Advisor -> DB : atomically persist reader+assistant messages and pending proposals
+   DB --> Advisor : saved turn
+   Advisor --> UI : 201 ConversationTurn(userMessage, assistantMessage, proposalIds)
+  end
  end
 end
-opt Reader intentionally saves a reflection
- Reader -> UI : Save text to book journal
- UI -> API : Add independent journal entry
- API -> DB : save journal entry (separate from memory)
+opt Reader later reviews pending proposal
+ Reader -> UI : Accept/edit OR dismiss
+ UI -> API : POST /memory-proposals/{id}/decision
+ API -> Privacy : verify proposal and source message ownership
+ alt Approve
+  API -> Advisor : approve exactly once
+  Advisor -> DB : proposal=APPROVED, approved memory linked to proposal
+ else Dismiss
+  API -> Advisor : dismiss
+  Advisor -> DB : proposal=DISMISSED
+ end
 end
 note over Advisor,DB
-A conversation is NOT a permanent memory.
-No approval is inferred from keeping chat history.
+Chats never silently create permanent approved memories.
+Revocation via DELETE /memories/{id} is terminal.
 end note
 @enduml

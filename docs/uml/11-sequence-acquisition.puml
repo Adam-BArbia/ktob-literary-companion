@@ -1,39 +1,40 @@
 @startuml KTOB_11_sequence_acquisition
-title KTOB — Find a Copy, Save Offer and Record Acquisition
+title KTOB - Offer Lookup, Historical Saving and Acquisition
 actor Reader
-participant "Angular UI" as UI
-participant "Java API" as API
-participant "Acquisition module" as Acq
-participant "Verified retailer source [TBD]" as Seller
-database "Supabase Postgres" as DB
-Reader -> UI : Find a copy of selected work
-UI -> API : Query(format, language, location=Tunisia, budget)
-API -> Acq : research offers
-alt Validated seller research provider available
- Acq -> Seller : locate verified listings
- Seller --> Acq : sourced offers + lookup time
- Acq --> API : identified matches with uncertainty
-else Provider absent or no verified matches
- Acq --> API : no verified offers available
+participant "Angular" as UI
+participant "Spring API" as API
+participant "Acquisition" as Acquisition
+participant "Provider adapter" as Adapter
+participant "Seller research [BLOCKED]" as Seller
+database "Supabase PostgreSQL" as DB
+Reader -> UI : Choose country / format / language / maxPrice
+UI -> API : GET /catalog/works/{id}/offers
+API -> Acquisition : query validated filters
+alt Verified seller provider configured and available
+ Acquisition -> Adapter : search offers
+ Adapter -> Seller : request verified listings
+ Seller --> Adapter : sourced offers, observedAt
+ Adapter --> Acquisition : verified result
+ Acquisition --> UI : 200 data[] meta.providerStatus=OK/PARTIAL
+else Provider unavailable or unselected
+ Acquisition --> UI : 200 data=[] meta.providerStatus=UNAVAILABLE
 end
-API --> UI : source links / empty state
-opt Reader saves a known listing
- Reader -> UI : Save offer
- UI -> API : Save source URL and observed details
- API -> Acq : verify reader + work ownership
- Acq -> DB : save historical offer
- DB --> API : stored offer
+opt Reader saves observed listing
+ Reader -> UI : Enter source URL / observation details
+ UI -> API : POST /library/{entryId}/saved-offers
+ API -> Acquisition : verify entry ownership and sourceType
+ Acquisition -> DB : persist immutable observedAt snapshot (USER_SUPPLIED)
+ Acquisition --> UI : 201 saved offer
 end
-opt Reader has obtained a copy
- Reader -> UI : I acquired / borrowed / accessed this book
- UI -> API : Create acquisition record (optional details)
- API -> Acq : verify reader, store acquisition
- Acq -> DB : save access / ownership record
- DB --> API : created
+opt Reader explicitly obtains a copy
+ Reader -> UI : Record owned/borrowed/digital access
+ UI -> API : POST /library/{entryId}/acquisitions
+ API -> Acquisition : authenticate/authorize and deduplicate
+ Acquisition -> DB : persist acquisition, no reading status changes
+ Acquisition --> UI : 201 acquisition
 end
 note over UI,DB
-Saving an offer != purchase.
-Purchase/access != reading status.
-No price or stock is invented if unverified.
+Saving an offer or visiting a seller never means purchase.
+Provider listings are not synthesized from AI suggestions.
 end note
 @enduml

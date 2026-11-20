@@ -1,40 +1,39 @@
 @startuml KTOB_05_deployment
-title KTOB — Initial Deployment Model
-node "Reader device" as Client {
+title KTOB - R1 Deployment (physical nodes)
+node "Reader device" {
  artifact "Web browser" as Browser
 }
-cloud "Vercel Hobby" as Vercel {
- artifact "Angular static web distribution" as Frontend
+cloud "Vercel" {
+ artifact "Angular static client" as Angular
 }
-cloud "Render Free" as Render {
- node "Docker-based Spring Boot runtime" as Runtime {
-  artifact "KTOB Java service application" as Jar
+cloud "Render Free" {
+ node "One Spring Boot Docker runtime" {
+  artifact "KTOB Java application" as Backend
  }
 }
-cloud "Supabase" as Supa {
- database "PostgreSQL" as DB
+cloud "Supabase" {
+ database "PostgreSQL [private app schema]" as Database
  component "Supabase Auth" as Auth
 }
-cloud "External APIs" as Providers {
- component "Open Library" as Open
- component "AI provider (provisional)" as AI
- component "Seller data source (TBD)" as Seller
+cloud "External providers" {
+ component "Open Library" as OL
+ component "AI provider [PROPOSED]" as AI
+ component "Seller research [BLOCKED]" as Seller
 }
-Browser --> Frontend : HTTPS load UI
-Browser --> Jar : HTTPS REST
-Browser --> Auth : authentication
-Jar --> Auth : verify identity
-Jar --> DB : TLS PostgreSQL / session pooler as needed
-Jar --> Open : HTTPS metadata API
-Jar --> AI : HTTPS AI API / consent
-Jar ..> Seller : HTTPS lookup only if validated
-note right of Render
-One Java service instance initially.
-May sleep after inactivity.
-Multiple free containers not assumed.
+Browser --> Angular : HTTPS
+Browser --> Backend : HTTPS REST / JSON
+Browser --> Auth : Sign-in and token
+Backend --> Auth : Token verification
+Backend --> Database : TLS PostgreSQL
+Backend --> OL : Catalog requests
+Backend --> AI : Consent-gated requests
+Backend ..> Seller : Not configured
+note right of Backend
+Single deployable, multiple logical modules.
+No separate microservice instances implied.
 end note
-note bottom of Providers
-Live seller verification remains unselected.
-No fabricated offers when source unavailable.
+note bottom of Database
+Private business tables are not browser-facing.
+RLS in exposed schemas; owner checks in Java.
 end note
 @enduml

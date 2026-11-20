@@ -1,45 +1,44 @@
 @startuml KTOB_04_components
-title KTOB — Logical Component Model (R1 modular backend)
+title KTOB - Logical Components (one Java deployable)
 skinparam componentStyle uml2
-component "Angular SPA\n[Vercel]" as Web
 actor Reader
-node "Spring Boot Application [Render Free]" {
-  component "REST API +\nsecurity enforcement" as API
-  component "Identity / Privacy" as Identity
-  component "Library / Journal" as Library
-  component "Catalog / Discovery" as Catalog
-  component "Literary Advisor" as Advisor
-  component "Acquisition" as Acquire
-  component "Provider adapters" as Adapters
+component "Angular SPA [Vercel]" as Web
+node "Spring Boot runtime [Render]" {
+ component "REST API + authorization" as API
+ component "Reader / Privacy / Export" as ReaderModule
+ component "Library / Journal / Collections" as LibraryModule
+ component "Catalog" as CatalogModule
+ component "Literary Advisor" as AdvisorModule
+ component "Acquisition" as AcqModule
+ component "Provider adapters" as Adapters
 }
-database "Supabase PostgreSQL" as DB
+database "Supabase Postgres [private app schema]" as DB
 component "Supabase Auth [EXT]" as Auth
-component "Open Library [EXT]" as Open
-component "Groq or other AI [EXT]\nprovisional" as AI
-component "Seller source [EXT]\nnot selected" as Sellers
+component "Open Library [EXT]" as OL
+component "AI provider [PROPOSED]" as AI
+component "Seller source [BLOCKED]" as Sellers
 Reader --> Web
-Web --> API : HTTPS REST / JSON
-Web --> Auth : sign-in / session
-API --> Identity
-API --> Library
-API --> Catalog
-API --> Advisor
-API --> Acquire
-Identity --> Auth : verify token claims
-Identity --> DB
-Library --> DB
-Catalog --> DB : optional catalogue cache
-Advisor --> DB : conversations / memories
-Acquire --> DB : offers / acquisition
-Catalog --> Adapters
-Advisor --> Adapters
-Acquire --> Adapters
-Adapters --> Open : metadata
-Adapters --> AI : permitted context only
-Adapters ..> Sellers : verified offer lookup [pending]
+Web --> API : HTTPS / JSON
+Web --> Auth : sign in
+API --> ReaderModule
+API --> LibraryModule
+API --> CatalogModule
+API --> AdvisorModule
+API --> AcqModule
+ReaderModule --> Auth : verify token
+ReaderModule --> DB : owner-only queries / export
+LibraryModule --> DB
+CatalogModule --> DB
+AdvisorModule --> DB
+AcqModule --> DB
+CatalogModule --> Adapters : work metadata
+AdvisorModule --> Adapters : AI after consent gate
+AcqModule --> Adapters : seller lookup
+Adapters --> OL
+Adapters --> AI
+Adapters ..> Sellers : unconfigured
 note right of API
-One deployment, logical service contracts.
-No direct business-data access from browser.
-REST/SOAP requirement awaits lecturer confirmation.
+One modular JVM, NOT network microservices.
+REST is provisional pending course rubric.
 end note
 @enduml

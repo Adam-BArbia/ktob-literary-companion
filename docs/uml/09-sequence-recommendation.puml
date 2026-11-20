@@ -1,42 +1,51 @@
 @startuml KTOB_09_sequence_recommendation
-title KTOB — Recommendations with Consent and Boundaries
+title KTOB - Consent-gated Recommendation Batch
 actor Reader
-participant "Angular UI" as UI
-participant "Java API" as API
-participant "Privacy module" as Privacy
-participant "Advisor module" as Advisor
-database "Supabase Postgres" as DB
-participant "AI provider" as AI
-Reader -> UI : Request recommendations
-UI -> API : recommend(mode, request, exceptions)
-API -> Privacy : verify reader, read consent / boundaries
-Privacy -> DB : fetch explicit restrictions
-DB --> Privacy : opt-in, firm boundaries, permitted scopes
-Privacy --> API : safe request policy
-alt Explicit per-request exception
- API -> Privacy : validate reader authorized exception
- Privacy --> API : scoped exception
+participant "Angular" as UI
+participant "Spring API" as API
+participant "Reader / Privacy" as Privacy
+participant "Advisor" as Advisor
+database "Supabase PostgreSQL" as DB
+participant "AI adapter" as AI
+Reader -> UI : Request mode, prompt, exception IDs
+UI -> API : POST /recommendations
+API -> Privacy : verify JWT and ownership
+Privacy -> DB : load current AI consent, personalization, boundaries
+DB --> Privacy : effective policy
+alt AI processing NOT authorized
+ Privacy --> API : AI_PROCESSING_CONSENT_REQUIRED
+ API --> UI : 403 problem+json; no provider call
+else Processing authorized
+ Privacy --> API : processing permitted
+ API -> Advisor : create request / validate exceptions
+ Advisor -> Privacy : validate explicit exception scope
+ Privacy --> Advisor : request-scoped policy
+ opt Personalization authorized AND usePersonalContext
+  Advisor -> DB : read only permitted scoped history, notes, memories
+  DB --> Advisor : filtered context (journal exclusions honored)
+ end
+ Advisor -> Privacy : recheck processing authorization before dispatch
+ alt Consent revoked before dispatch
+  Privacy --> Advisor : denied
+  Advisor --> UI : 403; no external request
+ else Still authorized
+  Privacy --> Advisor : allowed
+  Advisor -> AI : prompt + explicitly authorized context
+  alt AI provider unavailable
+   AI --> Advisor : unavailable
+   Advisor --> UI : 503 problem+json
+  else AI response
+   AI --> Advisor : candidate suggestions
+   Advisor -> Privacy : verify boundaries and provenance
+   Privacy --> Advisor : reject unsafe/unknown-as-safe candidates
+   Advisor -> DB : save request and 0..N qualified items
+   Advisor --> UI : 200 RecommendationResult(requestId, items[], providerStatus)
+  end
+ end
 end
-alt Personalization opted in
- API -> Advisor : build allowed reading context
- Advisor -> DB : retrieve only permitted books, notes, memories
- DB --> Advisor : filtered context
-else Personalization off
- API -> Advisor : no private reading context
-end
-Advisor -> AI : request (permitted context or generic)
-AI --> Advisor : suggestions and explanations
-Advisor -> Privacy : enforce boundaries on candidates
-alt Verified safe candidates
- Privacy --> Advisor : allowed recommendations
-else Content safety uncertain or conflicting
- Privacy --> Advisor : reject / mark uncertainty
-end
-Advisor --> API : verified/qualified recommendations
-API --> UI : suggestions + source/uncertainty explanations
-UI --> Reader : view and give optional feedback
-note over Privacy, Advisor
-'SURPRISE ME' never silently bypasses firm boundaries.
-Unknown warning data never proves a book safe.
+note over Privacy,AI
+Explicit AI-processing consent is mandatory for every call.
+Personalization is a separate, default-off permission.
+Revocation after dispatch cannot undo prior provider processing.
 end note
 @enduml
