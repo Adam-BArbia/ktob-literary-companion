@@ -1,4 +1,4 @@
-@startuml
+@startuml KTOB_11_sequence_acquisition
 title KTOB — Find a Copy, Save Offer and Record Acquisition
 actor Reader
 participant "Angular UI" as UI

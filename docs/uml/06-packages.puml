@@ -1,4 +1,4 @@
-@startuml
+@startuml KTOB_06_packages
 title KTOB — Backend Package Dependency Rules (conceptual)
 package "api" as API
 package "security" as Security

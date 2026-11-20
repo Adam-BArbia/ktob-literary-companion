@@ -1,4 +1,4 @@
-@startuml
+@startuml KTOB_07_sequence_add_book
 title KTOB — Search, Manual Fallback and Add to Library
 actor Reader
 participant "Angular UI" as UI

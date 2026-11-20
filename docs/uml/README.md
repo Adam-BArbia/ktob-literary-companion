@@ -60,3 +60,22 @@ All diagrams are **PlantUML** sources (`.puml`): standard UML diagram types, not
 - Functional baseline: FR-01..FR-46, acceptance criteria AC-01..AC-20 from the KTOB requirements discussion.
 - Main use cases include personal library, reading and reflection, recommendation, conversation and memory, discovery, acquisition and export.
 - Security is part of every private use case, not only a UI concern.
+
+
+## VS Code preview and diagnostics
+
+Use **PlantUML** by *jebbs* (extension ID `jebbs.plantuml`) to preview `.puml` files.
+**Plan UML Preview** (`justuskarlsson.plan-uml`) is a *different* extension with its own Java/JAR renderer.
+Its "Failed to generate SVG" may occur even when the diagrams are valid.
+
+1. In Extensions (`Ctrl+Shift+X`), enable `jebbs.plantuml` and disable
+   **Plan UML** (`justuskarlsson.plan-uml`) **for this workspace**.
+2. Open a `.puml` diagram and press **Alt+D** to start jebbs's preview.
+3. If local rendering fails, check `java -version` in Command Prompt.
+   The jebbs Windows extension normally bundles a PlantUML JAR; Graphviz may be necessary.
+4. The GitHub **Actions** workflow validates PlantUML syntax and renders all 16 diagrams to SVG.
+
+All 16 files have explicit named `@startuml KTOB_...` declarations to remove
+"Diagram unnamed" lint warnings. These are distinct from Java/JAR runtime errors.
+
+Do not send private diagrams to public PlantUML servers without approval.

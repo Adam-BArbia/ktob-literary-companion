@@ -1,4 +1,4 @@
-@startuml
+@startuml KTOB_02_domain_library
 title KTOB — Library and Reading Domain (conceptual UML)
 hide empty methods
 skinparam classAttributeIconSize 0

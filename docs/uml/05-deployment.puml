@@ -1,4 +1,4 @@
-@startuml
+@startuml KTOB_05_deployment
 title KTOB — Initial Deployment Model
 node "Reader device" as Client {
  artifact "Web browser" as Browser

@@ -1,4 +1,4 @@
-@startuml
+@startuml KTOB_10_sequence_memory
 title KTOB — Literary Conversation and AI Memory Approval
 actor Reader
 participant "Angular UI" as UI

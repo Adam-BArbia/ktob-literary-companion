@@ -1,4 +1,4 @@
-@startuml
+@startuml KTOB_15_state_memory
 title KTOB — AI Memory Proposal Lifecycle
 [*] --> PENDING : AI suggests insight
 PENDING --> APPROVED : reader accepts/edits

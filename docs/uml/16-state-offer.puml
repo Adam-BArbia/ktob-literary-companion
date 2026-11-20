@@ -1,4 +1,4 @@
-@startuml
+@startuml KTOB_16_state_offer
 title KTOB — Saved Offer Lifecycle
 [*] --> OBSERVED : verified source listing found
 OBSERVED --> SAVED : reader saves

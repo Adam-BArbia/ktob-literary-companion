@@ -1,4 +1,4 @@
-@startuml
+@startuml KTOB_09_sequence_recommendation
 title KTOB — Recommendations with Consent and Boundaries
 actor Reader
 participant "Angular UI" as UI

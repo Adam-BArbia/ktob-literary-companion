@@ -1,4 +1,4 @@
-@startuml
+@startuml KTOB_04_components
 title KTOB — Logical Component Model (R1 modular backend)
 skinparam componentStyle uml2
 component "Angular SPA\n[Vercel]" as Web

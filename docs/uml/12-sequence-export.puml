@@ -1,4 +1,4 @@
-@startuml
+@startuml KTOB_12_sequence_export
 title KTOB — Private Data Export
 actor Reader
 participant "Angular UI" as UI

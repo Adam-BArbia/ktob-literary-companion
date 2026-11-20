@@ -1,4 +1,4 @@
-@startuml
+@startuml KTOB_03_domain_advisor
 title KTOB — Advisor, Consent, Preferences and Memory Domain
 hide empty methods
 skinparam classAttributeIconSize 0

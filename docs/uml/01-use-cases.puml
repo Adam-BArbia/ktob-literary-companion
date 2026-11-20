@@ -1,4 +1,4 @@
-@startuml
+@startuml KTOB_01_use_cases
 title KTOB — System Use Case Model (R1)
 left to right direction
 skinparam packageStyle rectangle

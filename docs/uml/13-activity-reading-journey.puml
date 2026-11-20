@@ -1,4 +1,4 @@
-@startuml
+@startuml KTOB_13_activity_reading_journey
 title KTOB — Reader Journey (optional paths)
 start
 :Sign in / optional onboarding;

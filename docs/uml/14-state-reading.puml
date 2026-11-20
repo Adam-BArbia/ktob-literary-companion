@@ -1,4 +1,4 @@
-@startuml
+@startuml KTOB_14_state_reading
 title KTOB — Reading Experience State Machine
 [*] --> WANT_TO_READ
 WANT_TO_READ --> CURRENTLY_READING : start

@@ -1,4 +1,4 @@
-@startuml
+@startuml KTOB_08_sequence_reading_journal
 title KTOB — Update Reading and Add Private Journal Note
 actor Reader
 participant "Angular UI" as UI
