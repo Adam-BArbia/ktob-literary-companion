@@ -46,3 +46,11 @@ npm run build
 The `configure-api.mjs` script is intentionally separate from `npm run build` so documentation/tests cannot silently replace the local development config. Later Vercel deployment should use `node scripts/configure-api.mjs && npm run build` with the correct environment variable.
 
 Backend/Angular authentication, business CRUD, Supabase storage, and live AI/sellers remain unimplemented. See the [implementation handoff](../../docs/implementation/README.md).
+
+## Sprint 1 — authentication and reader workflows
+
+The UI now has `/auth` for email/password sign-in/sign-up, protected `/library` and `/catalog/search`, and calls to actual Java endpoints. The app uses the official pinned Supabase JS v2 client. **Only public publishable credentials** are included in the browser config.
+
+For a dedicated KTOB project, inject `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, and `KTOB_API_URL` into the build pipeline and run `node scripts/configure-api.mjs` prior to production build. Missing credentials intentionally disable sign-in. Do NOT reuse the existing Hani Maak Supabase instance.
+
+The API needs its own verified `SUPABASE_ISSUER` and `SUPABASE_JWKS_URL` and reviewed JDBC connection to a private `app` schema. This is not yet configured or hosted.

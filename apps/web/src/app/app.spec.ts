@@ -4,17 +4,22 @@ import { signal } from '@angular/core';
 import { App } from './app';
 import { HealthService, HealthState } from './core/health/health.service';
 import { routes } from './app.routes';
+import { AuthService } from './core/auth/auth.service';
 
 describe('KTOB app shell', () => {
   const state = signal<HealthState>('online');
   const check = vi.fn();
+  const user = signal(null);
+  const ensureReady = vi.fn(async () => undefined);
 
   beforeEach(async () => {
     state.set('online');
     check.mockClear();
+    ensureReady.mockClear();
     await TestBed.configureTestingModule({
       imports: [App],
-      providers: [provideRouter(routes), { provide: HealthService, useValue: { state, check } }],
+      providers: [provideRouter(routes), { provide: HealthService, useValue: { state, check } },
+        { provide: AuthService, useValue: { user, ensureReady, status: signal('unconfigured') } }],
     }).compileComponents();
   });
 

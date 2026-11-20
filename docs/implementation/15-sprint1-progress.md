@@ -15,3 +15,14 @@ Sprint 1 targets the first working reader-owned flow: Angular → Java REST → 
 The disposable PostgreSQL job executes Flyway and two-reader isolation/restore tests; the Open Library client has a local fake HTTP server test and does NOT depend on live Open Library in CI. Tests using `jwt()` use Spring Security's **test-only** verified token context, not a real Supabase issuer. Before hosting, verify a real token against a KTOB-specific project JWKS and test actual origin CORS and redirection.
 
 The approved OpenAPI still documents 57 operations; only actual coded endpoints may be registered in `implemented-operations.json`. Full cursor pagination, edition lookup, library PATCH, reading history, complete logout/revocation, live provider availability and user authentication UI are separate implementation steps or follow-ups. User acceptance testing is deferred until hosting.
+
+## Angular UI (Sprint 1)
+
+The Angular application now includes:
+- Supabase JS client locked in `package-lock.json`, sign-in/sign-up and automatic session refresh.
+- Protected /library and /catalog/search routes. Backend remains the only authority for authentication/ownership.
+- Catalog lookup through Java (GET /catalog/works), manual private work creation (POST /catalog/manual-works), and add-to-library POST.
+- Library owner-only list, archive and restore controls; honest empty/loading/error states.
+- Runtime public config supports `supabaseUrl`, `supabasePublishableKey`, and `apiBaseUrl`. In the absence of a dedicated KTOB project, the sign-in page reports 'not configured' instead of accepting fake credentials.
+
+No business data is seeded and no manual user acceptance test is required before hosting. The backend's self-contained JDBC tests use only ephemeral PostgreSQL, and the UI's auth/config/API unit tests use controlled HTTP fakes.

@@ -6,7 +6,7 @@ KTOB is a private literary companion centered on personal reading libraries, jou
 
 ## Current state — implementation handoff ready (2026-11-20)
 
-**KTOB-001 is implemented:** a Java 21 / Spring Boot 4.1.3 backend with Maven Wrapper and a public `GET /api/v1/health` endpoint lives in [`apps/api`](apps/api/README.md). **KTOB-002 is implemented:** Angular 22 + Tailwind 4 responsive web shell and real Java health integration at [`apps/web`](apps/web/README.md). Business modules, Supabase integration and production deployment remain future work. **User-approved R1 product defaults** have been frozen in [OpenAPI v0.3](docs/architecture/openapi.json).
+**KTOB-001 is implemented:** a Java 21 / Spring Boot 4.1.3 backend with Maven Wrapper and a public `GET /api/v1/health` endpoint lives in [`apps/api`](apps/api/README.md). **KTOB-002 is implemented:** Angular 22 + Tailwind 4 responsive web shell and real Java health integration at [`apps/web`](apps/web/README.md). Sprint 1 now has initial JWT-secured reader/profile/catalog/library backend and Angular authentication/catalog/library workflows. A dedicated KTOB Supabase project is not yet connected; production deployment remains future work. **User-approved R1 product defaults** have been frozen in [OpenAPI v0.3](docs/architecture/openapi.json).
 
 **Start here:** [Implementation handoff](docs/implementation/README.md) → [Sprint backlog](docs/implementation/10-sprint-backlog.md) → [First implementation checklist](docs/implementation/12-start-implementation-checklist.md).
 
