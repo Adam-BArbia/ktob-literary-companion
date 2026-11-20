@@ -1,35 +1,53 @@
-name: Validate UML diagrams
+name: Validate KTOB architecture documentation
 on:
   push:
     paths:
       - 'docs/uml/**'
+      - 'docs/architecture/**'
       - '.github/workflows/uml-validation.yml'
   pull_request:
     paths:
       - 'docs/uml/**'
+      - 'docs/architecture/**'
       - '.github/workflows/uml-validation.yml'
 permissions:
   contents: read
 jobs:
-  validate-plantuml:
+  validate-contracts:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
-      - name: Get PlantUML (pinned)
+      - name: Install pinned PlantUML CLI
         run: |
           curl --fail --location --silent --show-error --retry 3 \
             https://github.com/plantuml/plantuml/releases/download/v1.2025.4/plantuml-1.2025.4.jar \
             -o "$RUNNER_TEMP/plantuml.jar"
-      - name: Syntax validation (all 16 sources)
-        run: |
-          java -jar "$RUNNER_TEMP/plantuml.jar" -checkonly -stdrpt docs/uml/*.puml
-      - name: Render every diagram to SVG
+      - name: Validate all UML syntax
+        run: java -jar "$RUNNER_TEMP/plantuml.jar" -checkonly -stdrpt docs/uml/*.puml
+      - name: Render all 16 diagrams
         run: |
           mkdir -p "$RUNNER_TEMP/uml-output"
           java -jar "$RUNNER_TEMP/plantuml.jar" -tsvg -o "$RUNNER_TEMP/uml-output" docs/uml/*.puml
-          actual="$(find "$RUNNER_TEMP/uml-output" -maxdepth 1 -name '*.svg' | wc -l)"
-          echo "Rendered $actual SVG files"
-          test "$actual" -eq 16
+          test "$(find "$RUNNER_TEMP/uml-output" -maxdepth 1 -name '*.svg' | wc -l)" -eq 16
+      - name: Parse JSON and cross-check contracts
+        run: |
+          python3 -m json.tool docs/architecture/openapi.json > /dev/null
+          python3 docs/architecture/validate_contract.py
+      - name: Install pinned OpenAPI parser
+        run: |
+          npm install --prefix "$RUNNER_TEMP/openapi-validation" --no-save \
+            --package-lock=false --ignore-scripts @apidevtools/swagger-parser@10.1.1
+      - name: Validate OpenAPI 3.1 schema and references
+        run: |
+          node - "$RUNNER_TEMP/openapi-validation/node_modules/@apidevtools/swagger-parser" docs/architecture/openapi.json <<'NODE'
+          const Parser = require(process.argv[2]);
+          Parser.validate(process.argv[3]).then(() => {
+            console.log("OpenAPI parser validation passed");
+          }).catch((error) => {
+            console.error(error);
+            process.exit(1);
+          });
+          NODE
