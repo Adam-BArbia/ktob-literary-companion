@@ -1,0 +1,41 @@
+name: KTOB Angular 22 Web
+on:
+  push:
+    paths:
+      - 'apps/web/**'
+      - '.github/workflows/web-ci.yml'
+  pull_request:
+    paths:
+      - 'apps/web/**'
+      - '.github/workflows/web-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  web-build-and-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Use supported Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - name: Install from committed lockfile
+        run: npm ci
+      - name: Run Vitest unit tests
+        run: npm test -- --watch=false
+      - name: Build Angular production
+        run: npm run build
+      - name: Verify runtime config and output
+        run: |
+          test -f public/ktob-config.json
+          test -f dist/ktob-web/browser/index.html

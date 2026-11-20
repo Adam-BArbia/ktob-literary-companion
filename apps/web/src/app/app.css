@@ -1,0 +1,5 @@
+:host { display:block; min-height:100vh; }
+.nav-item { padding:.7rem .85rem; border-radius:.65rem; font-size:.86rem; font-weight:600; color:#796b62; transition:background .15s,color .15s; text-decoration:none; }
+.nav-item:hover,.mobile-link:hover { background:#f1e6db; color:#704d3b; }
+.active-link { color:#704d3b !important; background:#eee1d6 !important; }
+.mobile-link { display:block; padding:.8rem 1rem; border-radius:.65rem; font-weight:600; color:#75675d; text-decoration:none; }

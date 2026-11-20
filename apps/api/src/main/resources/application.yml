@@ -4,3 +4,7 @@ spring:
 
 server:
   port: ${PORT:8080}
+
+ktob:
+  health:
+    allowed-origin: ${ALLOWED_WEB_ORIGINS:http://localhost:4200}

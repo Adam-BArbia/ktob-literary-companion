@@ -6,7 +6,7 @@ KTOB is a private literary companion centered on personal reading libraries, jou
 
 ## Current state — implementation handoff ready (2026-11-20)
 
-**KTOB-001 is implemented:** a Java 21 / Spring Boot 4.1.3 backend with Maven Wrapper and a public `GET /api/v1/health` endpoint lives in [`apps/api`](apps/api/README.md). The Angular frontend, domain modules, Supabase integration and production deployment have not been implemented. **User-approved R1 product defaults** have been frozen in [OpenAPI v0.3](docs/architecture/openapi.json).
+**KTOB-001 is implemented:** a Java 21 / Spring Boot 4.1.3 backend with Maven Wrapper and a public `GET /api/v1/health` endpoint lives in [`apps/api`](apps/api/README.md). **KTOB-002 is implemented:** Angular 22 + Tailwind 4 responsive web shell and real Java health integration at [`apps/web`](apps/web/README.md). Business modules, Supabase integration and production deployment remain future work. **User-approved R1 product defaults** have been frozen in [OpenAPI v0.3](docs/architecture/openapi.json).
 
 **Start here:** [Implementation handoff](docs/implementation/README.md) → [Sprint backlog](docs/implementation/10-sprint-backlog.md) → [First implementation checklist](docs/implementation/12-start-implementation-checklist.md).
 
@@ -36,4 +36,4 @@ java -version
 
 **Java must resolve to JDK 21**, not the Oracle Java 8 path previously taking precedence. See [Windows setup and deployment](docs/implementation/08-local-dev-ci-deploy.md) before generating the application.
 
-GitHub Actions validate UML/contracts and now also compile/test the Java backend. No application database migration or deployment has been performed.
+GitHub Actions validate UML/contracts, compile/test the Java backend, and test/build Angular from a committed npm lockfile. No application database migration or deployment has been performed.

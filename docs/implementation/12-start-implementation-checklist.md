@@ -12,7 +12,8 @@
 - [x] Windows development/deployment instructions specified.
 - [x] Test matrix, demo evidence and backlog ordered.
 - [x] **KTOB-001:** Java 21 / Spring Boot 4.1.3 API scaffold, Maven Wrapper, `GET /api/v1/health`, integration/context tests and backend CI added under `apps/api`.
-- [ ] KTOB-002 Angular app scaffold and complete Sprint 0 CI remain to be built.
+- [x] KTOB-002 Angular 22 standalone web shell, Tailwind 4, navigation, typed health integration, unit tests, production build and web CI added.
+- [ ] Remaining Sprint 0 environment hygiene, error contract and API synchronization tasks.
 - [ ] AI provider, live seller provider, full account deletion **remain gated**.
 - [ ] Complete professor rubric and validation date **not independently verified**.
 

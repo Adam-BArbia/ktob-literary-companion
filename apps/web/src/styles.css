@@ -1,1 +1,14 @@
 @import "tailwindcss";
+
+:root {
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  color: #43352e;
+  background: #fbf8f4;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+body { margin: 0; min-width: 320px; }
+h1,h2,h3,p { margin:0; }
+.font-serif { font-family: Georgia, "Times New Roman", serif; }
+:focus-visible { outline: 2px solid #8e6046; outline-offset: 3px; }
