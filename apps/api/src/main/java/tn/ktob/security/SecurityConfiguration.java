@@ -84,7 +84,7 @@ public class SecurityConfiguration {
     JwtDecoder jwtDecoder(@Value("${SUPABASE_ISSUER:}") String issuer,
                           @Value("${SUPABASE_JWKS_URL:}") String jwksUrl) {
         if (issuer.isBlank() || jwksUrl.isBlank()) {
-            return token -> { throw new JwtException("KTOB authentication not configured"); };
+            return token -> { throw new BadJwtException("KTOB authentication not configured"); };
         }
         if (!issuer.startsWith("https://") ||
             !jwksUrl.equals(issuer.replaceAll("/+$", "") + "/.well-known/jwks.json")) {
