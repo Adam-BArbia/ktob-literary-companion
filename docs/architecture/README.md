@@ -12,14 +12,15 @@ This architecture package must be reviewed together with the [16 PlantUML diagra
 4. [Security and AI privacy](04-security-privacy.md)
 5. [External integration and deployment](05-integrations-deployment.md)
 6. [Human review gates](06-review-gates.md)
-7. [Cross-document consistency matrix](07-consistency-matrix.md)
-8. [OpenAPI draft](openapi.json)
+7. [Gate B decision review (draft)](08-gate-b-decision-review.md)
+8. [Cross-document consistency matrix](07-consistency-matrix.md)
+9. [OpenAPI draft](openapi.json)
 
 ## Baseline and scope
 
 - KTOB (*Keep Thoughts On Books*) — private reader-focused literary companion.
 - Angular/TypeScript/Tailwind on Vercel; Java 21/Spring Boot on Render Free; Supabase Auth and PostgreSQL.
-- Initial Spring Boot topology: **one modular deployable**, not independent network microservices. REST/JSON `/api/v1` is **PROPOSED**, dependent on the professor's SOA/SOAP/WSDL rubric (**BLOCKED**).
+- Initial Spring Boot topology: **one modular deployable**, not independent network microservices. REST/JSON `/api/v1` is **PROPOSED**; the earlier user-provided assignment says **"SOAP ou REST"**, so REST is permitted under the supplied wording. Additional/full formal rubric details remain unverified. See Gate B review.
 - Bibliographic data via Open Library (with manual fallback). AI provider/model is **PROPOSED**, not confirmed. Live verified seller-research source is **BLOCKED**; never invent offer data.
 - R1: library, private/manual work entry, editions (possibly unknown metadata), reading and rereading, journal, reader collections, AI conversation and recommendations with explicit processing consent, approved memory, content boundaries, R1 essentials export, historical offers and explicit acquisitions.
 - R2: in-depth edition comparisons, multiple themed chats per book, fuller exports/imports, automatic offer rechecks, alerts and advanced lending analytics.
@@ -35,4 +36,4 @@ This architecture package must be reviewed together with the [16 PlantUML diagra
 7. A memory proposal remains pending until explicit acceptance. Revocation is terminal; editing never reactivates it.
 8. Saved offers are immutable historical observations and do not imply purchase; acquisition never changes reading state. Provider-unavailable results are empty with explicit metadata.
 
-**Do not claim Gate B or Gate C approval solely because syntax and source references pass.**
+**Do not claim Gate B or Gate C approval solely because syntax and source references pass.** See the [proposed Gate B decision register](08-gate-b-decision-review.md) before any contract or implementation change.

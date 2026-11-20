@@ -2,7 +2,7 @@
 
 ## One modular runtime
 
-Angular static frontend on Vercel communicates over HTTPS with **one** Spring Boot Java 21 deployment on Render Free. Supabase provides PostgreSQL and Supabase Auth. The Java process contains reader/privacy, export coordinator, library/journal/collections, catalog, advisor, acquisition and adapter modules; these are logical modules, **not** multiple deployed microservices. SOAP, WSDL or a service registry may be necessary if the professor explicitly requires them (**BLOCKED**).
+Angular static frontend on Vercel communicates over HTTPS with **one** Spring Boot Java 21 deployment on Render Free. Supabase provides PostgreSQL and Supabase Auth. The Java process contains reader/privacy, export coordinator, library/journal/collections, catalog, advisor, acquisition and adapter modules; these are logical modules, **not** multiple deployed microservices. The user-reported assignment permits **"SOAP ou REST"**, so a REST Java service meets the stated protocol choice. Any expanded rubric requiring a registry, particular demonstration or separate deployment remains unverified.
 
 ## Open Library [PROPOSED]
 

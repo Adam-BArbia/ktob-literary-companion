@@ -42,7 +42,7 @@ Each row identifies which UML, OpenAPI contract, persistence rule and policy rep
 
 ## Explicitly unresolved BLOCKED issues
 
-- Professor's SOA protocol/deployment rubric (REST may need SOAP/WSDL/registry).
+- The user-reported assignment explicitly allows **SOAP ou REST**; REST protocol is therefore an allowed choice under that text. Complete original grading/deployment rubric and validation date remain unverified (see [Gate B review](08-gate-b-decision-review.md)).
 - AI provider/model, account free-tier availability, privacy and retention.
 - Reliable and lawful Tunisian seller/price search service.
 - Full account deletion/re-auth/retention and complete archive behavior.

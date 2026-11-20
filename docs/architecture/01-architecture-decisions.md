@@ -6,9 +6,9 @@ All decisions in this document are either **CONFIRMED product invariants**, **PR
 
 One Java 21 / Spring Boot modular application runs on Render Free; Angular + TypeScript + Tailwind runs on Vercel; Supabase Auth and PostgreSQL supply identity and storage. Modules: `api`, `security`, `reader/privacy`, `export`, `library/journal/collections`, `catalog`, `advisor`, `acquisition`, `provider adapters`, `shared contracts`. A module is a logical boundary, **not** an independently deployed microservice. The `export` coordinator depends on read-only interfaces of reader, library and advisor; advisor can read reader privacy contracts without a circular dependency.
 
-## ADR-002 — SOA protocol [BLOCKED]
+## ADR-002 — SOA protocol [PROPOSED; REST SUPPORTED BY USER-REPORTED ASSIGNMENT]
 
-Proposed HTTP/JSON REST under `/api/v1`, documented by OpenAPI. The professor's actual assessment text has not been verified. If it mandates SOAP/WSDL, a registry or independently deployed services, revise architecture *before* implementation.
+The professor's previously shared project wording is **"SOAP ou REST"**: create a Java web service, consume it through the frontend, and consume a free online web service. Thus REST is explicitly one of the permitted protocols under that user-provided description. Proposed HTTP/JSON REST under `/api/v1`, documented by OpenAPI, can satisfy the stated protocol requirement. The full original rubric/document has not been attached for independent verification, so any additional grading, registry, deadline, or deployment requirements remain unverified. Do not infer an independently deployed microservice requirement absent such instructions. See [Gate B decision review](08-gate-b-decision-review.md).
 
 ## ADR-003 — One authoritative work identity [PROPOSED]
 
