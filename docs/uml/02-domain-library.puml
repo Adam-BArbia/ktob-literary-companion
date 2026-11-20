@@ -1,0 +1,109 @@
+@startuml
+title KTOB — Library and Reading Domain (conceptual UML)
+hide empty methods
+skinparam classAttributeIconSize 0
+class ReaderProfile {
+ +readerId: UUID
+ +displayName: String
+}
+class BookWork {
+ +workId: UUID
+ +title: String
+ +originalLanguage: String [0..1]
+ +publicationYear: Integer [0..1]
+ +externalCatalogId: String [0..1]
+}
+class Contributor {
+ +contributorId: UUID
+ +name: String
+ +role: String
+}
+class BookEdition {
+ +editionId: UUID
+ +language: String [0..1]
+ +format: BookFormat [0..1]
+ +isbn: String [0..1]
+ +publisher: String [0..1]
+ +translator: String [0..1]
+ +narrator: String [0..1]
+ +abridged: Boolean [0..1]
+}
+class LibraryEntry {
+ +entryId: UUID
+ +favorite: Boolean
+ +acquisitionIntention: Boolean
+ +createdAt: DateTime
+}
+class ReadingExperience {
+ +experienceId: UUID
+ +status: ReadingStatus
+ +startedOn: Date [0..1]
+ +finishedOn: Date [0..1]
+ +rating: Decimal [0..1]
+ +progress: String [0..1]
+}
+class JournalEntry {
+ +journalId: UUID
+ +createdAt: DateTime
+ +body: Text
+ +allowForPersonalization: Boolean
+}
+class Collection {
+ +collectionId: UUID
+ +name: String
+ +description: String [0..1]
+}
+class CollectionMembership {
+ +addedAt: DateTime
+}
+class SavedOffer {
+ +offerId: UUID
+ +sourceUrl: URL
+ +sellerName: String
+ +listedPrice: Decimal [0..1]
+ +currency: String [0..1]
+ +checkedAt: DateTime
+ +availability: String [0..1]
+}
+class AcquisitionRecord {
+ +acquisitionId: UUID
+ +accessType: AccessType
+ +acquiredOn: Date [0..1]
+ +paidPrice: Decimal [0..1]
+ +currency: String [0..1]
+ +seller: String [0..1]
+ +notes: Text [0..1]
+}
+enum ReadingStatus {
+ WANT_TO_READ
+ CURRENTLY_READING
+ FINISHED
+ PAUSED
+ DID_NOT_FINISH
+}
+enum BookFormat { PRINT; EBOOK; AUDIOBOOK; OTHER }
+enum AccessType { OWNED; BORROWED; DIGITAL_ACCESS; SUBSCRIPTION; PREVIOUSLY_OWNED; OTHER }
+
+ReaderProfile "1" -- "0..*" LibraryEntry : maintains >
+LibraryEntry "0..*" --> "1" BookWork : identifies >
+BookWork "0..*" -- "0..*" Contributor : credited author/editor >
+BookWork "1" *-- "0..*" BookEdition : editions >
+LibraryEntry "1" *-- "0..*" ReadingExperience : history >
+ReadingExperience "0..*" --> "0..1" BookEdition : read version >
+ReadingExperience "1" *-- "0..*" JournalEntry : reflections >
+ReaderProfile "1" -- "0..*" Collection : curates >
+Collection "1" *-- "0..*" CollectionMembership
+CollectionMembership "0..*" --> "1" LibraryEntry
+LibraryEntry "1" *-- "0..*" SavedOffer
+SavedOffer "0..*" --> "0..1" BookEdition : offered version >
+LibraryEntry "1" *-- "0..*" AcquisitionRecord
+AcquisitionRecord "0..*" --> "0..1" BookEdition : acquired version >
+note right of ReadingExperience
+A reread creates a new experience.
+Unknown dates and rating remain empty.
+end note
+note bottom of LibraryEntry
+One reader/work membership, no duplicate
+work entry for different editions.
+end note
+@enduml

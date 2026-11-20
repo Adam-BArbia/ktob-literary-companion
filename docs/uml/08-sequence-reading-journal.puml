@@ -1,0 +1,38 @@
+@startuml
+title KTOB — Update Reading and Add Private Journal Note
+actor Reader
+participant "Angular UI" as UI
+participant "Java API" as API
+participant "Identity guard" as Guard
+participant "Library / Journal" as Library
+database "Supabase Postgres" as DB
+Reader -> UI : Open a personal library entry
+Reader -> UI : Start or resume reading
+UI -> API : Create/update reading experience
+API -> Guard : validate owner
+Guard --> API : readerId
+API -> Library : record status/progress
+alt Rereading a previously finished work
+ Library -> DB : create NEW reading experience
+else Continuing current experience
+ Library -> DB : update chosen experience
+end
+DB --> Library : saved
+Library --> UI : experience record
+opt Reader writes a reflection
+ Reader -> UI : Enter free-form note
+ Reader -> UI : Set AI-context permission for note
+ UI -> API : Save journal reflection
+ API -> Guard : verify reader owns experience
+ Guard --> API : allowed
+ API -> Library : save reflection + exclusion flag
+ Library -> DB : persist reflection
+ DB --> Library : saved
+ Library --> UI : journal note
+end
+UI --> Reader : current experience and notes
+note over Library,DB
+Separate reading experiences preserve old ratings and dates.
+Notes are never required to update progress.
+end note
+@enduml

@@ -1,0 +1,19 @@
+@startuml
+title KTOB — Saved Offer Lifecycle
+[*] --> OBSERVED : verified source listing found
+OBSERVED --> SAVED : reader saves
+OBSERVED --> [*] : dismissed
+SAVED --> RECHECKED : reader revisits / refreshes
+RECHECKED --> SAVED : keep historical observation
+SAVED --> REMOVED : reader removes
+RECHECKED --> REMOVED : reader removes
+REMOVED --> [*]
+note right of SAVED
+Saved price and availability are last observed,
+not live guarantees. Seller click is not purchase.
+end note
+note bottom of RECHECKED
+Availability may change or be unknown.
+No automatic acquisition is inferred.
+end note
+@enduml

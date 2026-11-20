@@ -1,0 +1,42 @@
+@startuml
+title KTOB — Recommendations with Consent and Boundaries
+actor Reader
+participant "Angular UI" as UI
+participant "Java API" as API
+participant "Privacy module" as Privacy
+participant "Advisor module" as Advisor
+database "Supabase Postgres" as DB
+participant "AI provider" as AI
+Reader -> UI : Request recommendations
+UI -> API : recommend(mode, request, exceptions)
+API -> Privacy : verify reader, read consent / boundaries
+Privacy -> DB : fetch explicit restrictions
+DB --> Privacy : opt-in, firm boundaries, permitted scopes
+Privacy --> API : safe request policy
+alt Explicit per-request exception
+ API -> Privacy : validate reader authorized exception
+ Privacy --> API : scoped exception
+end
+alt Personalization opted in
+ API -> Advisor : build allowed reading context
+ Advisor -> DB : retrieve only permitted books, notes, memories
+ DB --> Advisor : filtered context
+else Personalization off
+ API -> Advisor : no private reading context
+end
+Advisor -> AI : request (permitted context or generic)
+AI --> Advisor : suggestions and explanations
+Advisor -> Privacy : enforce boundaries on candidates
+alt Verified safe candidates
+ Privacy --> Advisor : allowed recommendations
+else Content safety uncertain or conflicting
+ Privacy --> Advisor : reject / mark uncertainty
+end
+Advisor --> API : verified/qualified recommendations
+API --> UI : suggestions + source/uncertainty explanations
+UI --> Reader : view and give optional feedback
+note bottom of Privacy
+'SURPRISE ME' never silently bypasses firm boundaries.
+Unknown warning data never proves a book safe.
+end note
+@enduml

@@ -1,0 +1,45 @@
+@startuml
+title KTOB — Literary Conversation and AI Memory Approval
+actor Reader
+participant "Angular UI" as UI
+participant "Java API" as API
+participant "Privacy module" as Privacy
+participant "Advisor module" as Advisor
+database "Supabase Postgres" as DB
+participant "AI provider" as AI
+Reader -> UI : Discuss selected book / general literature
+UI -> API : Send message(conversationId, text)
+API -> Privacy : authenticate + check conversation ownership
+Privacy --> API : verified reader + AI data permissions
+API -> Advisor : append reader message
+Advisor -> DB : save message
+Advisor -> AI : conversation + only authorized context
+AI --> Advisor : reply + optional memory candidate
+Advisor -> DB : save assistant reply
+Advisor --> UI : answer
+opt Candidate insight identified
+ Advisor -> DB : store PENDING proposal
+ Advisor --> UI : unobtrusive proposal indicator
+ Reader -> UI : Review pending suggestion
+ alt Accept, possibly edit
+  UI -> API : approve proposal(edited text)
+  API -> Privacy : verify proposal ownership
+  Privacy --> API : authorized
+  API -> Advisor : save approved memory
+  Advisor -> DB : mark APPROVED + persist memory
+ else Dismiss
+  UI -> API : dismiss proposal
+  API -> Advisor : mark DISMISSED
+  Advisor -> DB : update proposal
+ end
+end
+opt Reader intentionally saves a reflection
+ Reader -> UI : Save text to book journal
+ UI -> API : Add independent journal entry
+ API -> DB : save journal entry (separate from memory)
+end
+note over Advisor,DB
+A conversation is NOT a permanent memory.
+No approval is inferred from keeping chat history.
+end note
+@enduml

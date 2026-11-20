@@ -1,0 +1,45 @@
+@startuml
+title KTOB — Logical Component Model (R1 modular backend)
+skinparam componentStyle uml2
+actor Reader
+component "Angular SPA\n[Vercel]" as Web
+node "Spring Boot Application [Render Free]" {
+  component "REST API +\nsecurity enforcement" as API
+  component "Identity / Privacy" as Identity
+  component "Library / Journal" as Library
+  component "Catalog / Discovery" as Catalog
+  component "Literary Advisor" as Advisor
+  component "Acquisition" as Acquire
+  component "Provider adapters" as Adapters
+}
+database "Supabase PostgreSQL" as DB
+component "Supabase Auth [EXT]" as Auth
+component "Open Library [EXT]" as Open
+component "Groq or other AI [EXT]\nprovisional" as AI
+component "Seller source [EXT]\nnot selected" as Sellers
+Reader --> Web
+Web --> API : HTTPS REST / JSON
+Web --> Auth : sign-in / session
+API --> Identity
+API --> Library
+API --> Catalog
+API --> Advisor
+API --> Acquire
+Identity --> Auth : verify token claims
+Identity --> DB
+Library --> DB
+Catalog --> DB : optional catalogue cache
+Advisor --> DB : conversations / memories
+Acquire --> DB : offers / acquisition
+Catalog --> Adapters
+Advisor --> Adapters
+Acquire --> Adapters
+Adapters --> Open : metadata
+Adapters --> AI : permitted context only
+Adapters ..> Sellers : verified offer lookup [pending]
+note bottom of API
+One deployment, logical service contracts.
+No direct business-data access from browser.
+REST/SOAP requirement awaits lecturer confirmation.
+end note
+@enduml

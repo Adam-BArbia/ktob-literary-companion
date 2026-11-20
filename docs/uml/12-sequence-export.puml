@@ -1,0 +1,31 @@
+@startuml
+title KTOB — Private Data Export
+actor Reader
+participant "Angular UI" as UI
+participant "Java API" as API
+participant "Identity guard" as Guard
+participant "Export module" as Export
+database "Supabase Postgres" as DB
+Reader -> UI : Export my reading history
+UI -> API : Request export (R1 essential data)
+API -> Guard : verify token and readerId
+alt Authorized
+ Guard --> API : confirmed owner
+ API -> Export : prepare reader-only archive
+ Export -> DB : get owned library entries
+ Export -> DB : get reading experiences, journal, collections
+ Export -> DB : get permitted preference records
+ DB --> Export : reader-scoped records
+ Export --> API : portable readable/structured export
+ API --> UI : downloadable export
+ UI --> Reader : save personal copy
+else Invalid credentials
+ Guard --> API : reject
+ API --> UI : unauthorized
+end
+note over Export,DB
+R1: essential library, journal, ratings, collections, preferences.
+Complete conversation + acquisition archive is R2.
+No other reader's data may appear.
+end note
+@enduml

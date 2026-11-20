@@ -1,0 +1,18 @@
+@startuml
+title KTOB — AI Memory Proposal Lifecycle
+[*] --> PENDING : AI suggests insight
+PENDING --> APPROVED : reader accepts/edits
+PENDING --> DISMISSED : reader dismisses
+APPROVED --> REVOKED : reader removes memory
+DISMISSED --> [*]
+REVOKED --> [*]
+note right of APPROVED
+Only this state may provide a persistent
+approved-memory signal for AI personalization.
+Reader can edit the content or revoke approval.
+end note
+note right of DISMISSED
+Dismissal is not a negative preference
+and must not change the reader's boundaries.
+end note
+@enduml

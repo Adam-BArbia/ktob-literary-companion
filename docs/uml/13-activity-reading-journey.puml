@@ -1,0 +1,44 @@
+@startuml
+title KTOB — Reader Journey (optional paths)
+start
+:Sign in / optional onboarding;
+:Search or discover a book;
+if (Found appropriate work?) then (yes)
+ :Select literary work;
+else (no)
+ :Create manual work entry;
+endif
+:Add work to personal library;
+if (Want to record reading?) then (yes)
+ :Create or resume reading experience;
+ :Optionally update progress and dates;
+ if (Want to write?) then (yes)
+  :Save dated private reflection;
+  :Choose whether note may inform AI;
+ endif
+else (no)
+ :Keep on want-to-read or another shelf;
+endif
+if (Want recommendations?) then (yes)
+ :Provide current request / reading intention;
+ if (Personalization allowed?) then (yes)
+  :Use permitted reading context;
+ else (no)
+  :Use request without private history;
+ endif
+ :Apply persistent boundaries;
+ :Present explained recommendations;
+endif
+if (Want a copy?) then (yes)
+ :Choose language, format, budget;
+ :Search verified offers when provider exists;
+ if (Suitable listing found?) then (yes)
+  :Optionally save offer;
+ endif
+ if (Actually acquired?) then (yes)
+  :Record owned / borrowed / accessed copy;
+ endif
+endif
+:Library and journal remain available;
+stop
+@enduml

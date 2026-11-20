@@ -1,0 +1,40 @@
+@startuml
+title KTOB — Initial Deployment Model
+node "Reader device" as Client {
+ artifact "Web browser" as Browser
+}
+cloud "Vercel Hobby" as Vercel {
+ artifact "Angular static web distribution" as Frontend
+}
+cloud "Render Free" as Render {
+ node "Docker-based Spring Boot runtime" as Runtime {
+  artifact "KTOB Java service application" as Jar
+ }
+}
+cloud "Supabase" as Supa {
+ database "PostgreSQL" as DB
+ component "Supabase Auth" as Auth
+}
+cloud "External APIs" as Providers {
+ component "Open Library" as Open
+ component "AI provider (provisional)" as AI
+ component "Seller data source (TBD)" as Seller
+}
+Browser --> Frontend : HTTPS load UI
+Browser --> Jar : HTTPS REST
+Browser --> Auth : authentication
+Jar --> Auth : verify identity
+Jar --> DB : TLS PostgreSQL / session pooler as needed
+Jar --> Open : HTTPS metadata API
+Jar --> AI : HTTPS AI API / consent
+Jar ..> Seller : HTTPS lookup only if validated
+note right of Render
+One Java service instance initially.
+May sleep after inactivity.
+Multiple free containers not assumed.
+end note
+note bottom of Providers
+Live seller verification remains unselected.
+No fabricated offers when source unavailable.
+end note
+@enduml

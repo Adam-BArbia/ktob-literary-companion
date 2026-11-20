@@ -1,0 +1,46 @@
+@startuml
+title KTOB — Search, Manual Fallback and Add to Library
+actor Reader
+participant "Angular UI" as UI
+participant "Java API" as API
+participant "Identity guard" as Guard
+participant "Catalog module" as Catalog
+participant "Open Library" as Open
+participant "Library module" as Library
+database "Supabase Postgres" as DB
+Reader -> UI : Search by title/author
+UI -> API : Search request
+API -> Catalog : search(query)
+Catalog -> Open : GET work metadata
+alt External API returns matching works
+ Open --> Catalog : candidate works
+ Catalog --> API : works and known metadata
+ API --> UI : results
+ Reader -> UI : Choose work
+else Empty, error, or wrong results
+ Open --> Catalog : none / unavailable
+ Catalog --> API : manual entry permitted
+ API --> UI : manual entry option
+ Reader -> UI : Enter title and optional details
+end
+Reader -> UI : Add to personal library
+UI -> API : Add selected/manual work
+API -> Guard : authenticate + authorize reader
+Guard --> API : verified readerId
+API -> Library : addWork(readerId, work)
+Library -> DB : check existing work entry
+alt Work already in reader's library
+ DB --> Library : existing entry
+ Library --> API : existing entry; offer to view
+else New work entry
+ Library -> DB : create work if necessary, then entry
+ DB --> Library : stored entry
+ Library --> API : created
+end
+API --> UI : entry / existing response
+UI --> Reader : personal library result
+note over UI,API
+Never auto-mark as owned or currently reading.
+Edition selection remains optional.
+end note
+@enduml

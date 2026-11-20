@@ -1,0 +1,18 @@
+@startuml
+title KTOB — Reading Experience State Machine
+[*] --> WANT_TO_READ
+WANT_TO_READ --> CURRENTLY_READING : start
+CURRENTLY_READING --> PAUSED : pause
+PAUSED --> CURRENTLY_READING : resume
+CURRENTLY_READING --> FINISHED : finish
+CURRENTLY_READING --> DID_NOT_FINISH : stop permanently
+PAUSED --> DID_NOT_FINISH : abandon
+DID_NOT_FINISH --> CURRENTLY_READING : resume later
+FINISHED --> [*] : experience archived
+note right of FINISHED
+Reread creates another ReadingExperience,
+with its own independent dates, notes and rating.
+Historical records may be entered directly in
+any valid status, not forced through this path.
+end note
+@enduml
