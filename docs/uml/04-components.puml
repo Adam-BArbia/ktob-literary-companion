@@ -5,7 +5,8 @@ actor Reader
 component "Angular SPA [Vercel]" as Web
 node "Spring Boot runtime [Render]" {
  component "REST API + authorization" as API
- component "Reader / Privacy / Export" as ReaderModule
+ component "Reader / Privacy" as ReaderModule
+ component "Export coordinator" as ExportModule
  component "Library / Journal / Collections" as LibraryModule
  component "Catalog" as CatalogModule
  component "Literary Advisor" as AdvisorModule
@@ -21,6 +22,10 @@ Reader --> Web
 Web --> API : HTTPS / JSON
 Web --> Auth : sign in
 API --> ReaderModule
+API --> ExportModule
+ExportModule --> ReaderModule : identity / privacy
+ExportModule --> LibraryModule : permitted reading records
+ExportModule --> AdvisorModule : explicit preferences
 API --> LibraryModule
 API --> CatalogModule
 API --> AdvisorModule
