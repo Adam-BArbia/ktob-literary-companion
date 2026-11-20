@@ -72,7 +72,6 @@ public class CatalogService {
         return find(id,owner);
     }
 
-    @Transactional
     public List<BookWork> search(UUID reader,String query,int limit) {
         String q=query==null?"":query.trim();
         if(q.length()>180) throw new ApiException(HttpStatus.BAD_REQUEST,"INVALID_QUERY",

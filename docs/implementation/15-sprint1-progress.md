@@ -26,3 +26,5 @@ The Angular application now includes:
 - Runtime public config supports `supabaseUrl`, `supabasePublishableKey`, and `apiBaseUrl`. In the absence of a dedicated KTOB project, the sign-in page reports 'not configured' instead of accepting fake credentials.
 
 No business data is seeded and no manual user acceptance test is required before hosting. The backend's self-contained JDBC tests use only ephemeral PostgreSQL, and the UI's auth/config/API unit tests use controlled HTTP fakes.
+
+Open Library adapter hardening: per-instance one-request-per-second throttle with ten-minute bounded in-memory result cache for repeated human searches. Live provider tests remain separate; no network call from CI.

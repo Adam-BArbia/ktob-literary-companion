@@ -9,6 +9,9 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.http.HttpStatus;
 import tn.ktob.api.shared.ApiException;
 import tools.jackson.databind.JsonNode;
@@ -20,6 +23,9 @@ public final class OpenLibraryClient {
     private final String contact;
     private final HttpClient http;
     private final JsonMapper json;
+    private final Map<String, Cached> cache = new ConcurrentHashMap<>();
+    private long lastRequestAtMillis = 0;
+    private record Cached(List<FoundWork> books, long expiresAt) {}
 
     public record FoundWork(String reference, String title, List<String> authors, String language) {}
 
@@ -32,8 +38,33 @@ public final class OpenLibraryClient {
         if (contact == null || contact.isBlank()) {
             throw unavailable();
         }
+        String cacheKey = query.toLowerCase(Locale.ROOT) + ":" + Math.min(limit,25);
+        long now = System.currentTimeMillis();
+        Cached hit = cache.get(cacheKey);
+        if (hit != null && hit.expiresAt() > now) return hit.books();
+        synchronized (this) {
+            now = System.currentTimeMillis();
+            hit = cache.get(cacheKey);
+            if (hit != null && hit.expiresAt() > now) return hit.books();
+            long remaining = 1000 - (now - lastRequestAtMillis);
+            if (remaining > 0) {
+                try { Thread.sleep(remaining); }
+                catch (InterruptedException interrupted) {
+                    Thread.currentThread().interrupt();
+                    throw unavailable();
+                }
+            }
+            lastRequestAtMillis = System.currentTimeMillis();
+            List<FoundWork> books = fetch(query, limit);
+            if (cache.size() > 100) cache.clear();
+            cache.put(cacheKey, new Cached(books, System.currentTimeMillis() + 600_000));
+            return books;
+        }
+    }
+
+    private List<FoundWork> fetch(String query, int limit) {
         String encoded = URLEncoder.encode(query, StandardCharsets.UTF_8);
-        URI url=base.resolve("/search.json?q="+encoded+"&limit="+Math.min(limit,25));
+        URI url = base.resolve("/search.json?q="+encoded+"&limit="+Math.min(limit,25));
         try {
             HttpRequest request=HttpRequest.newBuilder(url)
                 .timeout(Duration.ofSeconds(6))
