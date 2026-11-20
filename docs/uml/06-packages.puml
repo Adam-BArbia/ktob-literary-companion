@@ -2,7 +2,8 @@
 title KTOB - Logical Module Dependency Rules
 package "api" as Api
 package "security" as Security
-package "reader/privacy/export" as Reader
+package "reader/privacy" as Reader
+package "export" as Export
 package "library/journal/collections" as Library
 package "catalog" as Catalog
 package "advisor" as Advisor
@@ -16,8 +17,9 @@ Api ..> Catalog
 Api ..> Advisor
 Api ..> Acquisition
 Reader ..> Shared
-Reader ..> Library : export permitted records
-Reader ..> Advisor : export permitted preferences
+Export ..> Reader : owner identity
+Export ..> Library : export reading records
+Export ..> Advisor : export preferences
 Library ..> Catalog : work contract
 Advisor ..> Reader : consent / boundaries
 Advisor ..> Library : permitted history

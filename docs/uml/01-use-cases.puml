@@ -47,7 +47,7 @@ Reader --> USave
 Reader --> UAcquire
 Reader --> UExport
 UContext ..> URecommend : <<extend>>\nwhen personalization authorized
-UBoundary ..> URecommend : <<include>>
+URecommend ..> UBoundary : <<include>>
 Catalog --> USearch
 AI --> UChat
 AI --> URecommend

@@ -3,7 +3,7 @@ title KTOB - Owner-scoped Essential R1 JSON Export
 actor Reader
 participant "Angular" as UI
 participant "Spring API" as API
-participant "Reader / Export module" as Export
+participant "Export module" as Export
 participant "Library contract" as Library
 participant "Advisor contract" as Advisor
 database "Supabase PostgreSQL" as DB
