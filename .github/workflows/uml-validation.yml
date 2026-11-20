@@ -43,10 +43,14 @@ jobs:
             echo "PlantUML generated an error diagram" >&2
             exit 1
           fi
+      - name: Install pinned JSON Schema validator
+        run: |
+          python3 -m venv "$RUNNER_TEMP/schema-validation"
+          "$RUNNER_TEMP/schema-validation/bin/python" -m pip install --disable-pip-version-check 'jsonschema==4.23.0'
       - name: Parse JSON and cross-check contracts
         run: |
           python3 -m json.tool docs/architecture/openapi.json > /dev/null
-          python3 docs/architecture/validate_contract.py
+          "$RUNNER_TEMP/schema-validation/bin/python" docs/architecture/validate_contract.py
       - name: Install pinned OpenAPI parser
         run: |
           npm install --prefix "$RUNNER_TEMP/openapi-validation" --no-save \

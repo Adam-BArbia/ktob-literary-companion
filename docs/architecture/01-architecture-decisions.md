@@ -57,6 +57,17 @@ RFC 9457 problem responses. `404` for absent/other-user items, `409` duplicate w
 
 Open Library is a proposed metadata provider with rate-limited calls and manual fallback. AI vendor/model account eligibility, retention and free allowance are unconfirmed; offer provider is entirely unselected. No invented seller names, prices, coverage, warning certainty or stock. Render Free sleep/cold starts and memory must be tested before deployment.
 
+
+## Final targeted clarifications [PROPOSED]
+
+**Ownership:** Global OPEN_LIBRARY works have **zero** ReaderProfile owners (`owner_reader_id=NULL`). Reader-created MANUAL works have exactly **one** owner. UML multiplicity `0..1` is conditioned by work origin; a second manual-work table is not introduced.
+
+**Archived writes:** An archived LibraryEntry remains readable to its owner but is **read-only** until explicit restoration. Entry PATCH, experience/journal writes, collection membership PUT/DELETE, saved-offer or acquisition create/edit/delete return `409 LIBRARY_ENTRY_ARCHIVED` after verifying the reader owns the target. Unknown or cross-reader targets return `404` without revealing archived state. Repeat archive DELETE remains idempotent `204`; explicit restore clears archivedAt. Stored memberships persist but are hidden from default collection-member lists until restoration. Historical reads remain permitted.
+
+**Acquisition money:** Nonnegative decimal-string paidPrice (0–2 fractional digits) and active uppercase ISO 4217 currency must either both be supplied or both be absent/null. PATCH merges one or more updated fields atomically with the stored resource, then validates the merged pair. Contradictory merged states yield `422 INVALID_MONETARY_PAIR`. A single-field PATCH is valid if the other stored field makes the result coherent.
+
+**Offer search currency:** `maxPrice` requires an explicit active ISO 4217 `currency` query value; omission or invalid filters return `400 INVALID_PRICE_FILTER_CURRENCY`. Compare only offers denominated in that currency. Do not automatically convert currency or treat an unknown-price offer as under budget; when maxPrice is absent, offers with different labelled currencies may coexist without comparison.
+
 ## Human decisions
 
 See [review gates](06-review-gates.md), especially the professor's rubric, rating scale, progress units, AI policy, export and full deletion semantics. No product or implementation approval is implied by this draft.

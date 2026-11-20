@@ -114,6 +114,111 @@ check("/me" in PATHS and "delete" not in PATHS["/me"],
       "full account deletion must remain BLOCKED")
 check(operations == 57, f"expected 57 deliberately reviewed operations, found {operations}")
 
+
+# Five final targeted contract regressions.
+u01 = (ROOT / "docs/uml/01-use-cases.puml").read_text(encoding="utf-8")
+u02 = (ROOT / "docs/uml/02-domain-library.puml").read_text(encoding="utf-8")
+u06 = (ROOT / "docs/uml/06-packages.puml").read_text(encoding="utf-8")
+u08 = (ROOT / "docs/uml/08-sequence-reading-journal.puml").read_text(encoding="utf-8")
+u11 = (ROOT / "docs/uml/11-sequence-acquisition.puml").read_text(encoding="utf-8")
+check('ReaderProfile "0..1" -- "0..*" BookWork' in u02,
+      "BookWork optional owner multiplicity missing")
+check("OPEN_LIBRARY work has zero" in u02 and "MANUAL work has exactly one" in u02,
+      "conditional work ownership note missing")
+check("Api ..> Export" in u06 and "Export ..> Api" not in u06,
+      "API export dependency absent or circular")
+check("UContext ..> UChat" in u01 and "UContext ..> URecommend" in u01,
+      "optional conversation and recommendation context extensions missing")
+check("AI processing consent gates every provider call" in u01,
+      "processing opt-in must be independent of personalization")
+money_pattern = r"^(0|[1-9][0-9]*)(\.[0-9]{1,2})?$"
+for name in ("Acquisition", "AcquisitionWrite", "AcquisitionPatch"):
+    x = SCHEMAS[name]
+    check(x["properties"]["paidPrice"].get("pattern") == money_pattern,
+          f"{name} amount is not a nonnegative decimal string")
+    cc = x["properties"]["currency"]
+    check(cc.get("pattern") == r"^[A-Z]{3}$" and "TND" in cc.get("enum", [])
+          and "ZZZ" not in cc.get("enum", []),
+          f"{name} currency code not restricted")
+check(len(SCHEMAS["Acquisition"]["allOf"]) == 2 and
+      len(SCHEMAS["AcquisitionWrite"]["allOf"]) == 2,
+      "full Acquisition/Write pairing validation absent")
+check(SCHEMAS["AcquisitionPatch"].get("minProperties") == 1 and
+      len(SCHEMAS["AcquisitionPatch"].get("allOf", [])) == 2 and
+      "merged" in SCHEMAS["AcquisitionPatch"].get("description", "").lower(),
+      "AcquisitionPatch partial / merged validation missing")
+offers = PATHS["/catalog/works/{workId}/offers"]["get"]
+check({"currency", "maxPrice"}.issubset({p["name"] for p in offers["parameters"]})
+      and "400" in offers["responses"]
+      and offers.get("x-ktob-parameter-dependency") == {"maxPrice": ["currency"]},
+      "currency-scoped offer price filter missing")
+archived_writes = [
+    ("/library/{entryId}", "patch"),
+    ("/library/{entryId}/experiences", "post"),
+    ("/experiences/{experienceId}", "patch"),
+    ("/experiences/{experienceId}/journal", "post"),
+    ("/journal/{journalId}", "patch"), ("/journal/{journalId}", "delete"),
+    ("/collections/{collectionId}/entries/{entryId}", "put"),
+    ("/collections/{collectionId}/entries/{entryId}", "delete"),
+    ("/library/{entryId}/saved-offers", "post"),
+    ("/saved-offers/{offerId}", "delete"),
+    ("/library/{entryId}/acquisitions", "post"),
+    ("/acquisitions/{acquisitionId}", "patch"),
+    ("/acquisitions/{acquisitionId}", "delete")
+]
+for path, verb in archived_writes:
+    op = PATHS[path][verb]
+    check("409" in op["responses"] and
+          "LIBRARY_ENTRY_ARCHIVED" in op.get("description", ""),
+          f"archived entry write not guarded: {verb} {path}")
+check("LIBRARY_ENTRY_ARCHIVED" in u08 and "LIBRARY_ENTRY_ARCHIVED" in u11,
+      "archived mutation missing in sequence diagrams")
+check("restore" in PATHS["/library/{entryId}"] or
+      "/library/{entryId}/restore" in PATHS,
+      "restore endpoint missing")
+
+
+# JSON Schema example-level regression tests, not just static string assertions.
+try:
+    from jsonschema import Draft202012Validator
+except ImportError:
+    fail("jsonschema 4.23.0 not installed")
+else:
+    for name in ("Acquisition", "AcquisitionWrite", "AcquisitionPatch"):
+        Draft202012Validator.check_schema(SCHEMAS[name])
+    def accepts(name, data):
+        return Draft202012Validator(SCHEMAS[name]).is_valid(data)
+    good = {"accessType": "OWNED", "paidPrice": "20.00", "currency": "TND"}
+    check(accepts("AcquisitionWrite", good), "valid currency pair rejected")
+    check(accepts("AcquisitionWrite", {"accessType": "OWNED"}),
+          "optional monetary pair rejected")
+    check(accepts("AcquisitionWrite", {"accessType": "OWNED", "paidPrice": None, "currency": None}),
+          "null monetary pair rejected")
+    for bad in (
+        {"accessType": "OWNED", "paidPrice": "-1.00", "currency": "TND"},
+        {"accessType": "OWNED", "paidPrice": "10.00"},
+        {"accessType": "OWNED", "currency": "TND"},
+        {"accessType": "OWNED", "paidPrice": "10.00", "currency": "ZZZ"},
+        {"accessType": "OWNED", "paidPrice": "10.00", "currency": "tnd"},
+        {"accessType": "OWNED", "paidPrice": "10.00", "currency": None},
+        {"accessType": "OWNED", "paidPrice": None, "currency": "TND"},
+    ):
+        check(not accepts("AcquisitionWrite", bad), f"invalid monetary pair accepted: {bad}")
+    check(accepts("AcquisitionPatch", {"paidPrice": "20.00"})
+          and accepts("AcquisitionPatch", {"currency": "TND"}),
+          "legitimate single-field PATCH rejected")
+    check(not accepts("AcquisitionPatch", {"paidPrice": "-1.00"}),
+          "negative PATCH amount accepted")
+    check(not accepts("AcquisitionPatch", {"paidPrice": "10.00", "currency": None}),
+          "contradictory PATCH fields accepted")
+    check(not accepts("AcquisitionPatch", {"paidPrice": None, "currency": "TND"}),
+          "contradictory null PATCH fields accepted")
+    stored = {"accessType": "OWNED", "paidPrice": "12.00", "currency": "TND"}
+    check(accepts("AcquisitionWrite", {**stored, "paidPrice": "15.00"}),
+          "merged valid price-only PATCH rejected")
+    check(not accepts("AcquisitionWrite", {**stored, "paidPrice": None}),
+          "merged invalid single-field PATCH accepted")
+
 print(f"Checked {len(diagrams)} named UML diagrams, {operations} OpenAPI operations, "
       f"{len(SCHEMAS)} schemas, {list_count} cursor-paginated GET routes.")
 if ERRORS:

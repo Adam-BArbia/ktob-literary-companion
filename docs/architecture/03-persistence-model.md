@@ -53,6 +53,14 @@ Tables and constraints below are candidates. **No SQL, migrations, RLS policy or
 12. Deletion of an individual journal note or saved offer follows its documented endpoint; archiving a library entry does not delete children. Full reader/account deletion is **BLOCKED** pending a separate, audited purge/retention policy.
 13. R1 export queries exactly `library_entries` (including own archived), `reading_experiences`, `journal_entries`, `collections`, `reading_preferences` and emits five arrays. It does not claim to include conversations, memories, saved offers or acquisitions.
 
+
+## Final targeted referential and monetary invariants
+
+- A global OPEN_LIBRARY work has **zero** owning readers; a MANUAL work has **one**. Preserve one `catalog_works.work_id` namespace and the origin/owner consistency check.
+- For all entry/child write transactions, verify reader ownership before inspecting archived state. An owned `archived_at IS NOT NULL` prevents library PATCH, reading experience/journal writes, collection-membership mutations, saved offer modifications and acquisition modifications with `409 LIBRARY_ENTRY_ARCHIVED`. Historical owner-only GET remains allowed. Archive and restore are the allowed exceptions. Preserve memberships while hidden from default collection lists and re-expose when restored.
+- `acquisition_records.paid_price` must be nonnegative or null; `currency` is a supported active ISO 4217 uppercase code or null. Conceptual check: `(paid_price IS NULL) = (currency IS NULL)`. A partial PATCH validates its **merged** persisted record atomically, not the partial body independently. Reject invalid pairs with 422.
+- Budget filtering on sourced offers uses `maxPrice` only with an explicit `currency`; filter known prices with the same quote currency and exclude unknown/cross-currency entries. No automatic FX assumption. This is an adapter/API check, not a change to saved historical values.
+
 ## Suggested types and future migration rules
 
 UUID keys, `timestamptz` event times, `date` reading dates, `numeric(12,2)` prices, `text` for reflections, JSONB only for provenance/variable source fields. Restrict external URLs to trusted/validated `https:` where possible. In exposed schemas enable RLS; private schema should use least privilege, independent Java authorization and defense-in-depth RLS where practical. For service-role/bypass-RLS connections, explicitly scope SQL to verified reader.

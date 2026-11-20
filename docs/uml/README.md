@@ -25,10 +25,10 @@ See [Architecture contracts](../architecture/README.md) and the [consistency mat
 
 ## Invariants
 
-- `BookWork` has a single work UUID, either public OPEN_LIBRARY or owner-private MANUAL. Roles belong to `WorkCredit` (the work–person association).
+- `BookWork` has a single work UUID, either public OPEN_LIBRARY with **zero** reader owners, or private MANUAL with **exactly one**. UML owner multiplicity is conditionally 0..1. Roles belong to `WorkCredit` (the work–person association).
 - `BookEdition.format` may be **null** if unknown, not mislabeled OTHER.
 - `LibraryEntry` uniquely associates reader and work. It may have no reading experience: projected `WANT_TO_READ`. A reading experience never stores that value. At most one open experience; rereading creates a fresh experience without overwriting old notes.
-- Library DELETE archives with `archivedAt` and keeps history and memberships. Restoration is explicit.
+- Library DELETE archives with `archivedAt` and keeps history and memberships. An archived entry and descendants remain owner-readable but read-only (409 LIBRARY_ENTRY_ARCHIVED on writes) until explicit restoration. Default collection lists hide archived members and re-expose preserved memberships after restoration.
 - `aiProcessingOptIn=false` stops **every** external AI call; `personalizationOptIn` separately controls selected history. Per-entry journal exclusions always apply.
 - Recommendations return `RecommendationResult` with 0..N items and source uncertainty; content boundaries and exceptions are reader-controlled and request-scoped.
 - Only explicitly approved memory can be used later; revocation is terminal. No automatically inferred reader preferences.

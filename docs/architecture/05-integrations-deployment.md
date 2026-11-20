@@ -16,7 +16,7 @@ A model-generated recommendation requires book identity resolution, confidence/p
 
 ## Verified seller search [BLOCKED]
 
-No selected vendor or legal/coverage validation. `GET /catalog/works/{workId}/offers` accepts `country`, `format`, `language`, `maxPrice`, pagination; returns `{"data":[],"meta":{"providerStatus":"UNAVAILABLE","checkedAt":null,"reason":"No validated seller provider configured","nextCursor":null}}` when unconfigured. Never fabricate prices, merchants or availability. No AI hallucinated offer is a verified source.
+No selected vendor or legal/coverage validation. `GET /catalog/works/{workId}/offers` accepts `country`, `format`, `language`, `maxPrice`, `currency`, pagination; returns `{"data":[],"meta":{"providerStatus":"UNAVAILABLE","checkedAt":null,"reason":"No validated seller provider configured","nextCursor":null}}` when unconfigured. A maxPrice filter requires an active ISO 4217 currency query code, or return 400 INVALID_PRICE_FILTER_CURRENCY. Budget filtering compares prices **only** within that matching currency, excluding unknown/different-currency prices; no FX conversion is implied. Never fabricate prices, merchants or availability. No AI hallucinated offer is a verified source.
 
 A saved historical listing is `USER_SUPPLIED` with immutable `observedAt`, source URL, optional price/currency pair and availability enum. `VERIFIED_PROVIDER` is reserved for actual provider observations. Rechecking and alerts are **R2**. Neither offer saving nor seller navigation records acquisition.
 

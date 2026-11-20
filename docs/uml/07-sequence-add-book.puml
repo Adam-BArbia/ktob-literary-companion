@@ -46,7 +46,18 @@ else Valid new entry
  Library --> API : created entry
 API --> UI : 201 shelfStatus=WANT_TO_READ
 end
+opt Reader explicitly restores an archived entry
+ UI -> API : POST /library/{entryId}/restore
+ API -> Guard : verify owner of archived entry
+ Guard --> API : owned, archived
+ API -> Library : clear archivedAt, retain memberships
+ Library -> DB : restore original row
+ Library --> API : restored entry
+ API --> UI : 200, prior collection memberships visible
+end
 note over UI,DB
+Unowned entry: 404 before archive check.
+Archived descendants reject writes: 409 LIBRARY_ENTRY_ARCHIVED.
 No inferred possession, reading start, or acquisition.
 Manual works are created BEFORE library insertion.
 end note

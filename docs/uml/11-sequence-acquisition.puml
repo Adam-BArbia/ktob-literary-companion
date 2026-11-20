@@ -7,9 +7,13 @@ participant "Acquisition" as Acquisition
 participant "Provider adapter" as Adapter
 participant "Seller research [BLOCKED]" as Seller
 database "Supabase PostgreSQL" as DB
-Reader -> UI : Choose country / format / language / maxPrice
+Reader -> UI : Choose country / format / language / maxPrice and currency
 UI -> API : GET /catalog/works/{id}/offers
-API -> Acquisition : query validated filters
+API -> Acquisition : validate price and currency query
+alt maxPrice without valid currency
+ Acquisition --> API : invalid filter
+ API --> UI : 400 INVALID_PRICE_FILTER_CURRENCY
+else Valid currency scope
 alt Verified seller provider configured and available
  Acquisition -> Adapter : search offers
  Adapter -> Seller : request verified listings
@@ -21,24 +25,38 @@ else Provider unavailable or unselected
  Acquisition --> API : unavailable result
 API --> UI : 200 data=[] meta.providerStatus=UNAVAILABLE
 end
+end
 opt Reader saves observed listing
  Reader -> UI : Enter source URL / observation details
  UI -> API : POST /library/{entryId}/saved-offers
- API -> Acquisition : verify entry ownership and sourceType
- Acquisition -> DB : persist immutable observedAt snapshot (USER_SUPPLIED)
- Acquisition --> API : saved historical offer
-API --> UI : 201 saved offer
+ API -> Acquisition : check owner, archive status and sourceType
+ alt Parent library entry archived
+  Acquisition --> API : archived
+  API --> UI : 409 LIBRARY_ENTRY_ARCHIVED
+ else Active
+  Acquisition -> DB : persist immutable observedAt snapshot (USER_SUPPLIED)
+  Acquisition --> API : saved historical offer
+  API --> UI : 201 saved offer
+ end
 end
 opt Reader explicitly obtains a copy
  Reader -> UI : Record owned/borrowed/digital access
  UI -> API : POST /library/{entryId}/acquisitions
- API -> Acquisition : authenticate/authorize and deduplicate
- Acquisition -> DB : persist acquisition, no reading status changes
- Acquisition --> API : acquisition recorded
-API --> UI : 201 acquisition
+ API -> Acquisition : authenticate, check archive status, deduplicate
+ alt Parent library entry archived
+  Acquisition --> API : archived
+  API --> UI : 409 LIBRARY_ENTRY_ARCHIVED
+ else Active
+  Acquisition -> DB : persist acquisition, no reading status changes
+  Acquisition --> API : acquisition recorded
+  API --> UI : 201 acquisition
+ end
 end
 note over UI,DB
 Saving an offer or visiting a seller never means purchase.
+Only same-currency offers are compared against maxPrice;
+unknown prices and other currencies excluded. No FX conversion.
+Historic owned offers/acquisitions remain readable after archive.
 Provider listings are not synthesized from AI suggestions.
 end note
 @enduml

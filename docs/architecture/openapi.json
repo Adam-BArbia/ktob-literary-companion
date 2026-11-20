@@ -3,7 +3,7 @@
   "info": {
     "title": "KTOB - Java Business API (DESIGN DRAFT)",
     "version": "0.2.0",
-    "description": "Proposed REST/JSON contract for review; not deployed. SOAP/REST academic constraint pending. No application implementation authorized. Cross-document remediation v0.2: privacy, cardinality, lifecycle, pagination, canonical manual works and archival semantics."
+    "description": "Proposed REST/JSON contract for review; not deployed. SOAP/REST academic constraint pending. No application implementation authorized. Cross-document remediation v0.2: privacy, cardinality, lifecycle, pagination, canonical manual works and archival semantics. Final consistency correction: conditional book ownership, optional chat personalization, archived mutation 409, merged acquisition monetary validation and currency-scoped offer filters."
   },
   "servers": [
     {
@@ -1169,7 +1169,8 @@
               }
             }
           }
-        }
+        },
+        "description": " Owner may GET archived entry by ID; its preserved historical child resources remain readable."
       },
       "patch": {
         "tags": [
@@ -1208,6 +1209,16 @@
               }
             }
           },
+          "409": {
+            "description": "Owned parent library entry is archived; RFC 9457 code LIBRARY_ENTRY_ARCHIVED. Non-owner still receives 404.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "default": {
             "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
@@ -1228,7 +1239,8 @@
               }
             }
           }
-        }
+        },
+        "description": " ARCHIVED ENTRY WRITE GUARD: verify reader ownership first (404 for non-owner); reject owned archived parent with 409 LIBRARY_ENTRY_ARCHIVED, no write. Historical reads remain allowed after archive."
       },
       "delete": {
         "tags": [
@@ -1262,7 +1274,7 @@
             }
           }
         },
-        "description": "SOFT archive: sets archivedAt. No destructive cascade; history, journal, collections, offers and acquisitions preserved but hidden from default library listing. Repeat archive is idempotent."
+        "description": "SOFT archive: sets archivedAt. No destructive cascade; history, journal, collections, offers and acquisitions preserved but hidden from default library listing. Repeat archive is idempotent. Idempotent repeat archive returns 204; owner can explicitly restore."
       }
     },
     "/collections": {
@@ -1516,6 +1528,16 @@
           "204": {
             "description": "Membership exists; idempotent even when already present"
           },
+          "409": {
+            "description": "Owned parent library entry is archived; RFC 9457 code LIBRARY_ENTRY_ARCHIVED. Non-owner still receives 404.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "default": {
             "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
@@ -1527,7 +1549,7 @@
             }
           }
         },
-        "description": "Idempotent upsert of membership; both collection and entry must belong to verified reader. Returns 204; no response body."
+        "description": "Idempotent upsert of membership; both collection and entry must belong to verified reader. Returns 204; no response body. ARCHIVED ENTRY WRITE GUARD: verify reader ownership first (404 for non-owner); reject owned archived parent with 409 LIBRARY_ENTRY_ARCHIVED, no write. Historical reads remain allowed after archive."
       },
       "delete": {
         "tags": [
@@ -1559,6 +1581,16 @@
           "204": {
             "description": "Deleted"
           },
+          "409": {
+            "description": "Owned parent library entry is archived; RFC 9457 code LIBRARY_ENTRY_ARCHIVED. Non-owner still receives 404.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "default": {
             "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
@@ -1569,7 +1601,8 @@
               }
             }
           }
-        }
+        },
+        "description": " ARCHIVED ENTRY WRITE GUARD: verify reader ownership first (404 for non-owner); reject owned archived parent with 409 LIBRARY_ENTRY_ARCHIVED, no write. Historical reads remain allowed after archive."
       }
     },
     "/library/{entryId}/experiences": {
@@ -1655,7 +1688,7 @@
             }
           }
         },
-        "description": "Cursor pagination sorted by stable sequence (createdAt DESC, id DESC where available; catalog by provider score and normalized ID). Cursors are opaque and reader-scoped; no cross-account results."
+        "description": "Cursor pagination sorted by stable sequence (createdAt DESC, id DESC where available; catalog by provider score and normalized ID). Cursors are opaque and reader-scoped; no cross-account results. Owner-authorized historical read remains permitted after parent archive."
       },
       "post": {
         "tags": [
@@ -1694,6 +1727,16 @@
               }
             }
           },
+          "409": {
+            "description": "Owned parent library entry is archived; RFC 9457 code LIBRARY_ENTRY_ARCHIVED. Non-owner still receives 404.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "default": {
             "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
@@ -1715,7 +1758,7 @@
             }
           }
         },
-        "description": "Actual reading creates CURRENTLY_READING. Other initial statuses require historicalImport=true. Prohibit concurrent CURRENTLY_READING or PAUSED sessions; preserve all previous histories."
+        "description": "Actual reading creates CURRENTLY_READING. Other initial statuses require historicalImport=true. Prohibit concurrent CURRENTLY_READING or PAUSED sessions; preserve all previous histories. ARCHIVED ENTRY WRITE GUARD: verify reader ownership first (404 for non-owner); reject owned archived parent with 409 LIBRARY_ENTRY_ARCHIVED, no write. Historical reads remain allowed after archive."
       }
     },
     "/experiences/{experienceId}": {
@@ -1766,7 +1809,8 @@
               }
             }
           }
-        }
+        },
+        "description": " Owner-authorized historical read remains permitted after parent archive."
       },
       "patch": {
         "tags": [
@@ -1805,6 +1849,16 @@
               }
             }
           },
+          "409": {
+            "description": "Owned parent library entry is archived; RFC 9457 code LIBRARY_ENTRY_ARCHIVED. Non-owner still receives 404.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "default": {
             "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
@@ -1826,7 +1880,7 @@
             }
           }
         },
-        "description": "Partial nonempty update. Invalid status transitions 422; FINISHED/DID_NOT_FINISH are terminal (historical correction of dates/rating only). No concurrent open sessions."
+        "description": "Partial nonempty update. Invalid status transitions 422; FINISHED/DID_NOT_FINISH are terminal (historical correction of dates/rating only). No concurrent open sessions. ARCHIVED ENTRY WRITE GUARD: verify reader ownership first (404 for non-owner); reject owned archived parent with 409 LIBRARY_ENTRY_ARCHIVED, no write. Historical reads remain allowed after archive."
       }
     },
     "/experiences/{experienceId}/journal": {
@@ -1912,7 +1966,7 @@
             }
           }
         },
-        "description": "Cursor pagination sorted by stable sequence (createdAt DESC, id DESC where available; catalog by provider score and normalized ID). Cursors are opaque and reader-scoped; no cross-account results."
+        "description": "Cursor pagination sorted by stable sequence (createdAt DESC, id DESC where available; catalog by provider score and normalized ID). Cursors are opaque and reader-scoped; no cross-account results. Owner-authorized historical read remains permitted after parent archive."
       },
       "post": {
         "tags": [
@@ -1951,6 +2005,16 @@
               }
             }
           },
+          "409": {
+            "description": "Owned parent library entry is archived; RFC 9457 code LIBRARY_ENTRY_ARCHIVED. Non-owner still receives 404.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "default": {
             "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
@@ -1971,7 +2035,8 @@
               }
             }
           }
-        }
+        },
+        "description": " ARCHIVED ENTRY WRITE GUARD: verify reader ownership first (404 for non-owner); reject owned archived parent with 409 LIBRARY_ENTRY_ARCHIVED, no write. Historical reads remain allowed after archive."
       }
     },
     "/journal/{journalId}": {
@@ -2012,6 +2077,16 @@
               }
             }
           },
+          "409": {
+            "description": "Owned parent library entry is archived; RFC 9457 code LIBRARY_ENTRY_ARCHIVED. Non-owner still receives 404.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "default": {
             "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
@@ -2032,7 +2107,8 @@
               }
             }
           }
-        }
+        },
+        "description": " ARCHIVED ENTRY WRITE GUARD: verify reader ownership first (404 for non-owner); reject owned archived parent with 409 LIBRARY_ENTRY_ARCHIVED, no write. Historical reads remain allowed after archive."
       },
       "delete": {
         "tags": [
@@ -2055,6 +2131,16 @@
           "204": {
             "description": "Deleted"
           },
+          "409": {
+            "description": "Owned parent library entry is archived; RFC 9457 code LIBRARY_ENTRY_ARCHIVED. Non-owner still receives 404.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "default": {
             "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
@@ -2065,7 +2151,8 @@
               }
             }
           }
-        }
+        },
+        "description": " ARCHIVED ENTRY WRITE GUARD: verify reader ownership first (404 for non-owner); reject owned archived parent with 409 LIBRARY_ENTRY_ARCHIVED, no write. Historical reads remain allowed after archive."
       }
     },
     "/conversations": {
@@ -2828,11 +2915,183 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "pattern": "^[0-9]+(\\.[0-9]{1,2})?$"
-            }
+              "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]{1,2})?$"
+            },
+            "description": "A ceiling quoted in mandatory matching currency. No cross-currency comparison; unknown price excluded."
+          },
+          {
+            "name": "currency",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "AED",
+                "AFN",
+                "ALL",
+                "AMD",
+                "ANG",
+                "AOA",
+                "ARS",
+                "AUD",
+                "AWG",
+                "AZN",
+                "BAM",
+                "BBD",
+                "BDT",
+                "BGN",
+                "BHD",
+                "BIF",
+                "BMD",
+                "BND",
+                "BOB",
+                "BRL",
+                "BSD",
+                "BTN",
+                "BWP",
+                "BYN",
+                "BZD",
+                "CAD",
+                "CDF",
+                "CHF",
+                "CLP",
+                "CNY",
+                "COP",
+                "CRC",
+                "CUC",
+                "CUP",
+                "CVE",
+                "CZK",
+                "DJF",
+                "DKK",
+                "DOP",
+                "DZD",
+                "EGP",
+                "ERN",
+                "ETB",
+                "EUR",
+                "FJD",
+                "FKP",
+                "GBP",
+                "GEL",
+                "GHS",
+                "GIP",
+                "GMD",
+                "GNF",
+                "GTQ",
+                "GYD",
+                "HKD",
+                "HNL",
+                "HRK",
+                "HTG",
+                "HUF",
+                "IDR",
+                "ILS",
+                "INR",
+                "IQD",
+                "IRR",
+                "ISK",
+                "JMD",
+                "JOD",
+                "JPY",
+                "KES",
+                "KGS",
+                "KHR",
+                "KMF",
+                "KPW",
+                "KRW",
+                "KWD",
+                "KYD",
+                "KZT",
+                "LAK",
+                "LBP",
+                "LKR",
+                "LRD",
+                "LSL",
+                "LYD",
+                "MAD",
+                "MDL",
+                "MGA",
+                "MKD",
+                "MMK",
+                "MNT",
+                "MOP",
+                "MRU",
+                "MUR",
+                "MVR",
+                "MWK",
+                "MXN",
+                "MYR",
+                "MZN",
+                "NAD",
+                "NGN",
+                "NIO",
+                "NOK",
+                "NPR",
+                "NZD",
+                "OMR",
+                "PAB",
+                "PEN",
+                "PGK",
+                "PHP",
+                "PKR",
+                "PLN",
+                "PYG",
+                "QAR",
+                "RON",
+                "RSD",
+                "RUB",
+                "RWF",
+                "SAR",
+                "SBD",
+                "SCR",
+                "SDG",
+                "SEK",
+                "SGD",
+                "SHP",
+                "SLL",
+                "SOS",
+                "SRD",
+                "SSP",
+                "STN",
+                "SVC",
+                "SYP",
+                "SZL",
+                "THB",
+                "TJS",
+                "TMT",
+                "TND",
+                "TOP",
+                "TRY",
+                "TTD",
+                "TWD",
+                "TZS",
+                "UAH",
+                "UGX",
+                "USD",
+                "UYU",
+                "UZS",
+                "VES",
+                "VND",
+                "VUV",
+                "WST",
+                "XAF",
+                "XCD",
+                "XDR",
+                "XOF",
+                "XPF",
+                "XSU",
+                "YER",
+                "ZAR",
+                "ZMW",
+                "ZWL"
+              ],
+              "pattern": "^[A-Z]{3}$"
+            },
+            "description": "Required when maxPrice is set; exactly match quote currency. No automatic conversion."
           }
         ],
-        "description": "BLOCKED: no validated live seller provider. Return data=[] and meta.providerStatus=UNAVAILABLE until configured. Only provider-verified listings in this response; USER_SUPPLIED belongs to private saved-offers.",
+        "description": "BLOCKED: no validated live seller provider. Return data=[] and meta.providerStatus=UNAVAILABLE until configured. Only provider-verified listings in this response; USER_SUPPLIED belongs to private saved-offers. If maxPrice is provided, currency is required. Respond 400 INVALID_PRICE_FILTER_CURRENCY if omitted/invalid; compare only same-currency priced listings. Without maxPrice, display labelled prices in their original currencies without comparisons.",
         "responses": {
           "200": {
             "description": "Successful operation",
@@ -2860,6 +3119,16 @@
               }
             }
           },
+          "400": {
+            "description": "Invalid maxPrice or missing/unsupported ISO currency for the price filter",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "default": {
             "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
@@ -2870,6 +3139,11 @@
               }
             }
           }
+        },
+        "x-ktob-parameter-dependency": {
+          "maxPrice": [
+            "currency"
+          ]
         }
       }
     },
@@ -2956,7 +3230,7 @@
             }
           }
         },
-        "description": "Cursor pagination sorted by stable sequence (createdAt DESC, id DESC where available; catalog by provider score and normalized ID). Cursors are opaque and reader-scoped; no cross-account results."
+        "description": "Cursor pagination sorted by stable sequence (createdAt DESC, id DESC where available; catalog by provider score and normalized ID). Cursors are opaque and reader-scoped; no cross-account results. Owner-authorized historical read remains permitted after parent archive."
       },
       "post": {
         "tags": [
@@ -2995,6 +3269,16 @@
               }
             }
           },
+          "409": {
+            "description": "Owned parent library entry is archived; RFC 9457 code LIBRARY_ENTRY_ARCHIVED. Non-owner still receives 404.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "default": {
             "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
@@ -3016,7 +3300,7 @@
             }
           }
         },
-        "description": "User-supplied snapshot only; sourceType=USER_SUPPLIED, observedAt immutable. Source links have no purchase effect."
+        "description": "User-supplied snapshot only; sourceType=USER_SUPPLIED, observedAt immutable. Source links have no purchase effect. ARCHIVED ENTRY WRITE GUARD: verify reader ownership first (404 for non-owner); reject owned archived parent with 409 LIBRARY_ENTRY_ARCHIVED, no write. Historical reads remain allowed after archive."
       }
     },
     "/saved-offers/{offerId}": {
@@ -3041,6 +3325,16 @@
           "204": {
             "description": "Deleted"
           },
+          "409": {
+            "description": "Owned parent library entry is archived; RFC 9457 code LIBRARY_ENTRY_ARCHIVED. Non-owner still receives 404.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "default": {
             "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
@@ -3051,7 +3345,8 @@
               }
             }
           }
-        }
+        },
+        "description": " ARCHIVED ENTRY WRITE GUARD: verify reader ownership first (404 for non-owner); reject owned archived parent with 409 LIBRARY_ENTRY_ARCHIVED, no write. Historical reads remain allowed after archive."
       }
     },
     "/library/{entryId}/acquisitions": {
@@ -3137,7 +3432,7 @@
             }
           }
         },
-        "description": "Cursor pagination sorted by stable sequence (createdAt DESC, id DESC where available; catalog by provider score and normalized ID). Cursors are opaque and reader-scoped; no cross-account results."
+        "description": "Cursor pagination sorted by stable sequence (createdAt DESC, id DESC where available; catalog by provider score and normalized ID). Cursors are opaque and reader-scoped; no cross-account results. Owner-authorized historical read remains permitted after parent archive."
       },
       "post": {
         "tags": [
@@ -3186,6 +3481,16 @@
               }
             }
           },
+          "409": {
+            "description": "Owned parent library entry is archived; RFC 9457 code LIBRARY_ENTRY_ARCHIVED. Non-owner still receives 404.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "default": {
             "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
@@ -3207,7 +3512,7 @@
             }
           }
         },
-        "description": "Explicit acquisition only. Idempotency-Key as specified. No reading status changes."
+        "description": "Explicit acquisition only. Idempotency-Key as specified. No reading status changes. ARCHIVED ENTRY WRITE GUARD: verify reader ownership first (404 for non-owner); reject owned archived parent with 409 LIBRARY_ENTRY_ARCHIVED, no write. Historical reads remain allowed after archive. paidPrice/currency must be paired or both unknown; no negative amounts."
       }
     },
     "/acquisitions/{acquisitionId}": {
@@ -3248,6 +3553,16 @@
               }
             }
           },
+          "409": {
+            "description": "Owned parent library entry is archived; RFC 9457 code LIBRARY_ENTRY_ARCHIVED. Non-owner still receives 404.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "default": {
             "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
@@ -3268,7 +3583,8 @@
               }
             }
           }
-        }
+        },
+        "description": " ARCHIVED ENTRY WRITE GUARD: verify reader ownership first (404 for non-owner); reject owned archived parent with 409 LIBRARY_ENTRY_ARCHIVED, no write. Historical reads remain allowed after archive. A partial price-only or currency-only PATCH is accepted when its merged resulting resource passes full pair validation; otherwise 422 INVALID_MONETARY_PAIR."
       },
       "delete": {
         "tags": [
@@ -3291,6 +3607,16 @@
           "204": {
             "description": "Deleted"
           },
+          "409": {
+            "description": "Owned parent library entry is archived; RFC 9457 code LIBRARY_ENTRY_ARCHIVED. Non-owner still receives 404.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
           "default": {
             "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
             "content": {
@@ -3301,7 +3627,8 @@
               }
             }
           }
-        }
+        },
+        "description": " ARCHIVED ENTRY WRITE GUARD: verify reader ownership first (404 for non-owner); reject owned archived parent with 409 LIBRARY_ENTRY_ARCHIVED, no write. Historical reads remain allowed after archive."
       }
     },
     "/health": {
@@ -3420,7 +3747,7 @@
             }
           }
         },
-        "description": "Reader-scoped members sorted addedAt ASC then entryId ASC; excludes archived library entries by default. Opaque cursor and bounded limit."
+        "description": "Reader-scoped members sorted addedAt ASC then entryId ASC; excludes archived library entries by default. Opaque cursor and bounded limit. Hide archived members by default; restored member entries are re-exposed automatically using preserved membership rows."
       }
     },
     "/library/{entryId}/restore": {
@@ -3472,7 +3799,7 @@
             }
           }
         },
-        "description": "Explicitly restore archived entry; no duplicate new row."
+        "description": "Explicitly restore archived entry; no duplicate new row. Explicit restore is allowed for archived entries; prior collection memberships become visible again, without recreation."
       }
     }
   },
@@ -4644,13 +4971,179 @@
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]{1,2})?$",
+            "description": "Nonnegative decimal monetary amount as a string (at most two fractional digits); null or omitted when unknown."
           },
           "currency": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "pattern": "^[A-Z]{3}$",
+            "enum": [
+              "AED",
+              "AFN",
+              "ALL",
+              "AMD",
+              "ANG",
+              "AOA",
+              "ARS",
+              "AUD",
+              "AWG",
+              "AZN",
+              "BAM",
+              "BBD",
+              "BDT",
+              "BGN",
+              "BHD",
+              "BIF",
+              "BMD",
+              "BND",
+              "BOB",
+              "BRL",
+              "BSD",
+              "BTN",
+              "BWP",
+              "BYN",
+              "BZD",
+              "CAD",
+              "CDF",
+              "CHF",
+              "CLP",
+              "CNY",
+              "COP",
+              "CRC",
+              "CUC",
+              "CUP",
+              "CVE",
+              "CZK",
+              "DJF",
+              "DKK",
+              "DOP",
+              "DZD",
+              "EGP",
+              "ERN",
+              "ETB",
+              "EUR",
+              "FJD",
+              "FKP",
+              "GBP",
+              "GEL",
+              "GHS",
+              "GIP",
+              "GMD",
+              "GNF",
+              "GTQ",
+              "GYD",
+              "HKD",
+              "HNL",
+              "HRK",
+              "HTG",
+              "HUF",
+              "IDR",
+              "ILS",
+              "INR",
+              "IQD",
+              "IRR",
+              "ISK",
+              "JMD",
+              "JOD",
+              "JPY",
+              "KES",
+              "KGS",
+              "KHR",
+              "KMF",
+              "KPW",
+              "KRW",
+              "KWD",
+              "KYD",
+              "KZT",
+              "LAK",
+              "LBP",
+              "LKR",
+              "LRD",
+              "LSL",
+              "LYD",
+              "MAD",
+              "MDL",
+              "MGA",
+              "MKD",
+              "MMK",
+              "MNT",
+              "MOP",
+              "MRU",
+              "MUR",
+              "MVR",
+              "MWK",
+              "MXN",
+              "MYR",
+              "MZN",
+              "NAD",
+              "NGN",
+              "NIO",
+              "NOK",
+              "NPR",
+              "NZD",
+              "OMR",
+              "PAB",
+              "PEN",
+              "PGK",
+              "PHP",
+              "PKR",
+              "PLN",
+              "PYG",
+              "QAR",
+              "RON",
+              "RSD",
+              "RUB",
+              "RWF",
+              "SAR",
+              "SBD",
+              "SCR",
+              "SDG",
+              "SEK",
+              "SGD",
+              "SHP",
+              "SLL",
+              "SOS",
+              "SRD",
+              "SSP",
+              "STN",
+              "SVC",
+              "SYP",
+              "SZL",
+              "THB",
+              "TJS",
+              "TMT",
+              "TND",
+              "TOP",
+              "TRY",
+              "TTD",
+              "TWD",
+              "TZS",
+              "UAH",
+              "UGX",
+              "USD",
+              "UYU",
+              "UZS",
+              "VES",
+              "VND",
+              "VUV",
+              "WST",
+              "XAF",
+              "XCD",
+              "XDR",
+              "XOF",
+              "XPF",
+              "XSU",
+              "YER",
+              "ZAR",
+              "ZMW",
+              "ZWL",
+              null
+            ],
+            "description": "Active uppercase three-letter ISO 4217 code from the supported currency registry; null/omitted when price unknown. Registry membership is also validated at runtime."
           },
           "seller": {
             "type": [
@@ -4669,7 +5162,54 @@
           "id",
           "accessType"
         ],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "paidPrice": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "paidPrice"
+              ]
+            },
+            "then": {
+              "properties": {
+                "currency": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "currency"
+              ]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "currency": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "currency"
+              ]
+            },
+            "then": {
+              "properties": {
+                "paidPrice": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "paidPrice"
+              ]
+            }
+          }
+        ],
+        "description": "Price and currency must both be non-null strings or both absent/null. Price is non-negative and currency must be a supported ISO 4217 alphabetic code."
       },
       "AcquisitionWrite": {
         "type": "object",
@@ -4703,13 +5243,179 @@
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]{1,2})?$",
+            "description": "Nonnegative decimal monetary amount as a string (at most two fractional digits); null or omitted when unknown."
           },
           "currency": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "pattern": "^[A-Z]{3}$",
+            "enum": [
+              "AED",
+              "AFN",
+              "ALL",
+              "AMD",
+              "ANG",
+              "AOA",
+              "ARS",
+              "AUD",
+              "AWG",
+              "AZN",
+              "BAM",
+              "BBD",
+              "BDT",
+              "BGN",
+              "BHD",
+              "BIF",
+              "BMD",
+              "BND",
+              "BOB",
+              "BRL",
+              "BSD",
+              "BTN",
+              "BWP",
+              "BYN",
+              "BZD",
+              "CAD",
+              "CDF",
+              "CHF",
+              "CLP",
+              "CNY",
+              "COP",
+              "CRC",
+              "CUC",
+              "CUP",
+              "CVE",
+              "CZK",
+              "DJF",
+              "DKK",
+              "DOP",
+              "DZD",
+              "EGP",
+              "ERN",
+              "ETB",
+              "EUR",
+              "FJD",
+              "FKP",
+              "GBP",
+              "GEL",
+              "GHS",
+              "GIP",
+              "GMD",
+              "GNF",
+              "GTQ",
+              "GYD",
+              "HKD",
+              "HNL",
+              "HRK",
+              "HTG",
+              "HUF",
+              "IDR",
+              "ILS",
+              "INR",
+              "IQD",
+              "IRR",
+              "ISK",
+              "JMD",
+              "JOD",
+              "JPY",
+              "KES",
+              "KGS",
+              "KHR",
+              "KMF",
+              "KPW",
+              "KRW",
+              "KWD",
+              "KYD",
+              "KZT",
+              "LAK",
+              "LBP",
+              "LKR",
+              "LRD",
+              "LSL",
+              "LYD",
+              "MAD",
+              "MDL",
+              "MGA",
+              "MKD",
+              "MMK",
+              "MNT",
+              "MOP",
+              "MRU",
+              "MUR",
+              "MVR",
+              "MWK",
+              "MXN",
+              "MYR",
+              "MZN",
+              "NAD",
+              "NGN",
+              "NIO",
+              "NOK",
+              "NPR",
+              "NZD",
+              "OMR",
+              "PAB",
+              "PEN",
+              "PGK",
+              "PHP",
+              "PKR",
+              "PLN",
+              "PYG",
+              "QAR",
+              "RON",
+              "RSD",
+              "RUB",
+              "RWF",
+              "SAR",
+              "SBD",
+              "SCR",
+              "SDG",
+              "SEK",
+              "SGD",
+              "SHP",
+              "SLL",
+              "SOS",
+              "SRD",
+              "SSP",
+              "STN",
+              "SVC",
+              "SYP",
+              "SZL",
+              "THB",
+              "TJS",
+              "TMT",
+              "TND",
+              "TOP",
+              "TRY",
+              "TTD",
+              "TWD",
+              "TZS",
+              "UAH",
+              "UGX",
+              "USD",
+              "UYU",
+              "UZS",
+              "VES",
+              "VND",
+              "VUV",
+              "WST",
+              "XAF",
+              "XCD",
+              "XDR",
+              "XOF",
+              "XPF",
+              "XSU",
+              "YER",
+              "ZAR",
+              "ZMW",
+              "ZWL",
+              null
+            ],
+            "description": "Active uppercase three-letter ISO 4217 code from the supported currency registry; null/omitted when price unknown. Registry membership is also validated at runtime."
           },
           "seller": {
             "type": [
@@ -4727,7 +5433,54 @@
         "required": [
           "accessType"
         ],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "paidPrice": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "paidPrice"
+              ]
+            },
+            "then": {
+              "properties": {
+                "currency": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "currency"
+              ]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "currency": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "currency"
+              ]
+            },
+            "then": {
+              "properties": {
+                "paidPrice": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "paidPrice"
+              ]
+            }
+          }
+        ],
+        "description": "Price and currency must both be non-null strings or both absent/null. Price is non-negative and currency must be a supported ISO 4217 alphabetic code."
       },
       "ManualWorkWrite": {
         "type": "object",
@@ -5020,13 +5773,179 @@
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]{1,2})?$",
+            "description": "Nonnegative decimal monetary amount as a string (at most two fractional digits); null or omitted when unknown."
           },
           "currency": {
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "pattern": "^[A-Z]{3}$",
+            "enum": [
+              "AED",
+              "AFN",
+              "ALL",
+              "AMD",
+              "ANG",
+              "AOA",
+              "ARS",
+              "AUD",
+              "AWG",
+              "AZN",
+              "BAM",
+              "BBD",
+              "BDT",
+              "BGN",
+              "BHD",
+              "BIF",
+              "BMD",
+              "BND",
+              "BOB",
+              "BRL",
+              "BSD",
+              "BTN",
+              "BWP",
+              "BYN",
+              "BZD",
+              "CAD",
+              "CDF",
+              "CHF",
+              "CLP",
+              "CNY",
+              "COP",
+              "CRC",
+              "CUC",
+              "CUP",
+              "CVE",
+              "CZK",
+              "DJF",
+              "DKK",
+              "DOP",
+              "DZD",
+              "EGP",
+              "ERN",
+              "ETB",
+              "EUR",
+              "FJD",
+              "FKP",
+              "GBP",
+              "GEL",
+              "GHS",
+              "GIP",
+              "GMD",
+              "GNF",
+              "GTQ",
+              "GYD",
+              "HKD",
+              "HNL",
+              "HRK",
+              "HTG",
+              "HUF",
+              "IDR",
+              "ILS",
+              "INR",
+              "IQD",
+              "IRR",
+              "ISK",
+              "JMD",
+              "JOD",
+              "JPY",
+              "KES",
+              "KGS",
+              "KHR",
+              "KMF",
+              "KPW",
+              "KRW",
+              "KWD",
+              "KYD",
+              "KZT",
+              "LAK",
+              "LBP",
+              "LKR",
+              "LRD",
+              "LSL",
+              "LYD",
+              "MAD",
+              "MDL",
+              "MGA",
+              "MKD",
+              "MMK",
+              "MNT",
+              "MOP",
+              "MRU",
+              "MUR",
+              "MVR",
+              "MWK",
+              "MXN",
+              "MYR",
+              "MZN",
+              "NAD",
+              "NGN",
+              "NIO",
+              "NOK",
+              "NPR",
+              "NZD",
+              "OMR",
+              "PAB",
+              "PEN",
+              "PGK",
+              "PHP",
+              "PKR",
+              "PLN",
+              "PYG",
+              "QAR",
+              "RON",
+              "RSD",
+              "RUB",
+              "RWF",
+              "SAR",
+              "SBD",
+              "SCR",
+              "SDG",
+              "SEK",
+              "SGD",
+              "SHP",
+              "SLL",
+              "SOS",
+              "SRD",
+              "SSP",
+              "STN",
+              "SVC",
+              "SYP",
+              "SZL",
+              "THB",
+              "TJS",
+              "TMT",
+              "TND",
+              "TOP",
+              "TRY",
+              "TTD",
+              "TWD",
+              "TZS",
+              "UAH",
+              "UGX",
+              "USD",
+              "UYU",
+              "UZS",
+              "VES",
+              "VND",
+              "VUV",
+              "WST",
+              "XAF",
+              "XCD",
+              "XDR",
+              "XOF",
+              "XPF",
+              "XSU",
+              "YER",
+              "ZAR",
+              "ZMW",
+              "ZWL",
+              null
+            ],
+            "description": "Active uppercase three-letter ISO 4217 code from the supported currency registry; null/omitted when price unknown. Registry membership is also validated at runtime."
           },
           "seller": {
             "type": [
@@ -5043,7 +5962,50 @@
         },
         "required": [],
         "additionalProperties": false,
-        "minProperties": 1
+        "minProperties": 1,
+        "allOf": [
+          {
+            "if": {
+              "required": [
+                "paidPrice",
+                "currency"
+              ],
+              "properties": {
+                "paidPrice": {
+                  "type": "string"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "currency": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "required": [
+                "paidPrice",
+                "currency"
+              ],
+              "properties": {
+                "currency": {
+                  "type": "string"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "paidPrice": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "description": "A nonempty partial PATCH may supply one monetary field. Backend atomically merges request with persisted resource, validates the merged Acquisition using its full monetary pair schema, and returns 422 INVALID_MONETARY_PAIR if invalid; contradictory non-null/null price-currency pair supplied together is invalid."
       },
       "RecommendationResult": {
         "type": "object",

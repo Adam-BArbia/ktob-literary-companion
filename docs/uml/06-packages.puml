@@ -12,6 +12,7 @@ package "provider adapters" as Integration
 package "shared contracts" as Shared
 Api ..> Security
 Api ..> Reader
+Api ..> Export : GET /me/export
 Api ..> Library
 Api ..> Catalog
 Api ..> Advisor

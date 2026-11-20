@@ -39,4 +39,11 @@ A model's claim about book plot, edition, content warning, or seller price is *n
 - Full account deletion is **BLOCKED** pending recent reauthentication, retention, Supabase session revocation and dependent record/third-party data handling. JWT expiry alone does not immediately revoke tokens.
 - Use TLS for APIs/DB and safe bounded upstream timeouts. Passwords remain managed by Supabase Auth.
 
+
+## Archive-state authorization and monetary validation
+
+The backend derives identity from the verified token and checks owner-scoped access **before** returning a 409 archive-state conflict. Parent archived library entries remain owner-readable but read-only; all entry/experience/journal/membership/offer/acquisition mutations return `409 LIBRARY_ENTRY_ARCHIVED`, while other-reader/unknown targets return `404`. Explicit archive/restore actions are exceptions. Restored entries re-expose existing collection memberships without duplicating them.
+
+Acquisition amounts must be nonnegative decimal strings and currency must be an active uppercase ISO 4217 alphabetic code. A partial PATCH can change one field, but validation applies to the merged persisted resource as one transaction; inconsistent state yields `422 INVALID_MONETARY_PAIR`. The offers API rejects maxPrice without an explicit currency (`400 INVALID_PRICE_FILTER_CURRENCY`) before calling external services; foreign-currency amounts must not be compared numerically without conversion (conversion is out of scope).
+
 References: https://supabase.com/docs/guides/auth/jwts ; https://supabase.com/docs/guides/database/postgres/row-level-security .

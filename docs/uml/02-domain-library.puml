@@ -122,7 +122,7 @@ enum AccessType {
  OTHER
 }
 
-ReaderProfile "1" -- "0..*" BookWork : owns manual works >
+ReaderProfile "0..1" -- "0..*" BookWork : owns manual works >
 ReaderProfile "1" -- "0..*" LibraryEntry : maintains >
 LibraryEntry "0..*" --> "1" BookWork : canonical work >
 BookWork "1" -- "0..*" BookEdition : editions >
@@ -139,12 +139,15 @@ SavedOffer "0..*" --> "0..1" BookEdition
 LibraryEntry "1" -- "0..*" AcquisitionRecord
 AcquisitionRecord "0..*" --> "0..1" BookEdition
 note bottom of BookWork
-OPEN_LIBRARY work: ownerReaderId=null, globally readable.
-MANUAL work: ownerReaderId required, owner-only.
+OPEN_LIBRARY work has zero reader owners (ownerReaderId=null).
+MANUAL work has exactly one reader owner (ownerReaderId required).
 One canonical work ID; local overrides deferred.
 end note
 note bottom of LibraryEntry
 UNIQUE(readerId, workId). Deleting archives, not cascades.
+Archived entries: owner-readable, read-only until RESTORED.
+Descendant mutations return 409 LIBRARY_ENTRY_ARCHIVED.
+Collection lists hide archived members; restore reveals them.
 A shelf with no experience projects WANT_TO_READ.
 At most one open (CURRENTLY_READING or PAUSED) experience.
 end note

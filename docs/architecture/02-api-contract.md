@@ -46,7 +46,7 @@ Items may be empty. Each candidate has a work identity, explanation, warning con
 
 **Collection membership:** `GET /collections/{collectionId}/entries?limit=25&cursor=...` reads same-reader entries ordered by membership creation and entry ID. `PUT /collections/{collectionId}/entries/{entryId}` returns `204` whether membership already existed; the ownership chain is mandatory.
 
-**Offer-unavailable response:** `GET /catalog/works/{workId}/offers?country=TN&format=PRINT&language=fr&maxPrice=50.00` (live verified provider **BLOCKED**) returns:
+**Offer-unavailable response:** `GET /catalog/works/{workId}/offers?country=TN&format=PRINT&language=fr&maxPrice=50.00&currency=TND` (live verified provider **BLOCKED**) returns:
 ```json
 {"data":[],"meta":{"providerStatus":"UNAVAILABLE","checkedAt":null,"reason":"No validated seller provider configured","nextCursor":null}}
 ```
@@ -55,6 +55,17 @@ Only actual verified provider results may use `VERIFIED_PROVIDER` here. `POST /l
 **Archive:** `DELETE /library/{entryId}` is non-destructive soft archive (`204`). `POST /library/{entryId}/restore` makes the same record visible again (`200`). A second library add is `409` even if archived; past reading/journal/offers/acquisition remain.
 
 **R1 export:** `GET /me/export` returns `200 application/json` with exactly `{data:{version,generatedAt,readerId,library,experiences,journal,collections,preferences}}`. This is an *essentials export*, **not a full archive**. Other data categories are outside R1 export scope.
+
+
+## Final targeted contract additions
+
+**Chat personalization:** `Use permitted context` optionally extends both AI conversation and recommendation requests, but neither may make an external AI call without current `aiProcessingOptIn`. Context additionally requires `personalizationOptIn` and fine-grained scopes; per-note `allowForPersonalization=false` always excludes that journal entry.
+
+**Acquisitions:** `Acquisition`, `AcquisitionWrite` and `AcquisitionPatch` use optional `paidPrice` nonnegative decimal strings (0–2 fractional digits) and supported uppercase ISO 4217 three-letter `currency`. Full objects and create bodies require both non-null together or both null/omitted. A PATCH with `{"paidPrice":"20.00"}` is permitted when the persisted currency remains valid. Backend merges changes atomically then validates the full pair; invalid pair yields `422 INVALID_MONETARY_PAIR`. `{"paidPrice":null,"currency":null}` clears both. Negative values and unsupported currency codes are invalid.
+
+**Offer research:** `GET /catalog/works/{workId}/offers?maxPrice=50.00&currency=TND` is currency-qualified; `maxPrice` without valid `currency` returns `400 INVALID_PRICE_FILTER_CURRENCY`. Other-currency and unknown-price listings are excluded from the budget comparison; no exchange-rate conversion. Seller provider remains BLOCKED.
+
+**Archived-entry operations:** After authentication and ownership lookup, PATCH library entry, POST reading experience, PATCH reading experience, POST/PATCH/DELETE journal, PUT/DELETE collection membership, POST/DELETE saved offer, and POST/PATCH/DELETE acquisition all return `409 LIBRARY_ENTRY_ARCHIVED` when the parent library entry is archived. They never mutate historical records. A cross-reader target yields `404`. Owner can still GET historic records; default collection-member listing hides archived entries and restoration reveals preserved memberships. Repeat archive DELETE `204` and POST restore are explicit exceptions.
 
 ## Unresolved BLOCKED areas
 

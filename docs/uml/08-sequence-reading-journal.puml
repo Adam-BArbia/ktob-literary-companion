@@ -8,9 +8,13 @@ participant "Library / Journal" as Library
 database "Supabase PostgreSQL" as DB
 Reader -> UI : Select owned library entry
 UI -> API : POST /library/{entryId}/experiences
-API -> Guard : verify identity and entry ownership
-Guard --> API : owned
-alt New current reading or reread
+API -> Guard : verify identity, entry ownership and archivedAt
+alt Archived entry
+ Guard --> API : owned but archived
+ API --> UI : 409 LIBRARY_ENTRY_ARCHIVED; no mutation
+else Active entry
+ Guard --> API : owned and active
+ alt New current reading or reread
  API -> Library : create CURRENTLY_READING experience
  Library -> DB : ensure no other open experience
  DB --> Library : new experience (history preserved)
@@ -18,12 +22,12 @@ else Explicit historical import
  API -> Library : validate historical flag and final status
  Library -> DB : insert past experience, preserve existing
  DB --> Library : new historical experience
-end
+ end
 Library --> API : experience
 API --> UI : 201 experience
 Reader -> UI : Update status / dates / progress
 UI -> API : PATCH /experiences/{id}
-API -> Guard : validate experience owner
+API -> Guard : validate owner and active parent entry
 API -> Library : validate transition / no conflicting open record
 alt Transition invalid
  Library --> API : invalid transition
@@ -36,13 +40,16 @@ end
 opt Reader saves reflection
  Reader -> UI : Journal content + personalization exclusion
  UI -> API : POST /experiences/{id}/journal
- API -> Guard : check experience owner
+ API -> Guard : check owner and active parent entry
  API -> Library : save with allowForPersonalization flag
  Library -> DB : insert note
  Library --> API : saved journal entry
 API --> UI : 201 journal entry
 end
+end
 note over Library,DB
+Every descendant write rechecks parent archivedAt; 409 if archived,
+404 for non-owner. Historic owned GET remains available.
 Library shelf is derived, not persisted as experience status.
 Excluded notes never enter external AI context.
 end note

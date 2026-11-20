@@ -47,6 +47,7 @@ Reader --> USave
 Reader --> UAcquire
 Reader --> UExport
 UContext ..> URecommend : <<extend>>\nwhen personalization authorized
+UContext ..> UChat : <<extend>>\nwhen personalization authorized
 URecommend ..> UBoundary : <<include>>
 Catalog --> USearch
 AI --> UChat
@@ -58,8 +59,9 @@ neither is mandatory for an existing known work.
 A duplicate add returns 409.
 end note
 note bottom of UChat
-AI processing consent gates every provider call.
-Authorization to personalize is separate.
+AI processing consent gates every provider call, even generic chat.
+Personalization consent is separate and optional;
+per-entry journal exclusions always prevail.
 end note
 note bottom of UAcquire
 Seller click / saving offer does not imply acquisition.
