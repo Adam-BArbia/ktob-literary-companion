@@ -19,6 +19,8 @@ KTOB is a private literary companion centered on personal reading libraries, jou
 - **API contract:** [35 paths / 57 operations](docs/architecture/openapi.json); [all-operation implementation coverage](docs/implementation/13-api-coverage.md).
 - **Modelling:** [16 editable PlantUML diagrams](docs/uml/README.md); [architecture decisions and persistence](docs/architecture/README.md).
 
+The [Sprint 0 foundation](docs/implementation/14-sprint0-foundation.md) adds RFC 9457 error handling, typed pagination/UUID helpers, secret-safe configuration templates and route synchronization. The 57-operation OpenAPI contract is unchanged; **only health is currently implemented**.
+
 ### Allowed implementation boundary
 
 The documented first-party core (M0–M3) is **ready to implement locally**. Implementing disabled adapter contracts and their truthful UI states is also allowed. **Do not enable unapproved AI vendor traffic, advertise unverified live bookstore prices, or expose full-account deletion.** The B13/B15/B16 decisions remain tracked in [the risk register](docs/implementation/11-risk-and-decision-register.md).
@@ -36,4 +38,4 @@ java -version
 
 **Java must resolve to JDK 21**, not the Oracle Java 8 path previously taking precedence. See [Windows setup and deployment](docs/implementation/08-local-dev-ci-deploy.md) before generating the application.
 
-GitHub Actions validate UML/contracts, compile/test the Java backend, and test/build Angular from a committed npm lockfile. No application database migration or deployment has been performed.
+GitHub Actions validate UML/contracts, compile/test Java, test/build Angular from a committed npm lockfile, and run [integrated foundation CI](.github/workflows/foundation-ci.yml) with a disposable PostgreSQL readiness check. This is not yet database migration testing. No application database migration or deployment has been performed.

@@ -13,11 +13,14 @@
 - [x] Test matrix, demo evidence and backlog ordered.
 - [x] **KTOB-001:** Java 21 / Spring Boot 4.1.3 API scaffold, Maven Wrapper, `GET /api/v1/health`, integration/context tests and backend CI added under `apps/api`.
 - [x] KTOB-002 Angular 22 standalone web shell, Tailwind 4, navigation, typed health integration, unit tests, production build and web CI added.
-- [ ] Remaining Sprint 0 environment hygiene, error contract and API synchronization tasks.
+- [x] KTOB-003: workspace-wide ignore rules, placeholder-only environment templates, Git-tracked secret hygiene validation.
+- [x] KTOB-004: integrated Java/Angular build and test workflow with isolated PostgreSQL **service readiness only**. Actual migration/DB integration tests remain Sprint 1.
+- [x] KTOB-005: RFC 9457 problem handling, response/list envelopes, validated pagination and UUID parsing, tests.
+- [x] KTOB-006: implemented-operation synchronization; only `liveness` is currently registered, 56 operations remain planned.
 - [ ] AI provider, live seller provider, full account deletion **remain gated**.
 - [ ] Complete professor rubric and validation date **not independently verified**.
 
-## Next action: implement Sprint 0, not Sprint 4
+## Next action: proceed into Sprint 1 — authenticated SOA vertical slice
 
 1. In Windows CMD: `cd /d C:\dev\ktob-literary-companion`; `git pull origin main`; `where java`; `java -version`; ensure Java **21** (not older Java 8 on PATH).
 2. Verify supported Node version for Angular 22: `node -v`, `npm -v`; upgrade if needed. Do not install random unpinned tools before verifying compatibility.
@@ -38,4 +41,4 @@
 
 They are an **engineering handoff** to begin Sprint 0 and safe first-party work. They do not mean the entire consumer-facing release is implemented, audited or legally cleared. For public launch, the team must check provider decisions, retention/backups, real authentication/IDOR tests, and current hosting quotas.
 
-**Start with KTOB-001** (backend scaffold + health route), then **KTOB-002** (Angular scaffold). The first integration target is **KTOB-105/KTOB-106** (reader adds an Open Library work through Java to personal library).
+**Sprint 0 engineering foundation is implemented** (subject to the linked CI checks). Next milestone is KTOB-101 (actual Supabase Auth verification, with a staging-only configuration), KTOB-102 (disposable PostgreSQL migrations), and KTOB-104–106 (Java Open Library integration and frontend library workflow). The user will test only after hosting the finished app.

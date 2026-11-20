@@ -1,0 +1,5 @@
+{
+  "contract": "docs/architecture/openapi.json",
+  "notes": "Only list implemented Java routes here. Never register a placeholder to make CI green.",
+  "implemented": ["liveness"]
+}

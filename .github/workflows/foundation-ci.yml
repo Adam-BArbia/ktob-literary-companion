@@ -1,0 +1,87 @@
+name: KTOB Integrated Foundation CI
+on:
+  push:
+    paths:
+      - 'apps/**'
+      - 'scripts/**'
+      - 'docs/architecture/openapi.json'
+      - 'docs/implementation/implemented-operations.json'
+      - '.github/workflows/foundation-ci.yml'
+      - '.gitignore'
+      - '.env.example'
+  pull_request:
+    paths:
+      - 'apps/**'
+      - 'scripts/**'
+      - 'docs/architecture/openapi.json'
+      - 'docs/implementation/implemented-operations.json'
+      - '.github/workflows/foundation-ci.yml'
+      - '.gitignore'
+      - '.env.example'
+
+permissions:
+  contents: read
+
+jobs:
+  foundation:
+    name: Full-stack build, contract and ephemeral Postgres smoke
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: ktob_test
+          POSTGRES_PASSWORD: test-only-ephemeral-password
+          POSTGRES_DB: ktob_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ktob_test -d ktob_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 8
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Validate tracked files and API operation coverage
+        run: |
+          python3 scripts/check_repo_hygiene.py
+          python3 scripts/check_openapi_sync.py
+          python3 -m json.tool docs/architecture/openapi.json >/dev/null
+
+      - name: Verify disposable PostgreSQL service (no schema migrations yet)
+        run: |
+          docker exec "${{ job.services.postgres.id }}" pg_isready -U ktob_test -d ktob_test
+          actual="$(docker exec "${{ job.services.postgres.id }}" psql -U ktob_test -d ktob_test -tAc 'SELECT current_database()')"
+          test "$actual" = "ktob_test"
+          echo "Ephemeral Postgres reachable; no application schema or migrations installed."
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: apps/api/pom.xml
+
+      - name: Build and test Java backend
+        working-directory: apps/api
+        run: ./mvnw -B -ntp clean verify
+
+      - name: Set up Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Install, test and build Angular frontend
+        working-directory: apps/web
+        run: |
+          npm ci
+          npm test -- --watch=false
+          npm run build
+          test -f dist/ktob-web/browser/index.html

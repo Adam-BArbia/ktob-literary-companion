@@ -1,6 +1,6 @@
 # KTOB Java API — Sprint 0 / KTOB-001
 
-**Status:** Basic Spring Boot backend is implemented; full SOA, security, database, AI and frontend features are **not implemented yet**. This backend is intentionally small and can run without secrets or a Supabase project.
+**Status:** Spring Boot health endpoint plus shared RFC 9457 errors, response envelopes, bounded pagination and UUID value parsing are implemented. No database, authentication, live AI or seller provider is connected. This backend is intentionally small and can run without secrets or a Supabase project.
 
 ## Toolchain
 
@@ -62,7 +62,9 @@ The path and exact response shape are defined by `docs/architecture/openapi.json
 - `KtobApplicationTests.contextLoads` — Spring context bootstraps.
 - `HealthControllerTest.livenessMatchesThePublishedOpenApiContract` — verifies HTTP 200, JSON response and expected status.
 - `HealthControllerTest.livenessDoesNotDependOnAuthentication` — public endpoint remains reachable.
+- `ApiPrimitivesTest` — pagination bounds, UUIDs and response value objects.
+- `ApiExceptionHandlerTest` — test-only HTTP routes verify RFC 9457 error shape, status, safe details and envelopes.
 
 GitHub Actions workflow `.github/workflows/api-ci.yml` runs `./mvnw -B -ntp verify` on Java 21 for changes to `apps/api`. The full document-only pipeline remains separate.
 
-**Next**: KTOB-002 Angular app scaffold, KTOB-003 workspace/env hygiene and KTOB-005 RFC 9457 error envelope. No auth/database code before their dedicated Sprint 1 tasks.
+**Next**: Begin Sprint 1 authentication and Open Library/catalog vertical slice. New controller implementations must be added to `docs/implementation/implemented-operations.json` in lockstep with `docs/architecture/openapi.json`; 56 operations are planned, not yet working. The integrated foundation CI builds both applications and checks only the disposable Postgres service readiness; it does not claim migrations or database integration tests.

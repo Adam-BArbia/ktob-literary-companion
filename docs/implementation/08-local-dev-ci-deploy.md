@@ -49,7 +49,7 @@ Required secrets as **placeholders**, not values:
 
 ## CI pipeline design for application code
 
-Current GitHub Actions workflow validates **documentation only**. Implementation milestone M0 must add separate jobs:
+GitHub Actions now include documentation validation, Java CI, Angular CI and an integrated foundation job with disposable PostgreSQL **readiness check only**. Sprint 1 must add actual reviewed SQL migrations, authentication isolation tests and transactional integration tests. Remaining acceptance tasks:
 - Java JDK21 dependency build, unit tests, formatting/static analysis, slice integration tests with disposable PostgreSQL, migrations tested from empty schema;
 - Angular supported Node setup, `npm ci`, typecheck, unit tests, production build and accessibility smoke;
 - OpenAPI spec validation and client/DTO compatibility (the existing `validate_contract.py`);

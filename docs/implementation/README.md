@@ -1,6 +1,6 @@
 # KTOB — Implementation Handoff (2026-11-20)
 
-**Status:** IMPLEMENTATION-READY BASELINE for the user-approved R1 core, **not implemented or deployed**. Begin coding from [Sprint 0](10-sprint-backlog.md) after pulling the repository. Do not present unselected AI/seller providers or unapproved account deletion as operational.
+**Status:** IMPLEMENTATION UNDERWAY: Java health endpoint, Angular 22 shell and shared backend primitives are committed; remaining R1 features are **not implemented or deployed**. Begin coding from [Sprint 0](10-sprint-backlog.md) after pulling the repository. Do not present unselected AI/seller providers or unapproved account deletion as operational.
 
 This directory transforms the approved [Gate B product decisions](../architecture/08-gate-b-decision-review.md), [16 UML models](../uml/README.md), [OpenAPI 3.1 v0.3](../architecture/openapi.json) and [conceptual persistence design](../architecture/03-persistence-model.md) into a sequential implementation contract.
 
@@ -20,6 +20,8 @@ This directory transforms the approved [Gate B product decisions](../architectur
 | 10 | [Sprint backlog and task order](10-sprint-backlog.md) | Implementation tasks and dependencies |
 | 11 | [Unresolved decisions and risks](11-risk-and-decision-register.md) | Provider, deletion, academic evidence |
 | 12 | [First implementation handoff](12-start-implementation-checklist.md) | Exactly where to begin |
+| 13 | [All 57 operations assigned](13-api-coverage.md) | Full design implementation inventory |
+| 14 | [Sprint 0 engineering foundation](14-sprint0-foundation.md) | Current code, safety and CI status |
 
 ## Source-of-truth and change control
 
