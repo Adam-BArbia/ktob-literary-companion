@@ -35,7 +35,7 @@ end
 Advisor --> API : verified/qualified recommendations
 API --> UI : suggestions + source/uncertainty explanations
 UI --> Reader : view and give optional feedback
-note bottom of Privacy
+note over Privacy, Advisor
 'SURPRISE ME' never silently bypasses firm boundaries.
 Unknown warning data never proves a book safe.
 end note

@@ -12,7 +12,7 @@ note right of SAVED
 Saved price and availability are last observed,
 not live guarantees. Seller click is not purchase.
 end note
-note bottom of RECHECKED
+note right of RECHECKED
 Availability may change or be unknown.
 No automatic acquisition is inferred.
 end note

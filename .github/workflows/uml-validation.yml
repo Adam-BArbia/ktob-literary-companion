@@ -1,0 +1,35 @@
+name: Validate UML diagrams
+on:
+  push:
+    paths:
+      - 'docs/uml/**'
+      - '.github/workflows/uml-validation.yml'
+  pull_request:
+    paths:
+      - 'docs/uml/**'
+      - '.github/workflows/uml-validation.yml'
+permissions:
+  contents: read
+jobs:
+  validate-plantuml:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Get PlantUML (pinned)
+        run: |
+          curl --fail --location --silent --show-error --retry 3 \
+            https://github.com/plantuml/plantuml/releases/download/v1.2025.4/plantuml-1.2025.4.jar \
+            -o "$RUNNER_TEMP/plantuml.jar"
+      - name: Syntax validation (all 16 sources)
+        run: |
+          java -jar "$RUNNER_TEMP/plantuml.jar" -checkonly -stdrpt docs/uml/*.puml
+      - name: Render every diagram to SVG
+        run: |
+          mkdir -p "$RUNNER_TEMP/uml-output"
+          java -jar "$RUNNER_TEMP/plantuml.jar" -tsvg -o "$RUNNER_TEMP/uml-output" docs/uml/*.puml
+          actual="$(find "$RUNNER_TEMP/uml-output" -maxdepth 1 -name '*.svg' | wc -l)"
+          echo "Rendered $actual SVG files"
+          test "$actual" -eq 16

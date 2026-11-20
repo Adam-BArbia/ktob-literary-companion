@@ -1,8 +1,8 @@
 @startuml
 title KTOB — Logical Component Model (R1 modular backend)
 skinparam componentStyle uml2
-actor Reader
 component "Angular SPA\n[Vercel]" as Web
+actor Reader
 node "Spring Boot Application [Render Free]" {
   component "REST API +\nsecurity enforcement" as API
   component "Identity / Privacy" as Identity
@@ -37,7 +37,7 @@ Acquire --> Adapters
 Adapters --> Open : metadata
 Adapters --> AI : permitted context only
 Adapters ..> Sellers : verified offer lookup [pending]
-note bottom of API
+note right of API
 One deployment, logical service contracts.
 No direct business-data access from browser.
 REST/SOAP requirement awaits lecturer confirmation.

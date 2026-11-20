@@ -2,7 +2,9 @@
 title KTOB — Advisor, Consent, Preferences and Memory Domain
 hide empty methods
 skinparam classAttributeIconSize 0
-class ReaderProfile { +readerId: UUID }
+class ReaderProfile {
+ +readerId: UUID
+}
 class PrivacySettings {
  +personalizationOptIn: Boolean
  +useReadingHistory: Boolean
@@ -17,7 +19,10 @@ class ReadingPreference {
  +source: PreferenceSource
  +active: Boolean
 }
-enum PreferenceSource { READER_ENTERED; AI_APPROVED }
+enum PreferenceSource {
+ READER_ENTERED
+ AI_APPROVED
+}
 class ContentBoundary {
  +boundaryId: UUID
  +category: String
@@ -36,20 +41,32 @@ class Conversation {
  +title: String
  +createdAt: DateTime
 }
-enum ConversationKind { GENERAL; BOOK_MAIN; BOOK_TOPIC_R2 }
+enum ConversationKind {
+ GENERAL
+ BOOK_MAIN
+ BOOK_TOPIC_R2
+}
 class Message {
  +messageId: UUID
  +role: MessageRole
  +body: Text
  +createdAt: DateTime
 }
-enum MessageRole { READER; ASSISTANT }
+enum MessageRole {
+ READER
+ ASSISTANT
+}
 class MemoryProposal {
  +proposalId: UUID
  +suggestedText: Text
  +status: MemoryStatus
 }
-enum MemoryStatus { PENDING; APPROVED; DISMISSED; REVOKED }
+enum MemoryStatus {
+ PENDING
+ APPROVED
+ DISMISSED
+ REVOKED
+}
 class ApprovedMemory {
  +memoryId: UUID
  +text: Text
@@ -62,15 +79,25 @@ class RecommendationRequest {
  +useHistoryForThisRequest: Boolean
  +createdAt: DateTime
 }
-enum DiscoveryMode { BALANCED; COMFORT; SURPRISE }
+enum DiscoveryMode {
+ BALANCED
+ COMFORT
+ SURPRISE
+}
 class Recommendation {
  +recommendationId: UUID
  +explanation: Text
  +feedback: String [0..1]
 }
-class BookWork { +workId: UUID }
-class ReadingExperience { +experienceId: UUID }
-class JournalEntry { +journalId: UUID }
+class BookWork {
+ +workId: UUID
+}
+class ReadingExperience {
+ +experienceId: UUID
+}
+class JournalEntry {
+ +journalId: UUID
+}
 ReaderProfile "1" *-- "1" PrivacySettings
 ReaderProfile "1" *-- "0..*" ReadingPreference
 ReaderProfile "1" *-- "0..*" ContentBoundary
