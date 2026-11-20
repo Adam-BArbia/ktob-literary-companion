@@ -25,10 +25,10 @@ else Explicit historical import
  end
 Library --> API : experience
 API --> UI : 201 experience
-Reader -> UI : Update status / dates / progress
+Reader -> UI : Update status / dates / progressPercent / rating
 UI -> API : PATCH /experiences/{id}
 API -> Guard : validate owner and active parent entry
-API -> Library : validate transition / no conflicting open record
+API -> Library : validate transition, progressPercent 0..100 (integer),\n  rating 1..5 (half-steps), no conflicting open record
 alt Transition invalid
  Library --> API : invalid transition
 API --> UI : 422 invalid transition
@@ -50,6 +50,8 @@ end
 note over Library,DB
 Every descendant write rechecks parent archivedAt; 409 if archived,
 404 for non-owner. Historic owned GET remains available.
+Rating is optional (1..5, 0.5 steps); progressPercent optional (0..100 integer).
+Progress and status do not auto-update each other.
 Library shelf is derived, not persisted as experience status.
 Excluded notes never enter external AI context.
 end note

@@ -46,4 +46,11 @@ The backend derives identity from the verified token and checks owner-scoped acc
 
 Acquisition amounts must be nonnegative decimal strings and currency must be an active uppercase ISO 4217 alphabetic code. A partial PATCH can change one field, but validation applies to the merged persisted resource as one transaction; inconsistent state yields `422 INVALID_MONETARY_PAIR`. The offers API rejects maxPrice without an explicit currency (`400 INVALID_PRICE_FILTER_CURRENCY`) before calling external services; foreign-currency amounts must not be compared numerically without conversion (conversion is out of scope).
 
+
+## Reader-approved optional onboarding and spoiler controls
+
+R1 profile creation and reading-list use do not require a mandatory onboarding questionnaire. Initialize `displayName` with a neutral value on first successful authenticated access. This must **not** create AI-processing or personalization consent. The only reader-editable profile field remains displayName (1–100 characters); avoid public bio/age capture.
+
+All chat/recommendation requests default to `NO_SPOILERS`. For `FULL_BOOK_SPOILERS`, require the same request to include `fullBookSpoilersConfirmed=true`. Reject missing/inconsistent confirmation with `422 SPOILER_CONFIRMATION_REQUIRED` **before** transmitting anything to an AI provider. Do not store such confirmation as an enduring account preference, and do not infer it from prior chat messages, reading progress, a finished book or a journal entry. Even with spoiler authorization, independently require `aiProcessingOptIn` for external AI, and enforce `personalizationOptIn` + scope filters for historical context, per-entry journal exclusions, and all firm content boundaries. Generated text can still contain inadvertent spoilers; do not promise guaranteed prevention. Displaying history of a reader-requested full-spoiler turn should distinguish the prior policy without silently applying it to new turns. For every new `NO_SPOILERS` turn, the context builder must filter or redact historical `FULL_BOOK_SPOILERS` messages so that earlier authorized reveals cannot leak into a later spoiler-free response.
+
 References: https://supabase.com/docs/guides/auth/jwts ; https://supabase.com/docs/guides/database/postgres/row-level-security .

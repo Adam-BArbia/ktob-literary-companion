@@ -7,9 +7,13 @@ participant "Reader / Privacy" as Privacy
 participant "Advisor" as Advisor
 database "Supabase PostgreSQL" as DB
 participant "AI adapter" as AI
-Reader -> UI : Send text to owned conversation
+Reader -> UI : Send text; choose spoilerLevel (NO_SPOILERS default)
 UI -> API : POST /conversations/{id}/messages
-API -> Privacy : verify JWT, conversation owner, AI processing opt-in
+API -> Privacy : verify JWT, owner, spoiler confirmation, AI processing opt-in
+alt FULL_BOOK_SPOILERS without same-request confirmation
+ Privacy --> API : SPOILER_CONFIRMATION_REQUIRED
+ API --> UI : 422; no provider call or saved turn
+else Spoiler policy valid
 alt AI consent missing
  Privacy --> API : consent denied
 API --> UI : 403 consent-required problem; no provider call
@@ -20,7 +24,7 @@ else Authorized
   Privacy --> API : consent revoked
 API --> UI : 403; no persisted turn / call
  else Dispatch authorized
-  Advisor -> AI : user text + permitted conversation/context
+  Advisor -> AI : user text + allowed context + effective spoilerLevel
   alt Provider unavailable
    AI --> Advisor : timeout / unavailable
    Advisor --> API : provider unavailable
@@ -33,6 +37,7 @@ API --> UI : 503; no committed turn
 API --> UI : 201 ConversationTurn
   end
  end
+end
 end
 opt Reader later reviews pending proposal
  Reader -> UI : Accept/edit OR dismiss
@@ -47,6 +52,10 @@ opt Reader later reviews pending proposal
  end
 end
 note over Advisor,DB
+NO_SPOILERS default; FULL_BOOK_SPOILERS requires one-turn confirmation.
+For a NO_SPOILERS turn, older FULL_BOOK_SPOILERS history is filtered
+or redacted from AI context (no accidental reuse).
+Spoiler request does not change privacy consent or content boundaries.
 Chats never silently create permanent approved memories.
 Revocation via DELETE /memories/{id} is terminal.
 end note

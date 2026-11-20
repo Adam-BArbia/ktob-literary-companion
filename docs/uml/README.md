@@ -27,6 +27,8 @@ See [Architecture contracts](../architecture/README.md) and the [consistency mat
 
 - `BookWork` has a single work UUID, either public OPEN_LIBRARY with **zero** reader owners, or private MANUAL with **exactly one**. UML owner multiplicity is conditionally 0..1. Roles belong to `WorkCredit` (the work–person association).
 - `BookEdition.format` may be **null** if unknown, not mislabeled OTHER.
+- Each `ReadingExperience.rating` is optional 1–5 in 0.5 steps; `progressPercent` is optional integer 0–100 and never implicitly changes reading status. Profile onboarding is optional and `displayName` is the only editable R1 profile field.
+- AI conversation/recommendation requests default to `NO_SPOILERS`; `FULL_BOOK_SPOILERS` requires explicit same-request confirmation and never bypasses firm content boundaries or processing consent.
 - `LibraryEntry` uniquely associates reader and work. It may have no reading experience: projected `WANT_TO_READ`. A reading experience never stores that value. At most one open experience; rereading creates a fresh experience without overwriting old notes.
 - Library DELETE archives with `archivedAt` and keeps history and memberships. An archived entry and descendants remain owner-readable but read-only (409 LIBRARY_ENTRY_ARCHIVED on writes) until explicit restoration. Default collection lists hide archived members and re-expose preserved memberships after restoration.
 - `aiProcessingOptIn=false` stops **every** external AI call; `personalizationOptIn` separately controls selected history. Per-entry journal exclusions always apply.
@@ -41,4 +43,4 @@ Use *PlantUML by jebbs* for `.puml` previews (normally Alt+D). The separate *Pla
 
 ## Status
 
-Draft v0.2 revised to remove mismatches documented in the [remediation matrix](../architecture/07-consistency-matrix.md). No application code or SQL migration. Human Gate B sign-off remains pending.
+R1 product-default approvals on 2026-11-20 are now reflected in the UML and OpenAPI contracts. No application code, SQL migration or provider deployment. Final Gate B sign-off and Gate C implementation authorization remain pending.

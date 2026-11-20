@@ -5,11 +5,14 @@ Each row identifies which UML, OpenAPI contract, persistence rule and policy rep
 | Scenario | UML file(s) | API endpoint / DTO | Persistence constraint | Security/architecture rule |
 |---|---|---|---|---|
 | Catalog book add | 01,02,07,13 | `POST /library`; `LibraryCreate/LibraryEntry` | `UNIQUE(reader_id,work_id)`; edition from work | Verified reader; catalog global or owned private; duplicate 409; no inferred reading |
+| Profile / onboarding | 02 | `ReaderProfile`, `PATCH /me` optional `displayName` 1–100 chars | First authenticated access provisions neutral Reader profile, no bio/age/public profile | Auth is separate from AI-processing/personalization opt-in |
 | Work ownership | 02,07 | `BookWork.origin/ownerReaderId` and manual-create operation | Global OPEN_LIBRARY has zero owners; MANUAL has exactly one; one canonical works table | Private work readable only by owning reader |
 | Manual work add | 01,02,07 | `POST /catalog/manual-works` then `POST /library` | One `catalog_works.work_id`; MANUAL implies owner_reader_id | Private only, other-reader manual IDs not visible |
 | Start reading | 02,08,13,14 | `POST /library/{entryId}/experiences`; `ExperienceWrite` | open-status uniqueness per library entry | Actual reading starts CURRENTLY_READING; shelf derived; WANT_TO_READ only if no experience |
+| R1 optional rating/progress | 02,08,13,14 | `ReadingExperience`, `ExperienceWrite`, `ExperiencePatch`: nullable `rating` 1–5 step 0.5 and integer `progressPercent` 0–100 | Exact numeric and integer bounds; independent of reading state | Unrated and no-progress are valid; no automatic status or page conversion |
 | Reread or historical import | 02,08,14 | same POST; `historicalImport`, `ExperiencePatch` | new experience, previous records untouched; deterministic selection | Terminal finished/DNF, explicit historical init, no concurrent open |
 | Journal entry | 02,03,08 | `POST /experiences/{experienceId}/journal`; `JournalWrite` | Owned experience; `allow_for_personalization` default false | Scope flag + personal opt-in AND journal exclusion |
+| Request-level spoiler safeguard | 01,03,09,10,13 | `SpoilerLevel` and `fullBookSpoilersConfirmed` on `MessageWrite` / `RecommendationRequest`; effective level in outputs | Effective turn/request policy recorded; no account-wide spoiler flag | NO_SPOILERS default, FULL_BOOK_SPOILERS needs same-request confirmation; 422 before AI; firm boundaries and consent persist |
 | Optional personalized chat | 01,03,10 | Conversation messages and privacy settings | Scopes restrict context and excluded journal entries | `UContext` optionally extends UChat and URecommend; processing consent mandatory for both |
 | Conversation with AI | 03,04,05,10 | `POST /conversations/{id}/messages`; `ConversationTurn` | Atomic two messages + optional pending proposals | Processing opt-in checked at dispatch; 403 missing, 503 provider |
 | Recommendation | 03,09,13 | `POST /recommendations`; `RecommendationResult.items[]` | `recommendation_requests` 1:N `recommendation_items`; boundary exceptions scoped to request | AI consent, separate personalization, firm boundary, unknown warning not safe |
@@ -47,6 +50,6 @@ Each row identifies which UML, OpenAPI contract, persistence rule and policy rep
 - Reliable and lawful Tunisian seller/price search service.
 - Full account deletion/re-auth/retention and complete archive behavior.
 
-**PROPOSED needing reader approval:** shelf projection and historical import semantics, rating scale, reading progress units, archival behavior, R1 JSON export, idempotency retention, manual-work deduplication and warning-confidence classification.
+**APPROVED R1 product defaults (2026-11-20):** shelf projection and historical imports, nullable 1–5 half-star ratings, nullable 0–100 integer progress, minimal optional profile, per-call spoiler policy, reversible archive, five-array JSON essentials export, privacy and idempotency rules. **Not approved:** AI provider, verified seller provider, full account deletion/retention, and overall Gate B/Gate C.
 
 No implementation, live migration or provider deployment is authorized by this matrix.

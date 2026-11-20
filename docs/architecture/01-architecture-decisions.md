@@ -68,6 +68,21 @@ Open Library is a proposed metadata provider with rate-limited calls and manual 
 
 **Offer search currency:** `maxPrice` requires an explicit active ISO 4217 `currency` query value; omission or invalid filters return `400 INVALID_PRICE_FILTER_CURRENCY`. Compare only offers denominated in that currency. Do not automatically convert currency or treat an unknown-price offer as under budget; when maxPrice is absent, offers with different labelled currencies may coexist without comparison.
 
+
+## Approved R1 product defaults (B01–B12, B14; Gate B still open)
+
+The reader approved these R1 defaults on 2026-11-20. This is **product-default approval**, NOT final Gate B architecture sign-off and NOT permission to implement.
+
+- **Reader profile and onboarding:** reader account is authenticated using Supabase Auth. On first authenticated access, `reader_profiles` is provisioned with a neutral `display_name` such as `Reader`; the user can optionally change it using `PATCH /me`. No mandatory onboarding questionnaire, biography, age, or public profile in R1. Only `displayName` is user-editable.
+- **Reading ratings:** each `ReadingExperience.rating` is nullable (unrated). Valid non-null values: 1.0 through 5.0 in **0.5-star increments**. A new reread has its own independent rating. Server validates ranges and increments without floating-point tolerance assumptions.
+- **Reading progress:** `ReadingExperience.progressPercent` replaces the untyped `progress` string and is nullable or an **integer 0..100**. It is not calculated from page count, format, or duration, and never implicitly changes `ReadingExperience.status`. A FINISHED experience may have null progress for imported historical data; no automatic 100% assignment.
+- **Spoilers:** all AI chat turns and recommendation requests default to `NO_SPOILERS`. Optional `FULL_BOOK_SPOILERS` is allowed **only** when that individual request includes `fullBookSpoilersConfirmed=true` and `spoilerLevel=FULL_BOOK_SPOILERS`; otherwise reject `422 SPOILER_CONFIRMATION_REQUIRED` before calling the provider. This is an explicit per-request acknowledgement, **not** a stored global preference or a replacement for `aiProcessingOptIn`. Spoiler safeguards are best-effort filtering and prompting; no provider can guarantee zero spoilers. Firm content boundaries and journal exclusions still apply.
+- **Continuing invariants:** one canonical global/private work identity; independent rereads; archived library entries read-only until restoration; collection membership retained across archive; explicit acquisitions and immutable observed offers; consent for AI processing and context personalization both false by default, with approved-memory and journal exclusions enforced.
+- **R1 export:** owner-scoped JSON essentials (`library`, `experiences`, `journal`, `collections`, `preferences`). Present it as a **partial** export, not full data portability, and never confuse archival with account erasure.
+- **Academic protocol:** REST/JSON with Angular consuming Java and Java consuming Open Library is the approved R1 direction given the user-provided `SOAP ou REST` wording; full formal rubric and demonstration date remain unverified.
+
+External AI provider/terms, live bookseller data, full account deletion/retention, any extra faculty requirements and explicit overall Gate B sign-off remain **BLOCKED/OPEN**. **Gate C remains closed.**
+
 ## Human decisions
 
 See [review gates](06-review-gates.md), especially the professor's rubric, rating scale, progress units, AI policy, export and full deletion semantics. No product or implementation approval is implied by this draft.

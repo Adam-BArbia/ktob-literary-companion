@@ -1,6 +1,6 @@
 # KTOB — Architecture and service contracts v0.2
 
-**Status:** documentation consistency remediation complete as a **PROPOSED modelling draft**, not approved implementation. **No backend code, SQL migration, database modification, or deployment.**
+**Status:** R1 product defaults **approved by user** and recorded in UML/OpenAPI/conceptual persistence; overall Gate B architecture is **not yet signed off**, Gate C closed. No implementation. **No backend code, SQL migration, database modification, or deployment.**
 
 This architecture package must be reviewed together with the [16 PlantUML diagrams](../uml/README.md). The [OpenAPI 3.1 design contract](openapi.json) describes the exact proposed HTTP operations. It does **not** describe a running API.
 
@@ -12,7 +12,7 @@ This architecture package must be reviewed together with the [16 PlantUML diagra
 4. [Security and AI privacy](04-security-privacy.md)
 5. [External integration and deployment](05-integrations-deployment.md)
 6. [Human review gates](06-review-gates.md)
-7. [Gate B decision review (draft)](08-gate-b-decision-review.md)
+7. [Gate B decision review and approval register](08-gate-b-decision-review.md)
 8. [Cross-document consistency matrix](07-consistency-matrix.md)
 9. [OpenAPI draft](openapi.json)
 
@@ -22,7 +22,7 @@ This architecture package must be reviewed together with the [16 PlantUML diagra
 - Angular/TypeScript/Tailwind on Vercel; Java 21/Spring Boot on Render Free; Supabase Auth and PostgreSQL.
 - Initial Spring Boot topology: **one modular deployable**, not independent network microservices. REST/JSON `/api/v1` is **PROPOSED**; the earlier user-provided assignment says **"SOAP ou REST"**, so REST is permitted under the supplied wording. Additional/full formal rubric details remain unverified. See Gate B review.
 - Bibliographic data via Open Library (with manual fallback). AI provider/model is **PROPOSED**, not confirmed. Live verified seller-research source is **BLOCKED**; never invent offer data.
-- R1: library, private/manual work entry, editions (possibly unknown metadata), reading and rereading, journal, reader collections, AI conversation and recommendations with explicit processing consent, approved memory, content boundaries, R1 essentials export, historical offers and explicit acquisitions.
+- R1: library, private/manual work entry, editions (possibly unknown metadata), reading and rereading, journal, reader collections, AI conversation and recommendations with explicit processing consent, approved memory, content boundaries, R1 essentials export, historical offers and explicit acquisitions. Approved product defaults: optional 1–5 half-star rating, optional integer 0–100% progress, minimal optional onboarding, NO_SPOILERS default with explicit per-request full-book spoilers.
 - R2: in-depth edition comparisons, multiple themed chats per book, fuller exports/imports, automatic offer rechecks, alerts and advanced lending analytics.
 
 ## Canonical rules — read before implementation

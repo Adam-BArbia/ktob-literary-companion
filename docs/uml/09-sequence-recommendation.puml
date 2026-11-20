@@ -7,9 +7,13 @@ participant "Reader / Privacy" as Privacy
 participant "Advisor" as Advisor
 database "Supabase PostgreSQL" as DB
 participant "AI adapter" as AI
-Reader -> UI : Request mode, prompt, exception IDs
-UI -> API : POST /recommendations
-API -> Privacy : verify JWT and ownership
+Reader -> UI : Choose mode, prompt, boundaries, spoilerLevel
+UI -> API : POST /recommendations (NO_SPOILERS default)
+API -> Privacy : verify JWT, ownership and request spoiler confirmation
+alt FULL_BOOK_SPOILERS without explicit confirmation
+ Privacy --> API : SPOILER_CONFIRMATION_REQUIRED
+ API --> UI : 422 problem+json; no AI request
+else Valid request-level spoiler policy
 Privacy -> DB : load current AI consent, personalization, boundaries
 DB --> Privacy : effective policy
 alt AI processing NOT authorized
@@ -31,7 +35,7 @@ else Processing authorized
 API --> UI : 403; no external request
  else Still authorized
   Privacy --> Advisor : allowed
-  Advisor -> AI : prompt + explicitly authorized context
+  Advisor -> AI : prompt + allowed context + effective spoiler policy
   alt AI provider unavailable
    AI --> Advisor : unavailable
    Advisor --> API : provider unavailable
@@ -46,7 +50,11 @@ API --> UI : 200 RecommendationResult
   end
  end
 end
+end
 note over Privacy,AI
+Default is NO_SPOILERS. FULL_BOOK_SPOILERS requires explicit
+confirmation in the same request; does NOT override firm boundaries.
+No model can guarantee perfect spoiler avoidance.
 Explicit AI-processing consent is mandatory for every call.
 Personalization is a separate, default-off permission.
 Revocation after dispatch cannot undo prior provider processing.

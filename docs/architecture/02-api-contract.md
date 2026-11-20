@@ -67,6 +67,17 @@ Only actual verified provider results may use `VERIFIED_PROVIDER` here. `POST /l
 
 **Archived-entry operations:** After authentication and ownership lookup, PATCH library entry, POST reading experience, PATCH reading experience, POST/PATCH/DELETE journal, PUT/DELETE collection membership, POST/DELETE saved offer, and POST/PATCH/DELETE acquisition all return `409 LIBRARY_ENTRY_ARCHIVED` when the parent library entry is archived. They never mutate historical records. A cross-reader target yields `404`. Owner can still GET historic records; default collection-member listing hides archived entries and restoration reveals preserved memberships. Repeat archive DELETE `204` and POST restore are explicit exceptions.
 
+
+## Reader-approved R1 contract defaults (2026-11-20)
+
+**Optional onboarding:** A reader profile is provisioned automatically upon first authenticated access with neutral `displayName="Reader"` if nothing has been chosen. `PATCH /me` optionally changes only `displayName` (1–100 characters). No profile questionnaire, public biography, age, or reading-history consent by implication.
+
+**Per-reading ratings and progress:** `ReadingExperience`, `ExperienceWrite` and `ExperiencePatch` now expose `rating` (nullable number 1–5 in 0.5 increments) and `progressPercent` (nullable **integer** 0–100). The previous `progress: String` is removed. Neither field implies a status transition. A FINISHED historical reading may omit progress or rating, and rereads retain separate values.
+
+**Spoiler authorization per call:** `MessageWrite` (POST conversation message) and `RecommendationRequest` (POST recommendations) accept optional `spoilerLevel` and `fullBookSpoilersConfirmed`. Omitting both yields `NO_SPOILERS` with `false` confirmation. `FULL_BOOK_SPOILERS` requires `fullBookSpoilersConfirmed=true` in the **same request**; true confirmation without that level is rejected. Otherwise `422 SPOILER_CONFIRMATION_REQUIRED`, with **no external AI request and no committed conversation turn**. Successful response `ConversationTurn.spoilerLevel` and `RecommendationResult.spoilerLevel` report the effective level. For a `NO_SPOILERS` chat turn, the context builder must omit/redact older `FULL_BOOK_SPOILERS` conversation messages to avoid exposing prior revelations again. `Message.spoilerLevel` records the turn-level setting for audit. Explicit full spoilers are **not** account-level consent, do **not** bypass firm content boundaries, and do **not** substitute for `aiProcessingOptIn`. `NO_SPOILERS` means best-effort provider prompting and output screening, not a guarantee that generated text can never reveal a plot point.
+
+These approved product defaults are a **contract change**, not implementation approval; `GET /me/export` remains the five-set JSON essentials export. External-provider and full-account-deletion policies remain unresolved and are not added as endpoints.
+
 ## Unresolved BLOCKED areas
 
-Professor's SOAP/REST/SOA rubric; AI provider selection/quotas; validated seller source; full account deletion and complete archival export; product details (ratings, reading progress units, spoiler policy). See [review gate](06-review-gates.md).
+Complete professor rubric/deadline unverified (REST permitted by user-reported wording); external AI provider/retention; verified seller data; full account deletion and complete archival export. Product defaults for ratings, percentage progress, profile and spoilers are **APPROVED**, but Gate B and Gate C remain open/closed respectively. See [review gates](06-review-gates.md).

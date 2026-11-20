@@ -5,6 +5,7 @@ skinparam classAttributeIconSize 0
 class ReaderProfile {
  +readerId: UUID
  +displayName: String
+ ' private display name; generated default if onboarding skipped
 }
 class BookWork {
  +workId: UUID
@@ -65,7 +66,7 @@ class ReadingExperience {
  +startedOn: Date [0..1]
  +finishedOn: Date [0..1]
  +rating: Decimal [0..1]
- +progress: String [0..1]
+ +progressPercent: Integer [0..1]
 }
 enum ReadingStatus {
  CURRENTLY_READING
@@ -153,6 +154,9 @@ At most one open (CURRENTLY_READING or PAUSED) experience.
 end note
 note right of ReadingExperience
 Rereads create new records.
+Optional rating: 1.0..5.0, step 0.5; no rating is null.
+Optional progressPercent: integer 0..100, not inferred from pages.
+Progress never implicitly changes reading status.
 WANT_TO_READ is NOT a ReadingStatus.
 end note
 @enduml

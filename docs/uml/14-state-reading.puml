@@ -20,5 +20,7 @@ note bottom of FINISHED
 WANT_TO_READ is only a derived LibraryEntry shelf.
 A reread creates a new experience; prior one is retained.
 Terminal FINISHED and DID_NOT_FINISH cannot be reopened.
+Rating 1..5 in half-steps and progress 0..100 are
+optional and do not automatically trigger status transitions.
 end note
 @enduml

@@ -20,6 +20,7 @@ rectangle "KTOB" {
  usecase "Write / exclude journal entry" as UJournal
  usecase "Discuss book or literature" as UChat
  usecase "Review memory proposal" as UMemory
+ usecase "Explicit full-book spoiler authorization (per request)" as USpoiler
  usecase "Request recommendations" as URecommend
  usecase "Use permitted context" as UContext
  usecase "Apply content boundaries" as UBoundary
@@ -48,6 +49,8 @@ Reader --> UAcquire
 Reader --> UExport
 UContext ..> URecommend : <<extend>>\nwhen personalization authorized
 UContext ..> UChat : <<extend>>\nwhen personalization authorized
+USpoiler ..> UChat : <<extend>>\nexplicit FULL_BOOK_SPOILERS confirmation
+USpoiler ..> URecommend : <<extend>>\nexplicit FULL_BOOK_SPOILERS confirmation
 URecommend ..> UBoundary : <<include>>
 Catalog --> USearch
 AI --> UChat
@@ -62,6 +65,7 @@ note bottom of UChat
 AI processing consent gates every provider call, even generic chat.
 Personalization consent is separate and optional;
 per-entry journal exclusions always prevail.
+NO_SPOILERS by default, regardless of AI consent.
 end note
 note bottom of UAcquire
 Seller click / saving offer does not imply acquisition.

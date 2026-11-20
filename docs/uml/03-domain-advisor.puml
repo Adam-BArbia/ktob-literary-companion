@@ -47,6 +47,8 @@ class Message {
  +messageId: UUID
  +role: MessageRole
  +body: Text
+ +spoilerLevel: SpoilerLevel [0..1]
+ +fullBookSpoilersConfirmed: Boolean [0..1]
 }
 enum MessageRole {
  READER
@@ -73,6 +75,12 @@ class RecommendationRequest {
  +requestId: UUID
  +discoveryMode: DiscoveryMode
  +usePersonalContext: Boolean
+ +spoilerLevel: SpoilerLevel
+ +fullBookSpoilersConfirmed: Boolean
+}
+enum SpoilerLevel {
+ NO_SPOILERS
+ FULL_BOOK_SPOILERS
 }
 enum DiscoveryMode {
  BALANCED
@@ -119,12 +127,21 @@ Before dispatch, verify AI processing opt-in.
 Personalization requires separate authorization
 and journal-specific exclusion filtering.
 end note
+note right of Message
+Spoiler metadata is recorded on reader messages / turns.
+NO_SPOILERS by default for each AI call; explicit
+FULL_BOOK_SPOILERS confirmation is per message request.
+No permanent spoiler setting is inferred.
+end note
 note bottom of ApprovedMemory
 One per approved proposal; revoked is terminal.
 No active=true generic PATCH reactivation.
 end note
 note bottom of RecommendationRequest
 Request-scoped exceptions never edit preferences.
+Default NO_SPOILERS; FULL_BOOK_SPOILERS requires
+explicit confirmation for THIS request only.
+Content boundaries remain independent of spoiler level.
 Results are a batch, not one item.
 end note
 @enduml

@@ -219,6 +219,119 @@ else:
     check(not accepts("AcquisitionWrite", {**stored, "paidPrice": None}),
           "merged invalid single-field PATCH accepted")
 
+
+# User-approved R1 product defaults: schema and cross-document regression.
+reader_rating = SCHEMAS["ReadingExperience"]["properties"]["rating"]
+reader_progress = SCHEMAS["ReadingExperience"]["properties"]["progressPercent"]
+for name in ("ReadingExperience", "ExperienceWrite", "ExperiencePatch"):
+    dto = SCHEMAS[name]
+    check("progress" not in dto["properties"],
+          f"retired untyped progress field still present in {name}")
+    rating = dto["properties"]["rating"]
+    percent = dto["properties"]["progressPercent"]
+    check(rating.get("minimum") == 1 and rating.get("maximum") == 5 and
+          rating.get("multipleOf") == 0.5 and "null" in rating.get("type", []),
+          f"{name}.rating is not optional half-stars")
+    check(percent.get("minimum") == 0 and percent.get("maximum") == 100 and
+          "integer" in percent.get("type", []) and "null" in percent.get("type", []),
+          f"{name}.progressPercent is not optional 0..100 integer")
+check(SCHEMAS["ReaderProfile"]["properties"]["displayName"]["minLength"] == 1
+      and SCHEMAS["ReaderProfile"]["properties"]["displayName"]["maxLength"] == 100,
+      "minimal editable displayName is missing bounds")
+check(set(SCHEMAS["ProfilePatch"]["properties"]) == {"displayName"},
+      "public profile or mandatory onboarding fields unexpectedly introduced")
+
+for name in ("MessageWrite", "RecommendationRequest"):
+    dto = SCHEMAS[name]
+    check("spoilerLevel" in dto["properties"] and
+          "fullBookSpoilersConfirmed" in dto["properties"] and
+          len(dto.get("allOf", [])) == 2,
+          f"{name} must represent explicit per-request spoiler confirmation")
+check(SCHEMAS["SpoilerLevel"]["enum"] == ["NO_SPOILERS", "FULL_BOOK_SPOILERS"] and
+      SCHEMAS["SpoilerLevel"].get("default") == "NO_SPOILERS",
+      "spoiler policy must default NO_SPOILERS")
+for path, verb in (("/recommendations", "post"),
+                   ("/conversations/{conversationId}/messages", "post")):
+    op = PATHS[path][verb]
+    check("422" in op["responses"] and
+          "SPOILER_CONFIRMATION_REQUIRED" in op.get("description", ""),
+          f"{path} must reject unconfirmed spoilers before dispatch")
+check("spoilerLevel" in SCHEMAS["ConversationTurn"]["required"] and
+      "spoilerLevel" in SCHEMAS["RecommendationResult"]["required"],
+      "AI turn and recommendations must report effective spoiler level")
+
+u02 = (ROOT / "docs/uml/02-domain-library.puml").read_text(encoding="utf-8")
+u03 = (ROOT / "docs/uml/03-domain-advisor.puml").read_text(encoding="utf-8")
+u09 = (ROOT / "docs/uml/09-sequence-recommendation.puml").read_text(encoding="utf-8")
+u10 = (ROOT / "docs/uml/10-sequence-memory.puml").read_text(encoding="utf-8")
+check("progressPercent" in u02 and "Optional rating: 1.0..5.0" in u02,
+      "reading UML not aligned with approved rating/progress")
+check("SpoilerLevel" in u03 and "fullBookSpoilersConfirmed" in u03,
+      "advisor UML missing spoiler policy")
+check("SPOILER_CONFIRMATION_REQUIRED" in u09 and
+      "SPOILER_CONFIRMATION_REQUIRED" in u10,
+      "chat and recommendation sequences must reject missing spoiler acknowledgement")
+
+gate = (ROOT / "docs/architecture/06-review-gates.md").read_text(encoding="utf-8")
+check("Gate C remains closed" in gate and "not" in gate.lower(),
+      "human architecture/implementation gate must remain closed")
+review = (ROOT / "docs/architecture/08-gate-b-decision-review.md").read_text(encoding="utf-8")
+check("APPROVED by the reader" in review and "B13" in review and "BLOCKED" in review,
+      "review register must distinguish approved R1 defaults from provider/deletion blockers")
+
+if 'Draft202012Validator' in globals():
+    for name in ("ReadingExperience", "ExperienceWrite", "ExperiencePatch",
+                 "MessageWrite", "RecommendationRequest"):
+        Draft202012Validator.check_schema(SCHEMAS[name])
+    # Examples must test real 2020-12 conditional JSON Schema behavior.
+    experience_base = {"status": "CURRENTLY_READING"}
+    good_experiences = [
+        experience_base,
+        {**experience_base, "rating": None, "progressPercent": None},
+        {**experience_base, "rating": 1, "progressPercent": 0},
+        {**experience_base, "rating": 3.5, "progressPercent": 72},
+        {**experience_base, "rating": 5, "progressPercent": 100},
+    ]
+    for item in good_experiences:
+        check(accepts("ExperienceWrite", item),
+              f"valid reading values were rejected: {item}")
+    bad_experiences = [
+        {**experience_base, "rating": 0.5},
+        {**experience_base, "rating": 5.5},
+        {**experience_base, "rating": 4.2},
+        {**experience_base, "progressPercent": -1},
+        {**experience_base, "progressPercent": 101},
+        {**experience_base, "progressPercent": 50.5},
+        {**experience_base, "progress": "halfway"},
+    ]
+    for item in bad_experiences:
+        check(not accepts("ExperienceWrite", item),
+              f"invalid reading values were accepted: {item}")
+    for name, base in (("MessageWrite", {"body": "Discuss this work"}),
+                       ("RecommendationRequest",
+                        {"mode": "BALANCED", "usePersonalContext": False})):
+        for good in (
+            base,
+            {**base, "spoilerLevel": "NO_SPOILERS"},
+            {**base, "spoilerLevel": "NO_SPOILERS",
+             "fullBookSpoilersConfirmed": False},
+            {**base, "spoilerLevel": "FULL_BOOK_SPOILERS",
+             "fullBookSpoilersConfirmed": True},
+        ):
+            check(accepts(name, good),
+                  f"valid spoiler policy rejected: {name} {good}")
+        for bad in (
+            {**base, "spoilerLevel": "FULL_BOOK_SPOILERS"},
+            {**base, "spoilerLevel": "FULL_BOOK_SPOILERS",
+             "fullBookSpoilersConfirmed": False},
+            {**base, "spoilerLevel": "NO_SPOILERS",
+             "fullBookSpoilersConfirmed": True},
+            {**base, "fullBookSpoilersConfirmed": True},
+            {**base, "spoilerLevel": "UNKNOWN"},
+        ):
+            check(not accepts(name, bad),
+                  f"unconfirmed or invalid spoiler policy accepted: {name} {bad}")
+
 print(f"Checked {len(diagrams)} named UML diagrams, {operations} OpenAPI operations, "
       f"{len(SCHEMAS)} schemas, {list_count} cursor-paginated GET routes.")
 if ERRORS:

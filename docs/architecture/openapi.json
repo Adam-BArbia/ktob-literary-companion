@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "KTOB - Java Business API (DESIGN DRAFT)",
-    "version": "0.2.0",
-    "description": "Proposed REST/JSON contract for review; not deployed. SOAP/REST academic constraint pending. No application implementation authorized. Cross-document remediation v0.2: privacy, cardinality, lifecycle, pagination, canonical manual works and archival semantics. Final consistency correction: conditional book ownership, optional chat personalization, archived mutation 409, merged acquisition monetary validation and currency-scoped offer filters."
+    "version": "0.3.0",
+    "description": "Proposed REST/JSON contract for review; not deployed. SOAP/REST academic constraint pending. No application implementation authorized. Cross-document remediation v0.2: privacy, cardinality, lifecycle, pagination, canonical manual works and archival semantics. Final consistency correction: conditional book ownership, optional chat personalization, archived mutation 409, merged acquisition monetary validation and currency-scoped offer filters. User-approved R1 product defaults: optional half-star ratings, percentage progress, minimal optional profile onboarding, and per-request spoiler authorization. External provider/deletion work and Gate C remain unapproved."
   },
   "servers": [
     {
@@ -84,7 +84,8 @@
               }
             }
           }
-        }
+        },
+        "description": " Profile auto-provisioned at first authenticated access with neutral Reader displayName if onboarding is skipped; no public profile fields."
       },
       "patch": {
         "tags": [
@@ -133,7 +134,8 @@
               }
             }
           }
-        }
+        },
+        "description": " Optional displayName editing, not mandatory onboarding."
       }
     },
     "/me/privacy": {
@@ -1758,7 +1760,7 @@
             }
           }
         },
-        "description": "Actual reading creates CURRENTLY_READING. Other initial statuses require historicalImport=true. Prohibit concurrent CURRENTLY_READING or PAUSED sessions; preserve all previous histories. ARCHIVED ENTRY WRITE GUARD: verify reader ownership first (404 for non-owner); reject owned archived parent with 409 LIBRARY_ENTRY_ARCHIVED, no write. Historical reads remain allowed after archive."
+        "description": "Actual reading creates CURRENTLY_READING. Other initial statuses require historicalImport=true. Prohibit concurrent CURRENTLY_READING or PAUSED sessions; preserve all previous histories. ARCHIVED ENTRY WRITE GUARD: verify reader ownership first (404 for non-owner); reject owned archived parent with 409 LIBRARY_ENTRY_ARCHIVED, no write. Historical reads remain allowed after archive. Optional rating must be 1..5 in half-star steps; progressPercent must be integer 0..100. Neither field changes status implicitly."
       }
     },
     "/experiences/{experienceId}": {
@@ -1880,7 +1882,7 @@
             }
           }
         },
-        "description": "Partial nonempty update. Invalid status transitions 422; FINISHED/DID_NOT_FINISH are terminal (historical correction of dates/rating only). No concurrent open sessions. ARCHIVED ENTRY WRITE GUARD: verify reader ownership first (404 for non-owner); reject owned archived parent with 409 LIBRARY_ENTRY_ARCHIVED, no write. Historical reads remain allowed after archive."
+        "description": "Partial nonempty update. Invalid status transitions 422; FINISHED/DID_NOT_FINISH are terminal (historical correction of dates/rating only). No concurrent open sessions. ARCHIVED ENTRY WRITE GUARD: verify reader ownership first (404 for non-owner); reject owned archived parent with 409 LIBRARY_ENTRY_ARCHIVED, no write. Historical reads remain allowed after archive. Rating and progressPercent are independent of status; invalid ranges/steps rejected with 422."
       }
     },
     "/experiences/{experienceId}/journal": {
@@ -2393,7 +2395,7 @@
             }
           }
         ],
-        "description": "AI processing consent verified before external dispatch. Personalization requires separate authorization. On provider error no committed turn; idempotent retry with same key may replay saved result. Memory proposals remain PENDING until explicit approval.",
+        "description": "AI processing consent verified before external dispatch. Personalization requires separate authorization. On provider error no committed turn; idempotent retry with same key may replay saved result. Memory proposals remain PENDING until explicit approval. Spoilers: omitted spoilerLevel means NO_SPOILERS; FULL_BOOK_SPOILERS requires fullBookSpoilersConfirmed=true in the same request; reject otherwise with 422 SPOILER_CONFIRMATION_REQUIRED before any external AI call. Never infer permission from reading progress, chat history or user profile. Firm content boundaries still apply. The model cannot guarantee absence of all spoilers.",
         "responses": {
           "201": {
             "description": "Atomically persisted user+assistant turn and optional pending proposal IDs",
@@ -2416,6 +2418,16 @@
           },
           "403": {
             "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Full-book spoilers requested without explicit same-request confirmation (SPOILER_CONFIRMATION_REQUIRED); no provider call",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2476,7 +2488,7 @@
             }
           }
         ],
-        "description": "No outbound AI call unless current aiProcessingOptIn is true immediately before dispatch. No private history unless personalizationOptIn, request opt-in, scope flags and journal exclusion all permit it. Unknown warning data never implies compliance with a firm boundary; return 403 for missing AI consent, 503 if provider unavailable.",
+        "description": "No outbound AI call unless current aiProcessingOptIn is true immediately before dispatch. No private history unless personalizationOptIn, request opt-in, scope flags and journal exclusion all permit it. Unknown warning data never implies compliance with a firm boundary; return 403 for missing AI consent, 503 if provider unavailable. Spoilers: omitted spoilerLevel means NO_SPOILERS; FULL_BOOK_SPOILERS requires fullBookSpoilersConfirmed=true in the same request; reject otherwise with 422 SPOILER_CONFIRMATION_REQUIRED before any external AI call. Never infer permission from reading progress, chat history or user profile. Firm content boundaries still apply. The model cannot guarantee absence of all spoilers.",
         "responses": {
           "200": {
             "description": "Recommendation batch, possibly empty after boundary checks",
@@ -2499,6 +2511,16 @@
           },
           "403": {
             "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Full-book spoilers requested without explicit same-request confirmation (SPOILER_CONFIRMATION_REQUIRED); no provider call",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -3933,7 +3955,10 @@
             "format": "uuid"
           },
           "displayName": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "Only editable R1 profile field. When optional onboarding is skipped, service assigns a neutral default Reader; no public profile, biography or age requirement."
           }
         },
         "required": [
@@ -3953,7 +3978,8 @@
         },
         "required": [],
         "additionalProperties": false,
-        "minProperties": 1
+        "minProperties": 1,
+        "description": "Optional progressive onboarding: PATCH displayName only if reader chooses to edit. Profile auto-created on first authenticated access; no mandatory onboarding step."
       },
       "PrivacySettings": {
         "type": "object",
@@ -4297,13 +4323,20 @@
             "type": [
               "number",
               "null"
-            ]
+            ],
+            "minimum": 1,
+            "maximum": 5,
+            "multipleOf": 0.5,
+            "description": "Optional per-reading-experience score in half-star steps from 1 to 5, or null if unrated."
           },
-          "progress": {
+          "progressPercent": {
             "type": [
-              "string",
+              "integer",
               "null"
-            ]
+            ],
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Optional whole-number completion estimate 0..100; not auto-computed from page counts or audio length, and does not imply status transition. No requirement to set 100 when FINISHED; historical records can omit it."
           }
         },
         "required": [
@@ -4311,7 +4344,8 @@
           "libraryEntryId",
           "status"
         ],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "description": " Progress and rating are independent of reading status; no automatic conversion from edition length."
       },
       "ExperienceWrite": {
         "type": "object",
@@ -4350,24 +4384,32 @@
             "type": [
               "number",
               "null"
-            ]
-          },
-          "progress": {
-            "type": [
-              "string",
-              "null"
-            ]
+            ],
+            "minimum": 1,
+            "maximum": 5,
+            "multipleOf": 0.5,
+            "description": "Optional per-reading-experience score in half-star steps from 1 to 5, or null if unrated."
           },
           "historicalImport": {
             "type": "boolean",
             "default": false,
             "description": "Required true for creating a historical reading experience directly with a terminal/paused status."
+          },
+          "progressPercent": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Optional whole-number completion estimate 0..100; not auto-computed from page counts or audio length, and does not imply status transition."
           }
         },
         "required": [
           "status"
         ],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "description": " Progress and rating are independent of reading status; no automatic conversion from edition length."
       },
       "JournalEntry": {
         "type": "object",
@@ -4541,6 +4583,14 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "spoilerLevel": {
+            "$ref": "#/components/schemas/SpoilerLevel",
+            "description": "Effective spoiler policy on a reader message/turn; may be omitted for older assistant message records."
+          },
+          "fullBookSpoilersConfirmed": {
+            "type": "boolean",
+            "description": "True only if reader explicitly authorized FULL_BOOK_SPOILERS on this turn; absent on assistant messages."
           }
         },
         "required": [
@@ -4559,12 +4609,73 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 12000
+          },
+          "spoilerLevel": {
+            "type": "string",
+            "enum": [
+              "NO_SPOILERS",
+              "FULL_BOOK_SPOILERS"
+            ],
+            "default": "NO_SPOILERS",
+            "description": "NO_SPOILERS if omitted. FULL_BOOK_SPOILERS requires explicit fullBookSpoilersConfirmed=true in the same request."
+          },
+          "fullBookSpoilersConfirmed": {
+            "type": "boolean",
+            "default": false,
+            "description": "An explicit acknowledgement for this single request; never stored as a persistent account permission."
           }
         },
         "required": [
           "body"
         ],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "spoilerLevel": {
+                  "const": "FULL_BOOK_SPOILERS"
+                }
+              },
+              "required": [
+                "spoilerLevel"
+              ]
+            },
+            "then": {
+              "required": [
+                "fullBookSpoilersConfirmed"
+              ],
+              "properties": {
+                "fullBookSpoilersConfirmed": {
+                  "const": true
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "fullBookSpoilersConfirmed": {
+                  "const": true
+                }
+              },
+              "required": [
+                "fullBookSpoilersConfirmed"
+              ]
+            },
+            "then": {
+              "required": [
+                "spoilerLevel"
+              ],
+              "properties": {
+                "spoilerLevel": {
+                  "const": "FULL_BOOK_SPOILERS"
+                }
+              }
+            }
+          }
+        ],
+        "description": " Default NO_SPOILERS if omitted. FULL_BOOK_SPOILERS is allowed only with an explicit true confirmation in this request; it does not override content boundaries or AI-processing consent."
       },
       "MemoryProposal": {
         "type": "object",
@@ -4690,13 +4801,74 @@
             "uniqueItems": true,
             "default": [],
             "description": "Explicit per-request exception IDs, authorized against reader-owned firm boundaries."
+          },
+          "spoilerLevel": {
+            "type": "string",
+            "enum": [
+              "NO_SPOILERS",
+              "FULL_BOOK_SPOILERS"
+            ],
+            "default": "NO_SPOILERS",
+            "description": "NO_SPOILERS if omitted. FULL_BOOK_SPOILERS requires explicit fullBookSpoilersConfirmed=true in the same request."
+          },
+          "fullBookSpoilersConfirmed": {
+            "type": "boolean",
+            "default": false,
+            "description": "An explicit acknowledgement for this single request; never stored as a persistent account permission."
           }
         },
         "required": [
           "mode",
           "usePersonalContext"
         ],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "spoilerLevel": {
+                  "const": "FULL_BOOK_SPOILERS"
+                }
+              },
+              "required": [
+                "spoilerLevel"
+              ]
+            },
+            "then": {
+              "required": [
+                "fullBookSpoilersConfirmed"
+              ],
+              "properties": {
+                "fullBookSpoilersConfirmed": {
+                  "const": true
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "fullBookSpoilersConfirmed": {
+                  "const": true
+                }
+              },
+              "required": [
+                "fullBookSpoilersConfirmed"
+              ]
+            },
+            "then": {
+              "required": [
+                "spoilerLevel"
+              ],
+              "properties": {
+                "spoilerLevel": {
+                  "const": "FULL_BOOK_SPOILERS"
+                }
+              }
+            }
+          }
+        ],
+        "description": " Default NO_SPOILERS if omitted. FULL_BOOK_SPOILERS is allowed only with an explicit true confirmation in this request; it does not override content boundaries or AI-processing consent."
       },
       "Recommendation": {
         "type": "object",
@@ -5697,18 +5869,26 @@
             "type": [
               "number",
               "null"
-            ]
+            ],
+            "minimum": 1,
+            "maximum": 5,
+            "multipleOf": 0.5,
+            "description": "Optional per-reading-experience score in half-star steps from 1 to 5, or null if unrated."
           },
-          "progress": {
+          "progressPercent": {
             "type": [
-              "string",
+              "integer",
               "null"
-            ]
+            ],
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Optional whole-number completion estimate 0..100; not auto-computed from page counts or audio length, and does not imply status transition."
           }
         },
         "required": [],
         "additionalProperties": false,
-        "minProperties": 1
+        "minProperties": 1,
+        "description": " Progress and rating are independent of reading status; no automatic conversion from edition length."
       },
       "JournalPatch": {
         "type": "object",
@@ -6012,7 +6192,8 @@
         "required": [
           "requestId",
           "items",
-          "providerStatus"
+          "providerStatus",
+          "spoilerLevel"
         ],
         "additionalProperties": false,
         "properties": {
@@ -6038,6 +6219,10 @@
               "string",
               "null"
             ]
+          },
+          "spoilerLevel": {
+            "$ref": "#/components/schemas/SpoilerLevel",
+            "description": "Effective per-request spoiler policy applied to this batch."
           }
         }
       },
@@ -6046,7 +6231,8 @@
         "required": [
           "userMessage",
           "assistantMessage",
-          "proposalIds"
+          "proposalIds",
+          "spoilerLevel"
         ],
         "additionalProperties": false,
         "properties": {
@@ -6062,6 +6248,10 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          "spoilerLevel": {
+            "$ref": "#/components/schemas/SpoilerLevel",
+            "description": "Effective spoiler policy used for this turn."
           }
         }
       },
@@ -6097,6 +6287,15 @@
             ]
           }
         }
+      },
+      "SpoilerLevel": {
+        "type": "string",
+        "enum": [
+          "NO_SPOILERS",
+          "FULL_BOOK_SPOILERS"
+        ],
+        "default": "NO_SPOILERS",
+        "description": "Per-request AI spoiler policy. NO_SPOILERS is the default, not a guarantee of error-free model output."
       }
     }
   },
