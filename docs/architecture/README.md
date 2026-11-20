@@ -1,6 +1,6 @@
 # KTOB — Architecture and service contracts v0.2
 
-**Status:** R1 product defaults **approved by user** and recorded in UML/OpenAPI/conceptual persistence; overall Gate B architecture is **not yet signed off**, Gate C closed. No implementation. **No backend code, SQL migration, database modification, or deployment.**
+**Status:** R1 product defaults approved, core architecture ready for local implementation through the [engineering handoff](../implementation/README.md). Independent B13/B15/B16 provider/deletion gates remain closed. This repository still has no application runtime, SQL migration applied, or deployment.
 
 This architecture package must be reviewed together with the [16 PlantUML diagrams](../uml/README.md). The [OpenAPI 3.1 design contract](openapi.json) describes the exact proposed HTTP operations. It does **not** describe a running API.
 
@@ -11,10 +11,11 @@ This architecture package must be reviewed together with the [16 PlantUML diagra
 3. [Conceptual persistence model](03-persistence-model.md)
 4. [Security and AI privacy](04-security-privacy.md)
 5. [External integration and deployment](05-integrations-deployment.md)
-6. [Human review gates](06-review-gates.md)
+6. [Engineering readiness and restrictions](06-review-gates.md)
 7. [Gate B decision review and approval register](08-gate-b-decision-review.md)
 8. [Cross-document consistency matrix](07-consistency-matrix.md)
 9. [OpenAPI draft](openapi.json)
+10. [Complete implementation handoff](../implementation/README.md)
 
 ## Baseline and scope
 
@@ -36,4 +37,4 @@ This architecture package must be reviewed together with the [16 PlantUML diagra
 7. A memory proposal remains pending until explicit acceptance. Revocation is terminal; editing never reactivates it.
 8. Saved offers are immutable historical observations and do not imply purchase; acquisition never changes reading state. Provider-unavailable results are empty with explicit metadata.
 
-**Do not claim Gate B or Gate C approval solely because syntax and source references pass.** See the [proposed Gate B decision register](08-gate-b-decision-review.md) before any contract or implementation change.
+**Core implementation can begin** under the scoped [handoff](../implementation/README.md); neither a green documentation build nor this handoff approves external AI calls, verified live seller claims, or full account deletion. See the [decision register](../implementation/11-risk-and-decision-register.md).

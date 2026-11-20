@@ -4,11 +4,15 @@ on:
     paths:
       - 'docs/uml/**'
       - 'docs/architecture/**'
+      - 'docs/implementation/**'
+      - 'README.md'
       - '.github/workflows/uml-validation.yml'
   pull_request:
     paths:
       - 'docs/uml/**'
       - 'docs/architecture/**'
+      - 'docs/implementation/**'
+      - 'README.md'
       - '.github/workflows/uml-validation.yml'
 permissions:
   contents: read
@@ -51,6 +55,8 @@ jobs:
         run: |
           python3 -m json.tool docs/architecture/openapi.json > /dev/null
           "$RUNNER_TEMP/schema-validation/bin/python" docs/architecture/validate_contract.py
+      - name: Check implementation handoff and all API operation assignments
+        run: python3 docs/implementation/validate_handoff.py
       - name: Install pinned OpenAPI parser
         run: |
           npm install --prefix "$RUNNER_TEMP/openapi-validation" --no-save \

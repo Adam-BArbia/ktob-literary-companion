@@ -95,3 +95,8 @@ The export currently covers **five sets of essentials**, not every stored person
 3. Validate the revised diagrams, API and regression tests in CI.
 4. Request a separate, **explicit Gate B architecture sign-off** after reviewing all remaining blockers.
 5. Gate C implementation authorization remains a later, separate decision.
+
+
+## Implementation handoff (2026-11-20)
+
+On the reader's subsequent instruction to finalize documents required to begin coding, [an engineering handoff](../implementation/README.md) was established. This permits working on the first-party/core increments while retaining B13/B15/B16 as separate closed gates. **It is not approval to transmit personal data to an unqualified AI provider, provide fabricated live merchant offers, or activate full account deletion.** See [readiness gates](06-review-gates.md).

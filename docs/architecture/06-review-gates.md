@@ -1,37 +1,36 @@
-# KTOB review gates after consistency remediation
+# KTOB — Engineering handoff gates (2026-11-20)
 
-## Gate A — documentation remediation
+## Scope of this readiness decision
 
-All 16 UML sources are preserved with the original filenames. OpenAPI includes 57 deliberate R1 operations (55 originally audited + collection-member GET + library restore POST), with corrected DTOs, reading states, recommendation batch, offer metadata and consent controls. Cross-document matrix is at [07-consistency-matrix.md](07-consistency-matrix.md). **Technical validation is necessary but does not grant product approval.**
+On 2026-11-20 the reader requested **all documents needed to begin implementation**. Previously they approved R1 product defaults B01–B12 and B14. The [implementation handoff](../implementation/README.md) is now the actionable baseline for initial engineering work, not a production release certificate.
 
-## Gate B — human architecture review (NOT yet approved)
+**Gate A documentation:** 16 named UML files, 35-path/57-operation OpenAPI v0.3, conceptual persistence and cross-document consistency tests completed.
 
-**R1 product defaults B01–B12 and B14 approved by the user (2026-11-20)**. The UML/OpenAPI/persistence contracts were updated accordingly. This **does not** mean the full architecture Gate B is signed off; external-provider selection, full-account-deletion/retention policy and any additional academic rubric details are still open. Gate C remains closed.
+**Gate B core architecture:** implementation-ready **for M0–M3 / first-party features**, subject to actual test and security verification during coding. The accepted protocol direction is REST/JSON based on the user-shared “SOAP ou REST” assignment; full faculty rubric/deadline not independently reviewed. This is **not** sign-off that provider-dependent full Complete Core Experience is working.
 
-The [approved R1 product-default register](08-gate-b-decision-review.md) records user-reported assignment wording, current academic evidence and reader-approved product choices. Overall Gate B remains open. It does not authorize implementation.
+**Gate C implementation execution:** **ready for local Sprint 0; no application code has yet been created.** Building Java/Angular scaffold, local DB migrations, Open Library adapter, authenticated library, reading, journal, privacy, copies history and essentials export may proceed when coding begins. This documentation request itself did **not** run migrations or deploy anything.
 
-- [x] Recover the earlier user-provided assignment wording: **"SOAP ou REST"** permits REST; frontend must consume Java service and Java must consume a free external web service. This is based on the user's prior statement, not an attached official PDF.
-- [ ] Check whether a later complete rubric adds extra demonstration/registry/deployment instructions, and confirm validation date (**unverified**).
-- [x] Approve one Spring Boot modular deployable versus required physical services. **(Approved as R1 product default; implementation pending.)**
-- [x] Approve canonical work global/private visibility and handling of near-duplicate catalog works. **(Approved as R1 product default; implementation pending.)**
-- [x] Approve shelf projection, historical imports, single-open reading and terminal states. **(Approved as R1 product default; implementation pending.)**
-- [x] Approve non-destructive library archive/restore and what appears in collection lists and R1 exports. **(Approved as R1 product default; implementation pending.)**
-- [x] Approve or amend decision proposals B05–B08: rating scale, typed progress percentage, minimal profile fields, and explicit spoiler level. **(Approved as R1 product default; implementation pending.)**
-- [x] Approve consent defaults, scope model and per-journal exclusion semantics (B09); **provider retention/feasibility still BLOCKED**, and consent UX implementation not started.
-- [x] Approve uncertain content-warning behavior and explicit request-scoped exceptions. **(Approved as R1 product default; implementation pending.)**
-- [ ] Select and independently verify a seller-research source/coverage/legal use (**BLOCKED**).
-- [x] Approve memory proposal traceability and terminal revocation. **(Approved as R1 product default; implementation pending.)**
-- [x] Approve B12 R1 five-array JSON essentials export as *partial*, not complete archive. Complete portability remains unapproved.
-- [ ] Approve full account deletion: recent reauth, revocation, retention, third-party data (**BLOCKED**); note full data erasure differs from the five-array essentials export.
-- [x] Review idempotency key retention and request-body replay behavior. **(Approved as R1 product default; implementation pending.)**
-- [ ] Run PlantUML parser/render checks and maintained OpenAPI validation in CI (see workflow), plus semantic parity checks.
-- [ ] Confirm no orphaned foreign keys/cross-reader collection/memory references.
-- [ ] Final human Gate B architecture sign-off: ensure all approved defaults are consistently represented in 16 UML diagrams, OpenAPI and conceptual persistence; resolve provider/deletion limitations or explicitly approve their degraded/demo scope.
+**Independent feature gates remain CLOSED:**
 
-## Gate C — implementation authorization (NOT approved)
+- **B13** full account deletion: no DELETE /me route, no UI claim of complete erasure until recent reauth/retention/backup/provider policies are approved.
+- **B15** verified live seller search: return explicit unavailable state, allow labelled USER_SUPPLIED historical saved offers; do not fabricate merchant/price.
+- **B16** AI provider: implement port plus disabled/fail-closed behavior, no live external AI calls until vendor/model access, data retention, privacy and quotas approved.
 
-Only after Gate B explicit sign-off: scaffold Angular/Spring Boot, author reviewed Flyway migrations, configure Supabase and service secrets, set up Render/Vercel deployment and acceptance tests. **No application code or deployment is part of Gate A.**
+## Evidence checklist
 
-## Semantic safety checks
+- [x] Reader approved R1 product defaults B01–B12/B14.
+- [x] Java REST + Angular + Open Library meets the previously user-reported protocol and external-service direction.
+- [x] 16 diagrams, API v0.3, conceptual data model, user privacy and spoofing/IDOR safeguards documented.
+- [x] Implementation handoff covering repository structure, migration blueprint, frontend routes, integration ports, security, tests, deployment, backlog and all 57 API operations.
+- [ ] Actual application scaffold and build CI (Sprint 0).
+- [ ] Nonproduction PostgreSQL migrations reviewed and tested (Sprint 1).
+- [ ] Independent Java↔Open Library call + Angular→Java path demonstrated (Sprint 1).
+- [ ] User-facing and security acceptance tests, provider failure cases, cold-start/deployment verification (later).
+- [ ] Complete official academic rubric, any additional deliverables and final validation date.
+- [ ] B13/B15/B16 external decisions separately approved for respective functionality.
 
-AI processing consent checked before every outbound call; personalization checked separately and journal flags respected; no WANT_TO_READ ReadingExperience; no concurrent open readings; one private/manual work identity; exact-owner library membership; source contributor role; no destructive library cascades; endpoint pagination parity; no active memory reactivation; offers use immutable observedAt; no inferred acquisition. Unknown academic/provider facts remain labelled **BLOCKED**.
+## Change control
+
+If implementation discovers a contradictory invariant, update OpenAPI, affected UML, architecture and handoff and run the contract suite in one PR. Do not silently change rating/progress/spoiler policy or reinterpret a soft archive as deletion. A green documentation CI does **not** prove application tests or security in production.
+
+The prior detailed [Gate B product approval register](08-gate-b-decision-review.md) remains historical evidence. This handoff allows work to **start**; it does not declare the project **finished**.

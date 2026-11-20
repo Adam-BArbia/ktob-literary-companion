@@ -2,14 +2,38 @@
 
 **Read. Reflect. Discover.**
 
-KTOB is a private literary companion for personal libraries, reading journals, contextual book recommendations, literary conversations, and book discovery.
+KTOB is a private literary companion centered on personal reading libraries, journal reflections, carefully controlled AI advice, and sourced book acquisition history.
 
-## Project status
+## Current state — implementation handoff ready (2026-11-20)
 
-**Modelling phase.** No application implementation has started.
+The repository currently contains **documentation, UML, API contracts and automated validation**, not a running Java/Angular application. **User-approved R1 product defaults** have been frozen in [OpenAPI v0.3](docs/architecture/openapi.json).
 
-- [UML documentation and editable diagrams](docs/uml/README.md)
-- Planned stack: Angular + TypeScript + Tailwind CSS; Java / Spring Boot; Supabase PostgreSQL; Vercel frontend; Render backend.
-- Current release: **Complete Core Experience (B)**. Future enhancements are explicitly separated in the UML documentation.
+**Start here:** [Implementation handoff](docs/implementation/README.md) → [Sprint backlog](docs/implementation/10-sprint-backlog.md) → [First implementation checklist](docs/implementation/12-start-implementation-checklist.md).
 
-The backend deployment target is one **modular Spring Boot application** for the academic release, with logically separated business responsibilities, not a claim of independently deployed microservices. REST/JSON is provisional until the professor's exact SOAP/REST requirement is verified.
+### Architecture
+
+- **Frontend:** Angular 22, TypeScript, Tailwind CSS → Vercel (planned).
+- **Backend:** Java 21 / Spring Boot 4.1.x, one modular deployable → Render (planned).
+- **Identity and persistence:** Supabase Auth + PostgreSQL in private `app` schema, Java-only business APIs.
+- **External free web service for SOA project:** Open Library book metadata via Java; manual private fallback if unavailable.
+- **API contract:** [35 paths / 57 operations](docs/architecture/openapi.json); [all-operation implementation coverage](docs/implementation/13-api-coverage.md).
+- **Modelling:** [16 editable PlantUML diagrams](docs/uml/README.md); [architecture decisions and persistence](docs/architecture/README.md).
+
+### Allowed implementation boundary
+
+The documented first-party core (M0–M3) is **ready to implement locally**. Implementing disabled adapter contracts and their truthful UI states is also allowed. **Do not enable unapproved AI vendor traffic, advertise unverified live bookstore prices, or expose full-account deletion.** The B13/B15/B16 decisions remain tracked in [the risk register](docs/implementation/11-risk-and-decision-register.md).
+
+The university requirements previously shared permit a Java **REST or SOAP** service, a frontend consuming the team's Java service, and Java consuming a free online service; the full official rubric/deadline is still unverified.
+
+## Local update (Windows CMD)
+
+```bat
+cd /d C:\dev\ktob-literary-companion
+git pull origin main
+where java
+java -version
+```
+
+**Java must resolve to JDK 21**, not the Oracle Java 8 path previously taking precedence. See [Windows setup and deployment](docs/implementation/08-local-dev-ci-deploy.md) before generating the application.
+
+Current GitHub Actions validate UML and architecture/contracts; application build CI must be added with Sprint 0. No database migrations or deployment have been run by this documentation handoff.
