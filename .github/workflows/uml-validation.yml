@@ -29,9 +29,16 @@ jobs:
         run: java -jar "$RUNNER_TEMP/plantuml.jar" -checkonly -stdrpt docs/uml/*.puml
       - name: Render all 16 diagrams
         run: |
+          command -v dot
+          dot -V
+          export GRAPHVIZ_DOT="$(command -v dot)"
           mkdir -p "$RUNNER_TEMP/uml-output"
           java -jar "$RUNNER_TEMP/plantuml.jar" -tsvg -o "$RUNNER_TEMP/uml-output" docs/uml/*.puml
           test "$(find "$RUNNER_TEMP/uml-output" -maxdepth 1 -name '*.svg' | wc -l)" -eq 16
+          if grep -r -E -i "cannot run program|syntax error|graphviz error" "$RUNNER_TEMP/uml-output"/*.svg; then
+            echo "PlantUML generated an error diagram" >&2
+            exit 1
+          fi
       - name: Parse JSON and cross-check contracts
         run: |
           python3 -m json.tool docs/architecture/openapi.json > /dev/null

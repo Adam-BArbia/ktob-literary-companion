@@ -19,7 +19,8 @@ Advisor -> DB : reader-scoped preference query
 DB --> Advisor : records
 Advisor --> Export : preferences
 Export -> Export : assemble v1 JSON (5 arrays)
-Export --> UI : 200 application/json {data: Export}
+Export --> API : R1 export JSON
+API --> UI : 200 application/json {data: Export}
 UI --> Reader : save personal copy
 note over Export,DB
 Does not claim full archive: chat, memory, offers,

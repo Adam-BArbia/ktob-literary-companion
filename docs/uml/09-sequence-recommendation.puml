@@ -27,19 +27,22 @@ else Processing authorized
  Advisor -> Privacy : recheck processing authorization before dispatch
  alt Consent revoked before dispatch
   Privacy --> Advisor : denied
-  Advisor --> UI : 403; no external request
+  Advisor --> API : processing consent revoked
+API --> UI : 403; no external request
  else Still authorized
   Privacy --> Advisor : allowed
   Advisor -> AI : prompt + explicitly authorized context
   alt AI provider unavailable
    AI --> Advisor : unavailable
-   Advisor --> UI : 503 problem+json
+   Advisor --> API : provider unavailable
+API --> UI : 503 problem+json
   else AI response
    AI --> Advisor : candidate suggestions
    Advisor -> Privacy : verify boundaries and provenance
    Privacy --> Advisor : reject unsafe/unknown-as-safe candidates
    Advisor -> DB : save request and 0..N qualified items
-   Advisor --> UI : 200 RecommendationResult(requestId, items[], providerStatus)
+   Advisor --> API : RecommendationResult(requestId, items[], providerStatus)
+API --> UI : 200 RecommendationResult
   end
  end
 end

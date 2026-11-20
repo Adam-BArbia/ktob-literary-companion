@@ -15,23 +15,27 @@ alt Verified seller provider configured and available
  Adapter -> Seller : request verified listings
  Seller --> Adapter : sourced offers, observedAt
  Adapter --> Acquisition : verified result
- Acquisition --> UI : 200 data[] meta.providerStatus=OK/PARTIAL
+ Acquisition --> API : verified offers
+API --> UI : 200 data[] meta.providerStatus=OK/PARTIAL
 else Provider unavailable or unselected
- Acquisition --> UI : 200 data=[] meta.providerStatus=UNAVAILABLE
+ Acquisition --> API : unavailable result
+API --> UI : 200 data=[] meta.providerStatus=UNAVAILABLE
 end
 opt Reader saves observed listing
  Reader -> UI : Enter source URL / observation details
  UI -> API : POST /library/{entryId}/saved-offers
  API -> Acquisition : verify entry ownership and sourceType
  Acquisition -> DB : persist immutable observedAt snapshot (USER_SUPPLIED)
- Acquisition --> UI : 201 saved offer
+ Acquisition --> API : saved historical offer
+API --> UI : 201 saved offer
 end
 opt Reader explicitly obtains a copy
  Reader -> UI : Record owned/borrowed/digital access
  UI -> API : POST /library/{entryId}/acquisitions
  API -> Acquisition : authenticate/authorize and deduplicate
  Acquisition -> DB : persist acquisition, no reading status changes
- Acquisition --> UI : 201 acquisition
+ Acquisition --> API : acquisition recorded
+API --> UI : 201 acquisition
 end
 note over UI,DB
 Saving an offer or visiting a seller never means purchase.

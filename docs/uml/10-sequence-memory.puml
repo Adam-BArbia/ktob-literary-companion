@@ -11,22 +11,26 @@ Reader -> UI : Send text to owned conversation
 UI -> API : POST /conversations/{id}/messages
 API -> Privacy : verify JWT, conversation owner, AI processing opt-in
 alt AI consent missing
- Privacy --> UI : 403 consent-required problem; no provider call
+ Privacy --> API : consent denied
+API --> UI : 403 consent-required problem; no provider call
 else Authorized
  Privacy --> Advisor : processing authorized
  Advisor -> Privacy : verify again at AI dispatch time
  alt Consent revoked
-  Privacy --> UI : 403; no persisted turn / call
+  Privacy --> API : consent revoked
+API --> UI : 403; no persisted turn / call
  else Dispatch authorized
   Advisor -> AI : user text + permitted conversation/context
   alt Provider unavailable
    AI --> Advisor : timeout / unavailable
-   Advisor --> UI : 503; no committed turn
+   Advisor --> API : provider unavailable
+API --> UI : 503; no committed turn
   else Provider reply
    AI --> Advisor : reply + optional memory suggestions
    Advisor -> DB : atomically persist reader+assistant messages and pending proposals
    DB --> Advisor : saved turn
-   Advisor --> UI : 201 ConversationTurn(userMessage, assistantMessage, proposalIds)
+   Advisor --> API : ConversationTurn(userMessage, assistantMessage, proposalIds)
+API --> UI : 201 ConversationTurn
   end
  end
 end

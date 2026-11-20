@@ -19,16 +19,19 @@ else Explicit historical import
  Library -> DB : insert past experience, preserve existing
  DB --> Library : new historical experience
 end
-Library --> UI : 201 experience
+Library --> API : experience
+API --> UI : 201 experience
 Reader -> UI : Update status / dates / progress
 UI -> API : PATCH /experiences/{id}
 API -> Guard : validate experience owner
 API -> Library : validate transition / no conflicting open record
 alt Transition invalid
- Library --> UI : 422 invalid transition
+ Library --> API : invalid transition
+API --> UI : 422 invalid transition
 else Transition valid
  Library -> DB : update selected experience only
- Library --> UI : 200 experience
+ Library --> API : updated experience
+API --> UI : 200 experience
 end
 opt Reader saves reflection
  Reader -> UI : Journal content + personalization exclusion
@@ -36,7 +39,8 @@ opt Reader saves reflection
  API -> Guard : check experience owner
  API -> Library : save with allowForPersonalization flag
  Library -> DB : insert note
- Library --> UI : 201 journal entry
+ Library --> API : saved journal entry
+API --> UI : 201 journal entry
 end
 note over Library,DB
 Library shelf is derived, not persisted as experience status.
