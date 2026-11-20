@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /** The test-only routes below never enter src/main or the published 57 operations. */
 @SpringBootTest
-@AutoConfigureMockMvc
+@AutoConfigureMockMvc(addFilters = false)
 @Import(ApiExceptionHandlerTest.ProbeController.class)
 class ApiExceptionHandlerTest {
 

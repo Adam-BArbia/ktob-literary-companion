@@ -1,5 +1,17 @@
 {
   "contract": "docs/architecture/openapi.json",
-  "notes": "Only list implemented Java routes here. Never register a placeholder to make CI green.",
-  "implemented": ["liveness"]
+  "notes": "Only include controller methods with real tests. DB-dependent operations require KTOB_DB_ENABLED=true and verified JWT.",
+  "implemented": [
+    "liveness",
+    "getMyProfile",
+    "updateMyProfile",
+    "searchWorks",
+    "getWork",
+    "createPrivateManualWork",
+    "listMyLibrary",
+    "addWorkToLibrary",
+    "getMyLibraryEntry",
+    "removeMyLibraryEntry",
+    "restoreMyLibraryEntry"
+  ]
 }

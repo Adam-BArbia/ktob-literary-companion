@@ -67,8 +67,14 @@ jobs:
           cache: maven
           cache-dependency-path: apps/api/pom.xml
 
-      - name: Build and test Java backend
+      - name: Build and test Java backend against disposable PostgreSQL
         working-directory: apps/api
+        env:
+          KTOB_TEST_POSTGRES: 'true'
+          KTOB_AUTO_MIGRATE: 'true'
+          DATABASE_JDBC_URL: jdbc:postgresql://127.0.0.1:5432/ktob_test
+          DATABASE_USERNAME: ktob_test
+          DATABASE_PASSWORD: test-only-ephemeral-password
         run: ./mvnw -B -ntp clean verify
 
       - name: Set up Node 24

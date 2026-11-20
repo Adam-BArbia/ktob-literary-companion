@@ -6,7 +6,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 /** Public API liveness endpoint. No authentication or external dependency required. */
 @RestController
-@org.springframework.web.bind.annotation.CrossOrigin(origins = "${ktob.health.allowed-origin:http://localhost:4200}")
 public class HealthController {
 
     private static final HealthResponse OK = new HealthResponse("ok");
