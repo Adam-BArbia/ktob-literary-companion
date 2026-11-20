@@ -1,0 +1,68 @@
+# KTOB Java API — Sprint 0 / KTOB-001
+
+**Status:** Basic Spring Boot backend is implemented; full SOA, security, database, AI and frontend features are **not implemented yet**. This backend is intentionally small and can run without secrets or a Supabase project.
+
+## Toolchain
+
+- Java **21** (not Java 8)
+- Spring Boot **4.1.3**, Spring MVC web application
+- Apache Maven **3.10.1** via the checked-in official Apache Maven Wrapper 3.3.4 scripts; system Maven installation is not required
+- GroupId: `tn.ktob`; artifact: `ktob-api`
+- Local development port: `8080` (override using `PORT` environment variable)
+
+## Windows CMD — build and run
+
+```bat
+cd /d C:\dev\ktob-literary-companion
+git pull origin main
+cd apps\api
+mvnw.cmd -version
+mvnw.cmd -B -ntp clean verify
+mvnw.cmd spring-boot:run
+```
+
+The first invocation downloads a Maven distribution/dependencies from Maven Central if necessary. Ensure `java -version` and `javac -version` both show **21**. If CMD finds Java 8, run `dir /b "C:\Program Files\Eclipse Adoptium"` and, if the `jdk-21...` folder is present, in that CMD session:
+
+```bat
+set "JAVA_HOME="
+for /d %D in ("C:\Program Files\Eclipse Adoptium\jdk-21*") do @set "JAVA_HOME=%~fD"
+set "PATH=%JAVA_HOME%\bin;%PATH%"
+java -version
+javac -version
+where java
+```
+
+**This PATH adjustment is temporary for the open CMD window.** Do not run it blindly if `jdk-21...` was not found.
+
+## API contract: health
+
+```http
+GET http://localhost:8080/api/v1/health
+Accept: application/json
+```
+
+Expected HTTP 200 with `Content-Type: application/json`:
+
+```json
+{"status":"ok"}
+```
+
+Verify in another CMD window using:
+
+```bat
+curl.exe -i http://localhost:8080/api/v1/health
+```
+
+Browser: http://localhost:8080/api/v1/health . Stop the server with `Ctrl+C`.
+
+The path and exact response shape are defined by `docs/architecture/openapi.json` (`GET /health` under the `/api/v1` server prefix). Other API operations are not yet available. No Supabase connections, database migrations, external AI keys or live seller source exist in this task.
+
+## Tests and next steps
+
+- `KtobApplicationTests.contextLoads` — Spring context bootstraps.
+- `HealthControllerTest.livenessMatchesThePublishedOpenApiContract` — verifies HTTP 200, JSON response and expected status.
+- `HealthControllerTest.livenessDoesNotDependOnAuthentication` — public endpoint remains reachable.
+
+GitHub Actions workflow `.github/workflows/api-ci.yml` runs `./mvnw -B -ntp verify` on Java 21 for changes to `apps/api`. The full document-only pipeline remains separate.
+
+**Next**: KTOB-002 Angular app scaffold, KTOB-003 workspace/env hygiene and KTOB-005 RFC 9457 error envelope. No auth/database code before their dedicated Sprint 1 tasks.

@@ -1,0 +1,15 @@
+# Build outputs and editor state
+target/
+*.class
+.project
+.classpath
+.settings/
+.idea/
+*.iml
+
+# Local secrets / profiles
+.env
+.env.*
+!.env.example
+application-local.yml
+application-local.yaml

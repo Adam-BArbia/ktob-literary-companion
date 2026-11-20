@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: ktob-api
+
+server:
+  port: ${PORT:8080}

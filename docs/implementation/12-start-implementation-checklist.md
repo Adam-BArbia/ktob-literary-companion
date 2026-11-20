@@ -11,7 +11,8 @@
 - [x] Security, consent, spoilers, archives, read experiences covered.
 - [x] Windows development/deployment instructions specified.
 - [x] Test matrix, demo evidence and backlog ordered.
-- [ ] Application directories and Java/Angular runtime code **not created yet**.
+- [x] **KTOB-001:** Java 21 / Spring Boot 4.1.3 API scaffold, Maven Wrapper, `GET /api/v1/health`, integration/context tests and backend CI added under `apps/api`.
+- [ ] KTOB-002 Angular app scaffold and complete Sprint 0 CI remain to be built.
 - [ ] AI provider, live seller provider, full account deletion **remain gated**.
 - [ ] Complete professor rubric and validation date **not independently verified**.
 
