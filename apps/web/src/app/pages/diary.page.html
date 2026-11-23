@@ -1,0 +1,201 @@
+<section class="diary-page">
+  <header class="diary-header">
+    <div>
+      <p class="eyebrow">A life, one book at a time</p>
+      <h1 class="page-heading">My reading <em>diary.</em></h1>
+      <p class="page-description">The last pages, the new beginnings, and everything you keep.</p>
+    </div>
+    <a routerLink="/library" class="btn btn-secondary"
+      ><ktob-icon name="library" [size]="17" /> My library</a
+    >
+  </header>
+  @if (loading()) {
+    <div class="diary-loading" role="status">
+      <ktob-icon name="book-open" [size]="28" />
+      <p>Gathering your reading life…</p>
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+    </div>
+  } @else if (error()) {
+    <div class="notice notice-error" role="alert">
+      <p>{{ error() }}</p>
+      @if (needsSignIn()) {
+        <a routerLink="/auth" [queryParams]="{ returnUrl: '/diary' }" class="text-link"
+          >Sign in again</a
+        >
+      } @else {
+        <button type="button" class="btn btn-secondary" (click)="load()">Try again</button>
+      }
+    </div>
+  } @else {
+    @if (partial()) {
+      <p class="notice partial-notice" role="status">
+        This diary covers up to 100 of your most recently saved books and the latest 100 readings of
+        each. The figures below describe these loaded records, not your complete lifetime totals.
+        Earlier records remain available from each book.
+      </p>
+    }
+    <section class="reading-statistics" aria-label="Your recorded reading statistics">
+      <div class="stat">
+        <span class="stat-number">{{ stats().library }}</span
+        ><span class="stat-label">Books on your shelf</span>
+      </div>
+      <div class="stat">
+        <span class="stat-number">{{ stats().finished }}</span
+        ><span class="stat-label">Books finished</span>
+      </div>
+      <div class="stat">
+        <span class="stat-number">{{ stats().reading }}</span
+        ><span class="stat-label">Currently reading</span>
+      </div>
+      <div class="stat">
+        <span class="stat-number">{{ stats().rated }}</span
+        ><span class="stat-label">Rated readings</span>
+      </div>
+      <div class="stat">
+        <span class="stat-number">{{ stats().average }}<small> / 5</small></span
+        ><span class="stat-label">Average personal rating</span>
+      </div>
+      <div class="stat">
+        <span class="stat-number">{{ stats().thisYear }}</span
+        ><span class="stat-label">Reads finished in {{ year }}</span>
+      </div>
+    </section>
+    <p class="statistics-note">
+      Finished books are counted once; rereads keep their own ratings. Dated and undated readings
+      are included, including archived books. The yearly count uses recorded finishing dates.
+    </p>
+    <div class="diary-toolbar">
+      <div class="diary-filters" role="group" aria-label="Filter reading diary">
+        @for (option of filters; track option.value) {
+          <button
+            type="button"
+            [class.selected]="filter() === option.value"
+            [attr.aria-pressed]="filter() === option.value"
+            (click)="filter.set(option.value)"
+          >
+            {{ option.label }}
+          </button>
+        }
+      </div>
+      <span class="private-label"><ktob-icon name="lock" [size]="13" /> Just for you</span>
+    </div>
+    @if (metadataMissing()) {
+      <p class="notice partial-notice">
+        Some book titles could not be loaded. Your recorded readings and statistics are still shown
+        accurately.<button type="button" class="retry-link" (click)="load()">Retry titles</button>
+      </p>
+    }
+    @if (!rows().length) {
+      <section class="diary-empty">
+        <div class="diary-empty-icon"><ktob-icon name="book-open" [size]="32" /></div>
+        <p class="eyebrow">Your next chapter starts here</p>
+        <h2>A reading life worth remembering.</h2>
+        <p>
+          Open a book from your library, start reading or log a finished read, then give it a few
+          stars and a few words. It will find its place here.
+        </p>
+        <a routerLink="/library" class="btn btn-primary"
+          >Open my library<ktob-icon name="arrow-right" [size]="17"
+        /></a>
+      </section>
+    } @else if (!groups().length) {
+      <section class="diary-empty filtered-empty">
+        <h2>No readings here yet.</h2>
+        <p>Try a different reading status to turn back a few pages.</p>
+        <button type="button" class="btn btn-secondary" (click)="filter.set('ALL')">
+          Show all readings
+        </button>
+      </section>
+    } @else {
+      <div class="diary-timeline">
+        @for (group of groups(); track group.key) {
+          <section class="diary-month" [attr.aria-labelledby]="'month-' + group.key">
+            <div class="month-heading">
+              <span class="month-dot" aria-hidden="true"></span>
+              <h2 [id]="'month-' + group.key">{{ group.label }}</h2>
+              <span
+                >{{ group.rows.length }}
+                {{ group.rows.length === 1 ? 'reading' : 'readings' }}</span
+              >
+            </div>
+            <div class="month-readings">
+              @for (row of group.rows; track row.reading.id; let i = $index) {
+                <article class="diary-reading">
+                  <a
+                    class="diary-cover"
+                    [routerLink]="['/books', row.entry.id]"
+                    [queryParams]="{ reading: row.reading.id }"
+                    [attr.aria-label]="'Open reading of ' + (row.work?.title || 'book')"
+                    ><ktob-book-cover
+                      [title]="row.work?.title || 'Title unavailable'"
+                      [author]="row.work?.authors?.[0] || ''"
+                      [variant]="i"
+                      [compact]="true"
+                  /></a>
+                  <div class="diary-book">
+                    <div class="reading-labels">
+                      <span
+                        class="status-label"
+                        [class.finished]="row.reading.status === 'FINISHED'"
+                        >{{ statusLabel(row.reading.status) }}</span
+                      >
+                      @if (row.entry.archivedAt) {
+                        <span class="archived-label">Archived book</span>
+                      }
+                      @if (row.entry.favorite) {
+                        <span class="favorite-mark"
+                          ><ktob-icon name="heart" [size]="14" /><span class="sr-only"
+                            >Favorite book</span
+                          ></span
+                        >
+                      }
+                    </div>
+                    <h3>
+                      <a
+                        [routerLink]="['/books', row.entry.id]"
+                        [queryParams]="{ reading: row.reading.id }"
+                        >{{ row.work?.title || 'Title unavailable' }}</a
+                      >
+                    </h3>
+                    <p class="diary-author">
+                      {{ row.work?.authors?.join(', ') || 'Author not listed' }}
+                    </p>
+                    <div class="reading-date">
+                      <ktob-icon name="clock" [size]="13" />{{
+                        row.reading.finishedOn
+                          ? row.reading.status === 'DID_NOT_FINISH'
+                            ? 'Ended '
+                            : 'Finished '
+                          : row.reading.startedOn
+                            ? 'Started '
+                            : ''
+                      }}{{ formatDate(row.reading.finishedOn || row.reading.startedOn) }}
+                    </div>
+                  </div>
+                  <div class="diary-reading-end">
+                    @if (row.reading.rating != null) {
+                      <ktob-rating [value]="row.reading.rating ?? null" [readonly]="true" />
+                    } @else {
+                      <span class="unrated">Not rated</span>
+                    }
+                    <a
+                      class="journal-link"
+                      [routerLink]="['/books', row.entry.id]"
+                      [queryParams]="{ reading: row.reading.id }"
+                      >Open journal<ktob-icon name="arrow-up-right" [size]="15"
+                    /></a>
+                  </div>
+                </article>
+              }
+            </div>
+          </section>
+        }
+      </div>
+    }
+    <footer class="diary-footnote">
+      <ktob-icon name="leaf" [size]="17" />
+      <p>No targets to chase. Just your reading, remembered.</p>
+    </footer>
+  }
+</section>

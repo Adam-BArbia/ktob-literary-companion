@@ -3,7 +3,7 @@
     <div>
       <p class="eyebrow">The books you keep close</p>
       <h1 class="page-heading">My <em>library.</em></h1>
-      <p class="page-description">A little space for your next great read.</p>
+      <p class="page-description">The books you read. The thoughts you keep.</p>
     </div>
     <a routerLink="/catalog/search" class="btn btn-primary"
       ><ktob-icon name="plus" [size]="18" /> Add a book</a
@@ -22,6 +22,17 @@
         <ktob-icon name="book-open" [size]="18" /> My shelf
         @if (!loading()) {
           <span>{{ activeCount() }}</span>
+        }
+      </button>
+      <button
+        type="button"
+        [class.selected]="shelf() === 'favorites'"
+        [attr.aria-pressed]="shelf() === 'favorites'"
+        (click)="setShelf('favorites')"
+      >
+        <ktob-icon name="heart" [size]="18" /> Favorites
+        @if (!loading()) {
+          <span>{{ favoriteCount() }}</span>
         }
       </button>
       <button
@@ -71,6 +82,23 @@
         </button>
       </div>
     </div>
+  </div>
+  <div class="library-filter-row">
+    <div>
+      <label for="reading-status-filter">Reading status</label
+      ><select id="reading-status-filter" [ngModel]="status()" (ngModelChange)="status.set($event)">
+        <option value="">All readings</option>
+        <option value="WANT_TO_READ">Want to read</option>
+        <option value="CURRENTLY_READING">Currently reading</option>
+        <option value="PAUSED">Paused</option>
+        <option value="FINISHED">Finished</option>
+        <option value="DID_NOT_FINISH">Did not finish</option>
+      </select>
+    </div>
+    <a routerLink="/diary"
+      ><ktob-icon name="book-open" [size]="16" /> My reading diary
+      <ktob-icon name="arrow-right" [size]="15"
+    /></a>
   </div>
 
   @if (error()) {
@@ -138,12 +166,22 @@
         <div class="art-book art-book-three"><ktob-icon name="book-open" [size]="28" /></div>
         <span class="art-line"></span>
       </div>
-      @if (query().trim()) {
+      @if (query().trim() || status() || shelf() === 'favorites') {
         <p class="eyebrow">A little more looking</p>
         <h2 id="empty-library-title">No books found here.</h2>
-        <p>Nothing on this shelf matches “{{ query() }}”. Try another title or author.</p>
-        <button class="btn btn-secondary" type="button" (click)="query.set('')">
-          Clear search
+        <p>
+          {{
+            shelf() === 'favorites' && !favoriteCount()
+              ? 'Tap the heart on a book to keep your favorites close.'
+              : 'No books match these filters. Try another title, author, or reading status.'
+          }}
+        </p>
+        <button
+          class="btn btn-secondary"
+          type="button"
+          (click)="query.set(''); status.set(''); setShelf('active')"
+        >
+          Show my shelf
         </button>
       } @else if (shelf() === 'archived') {
         <p class="eyebrow">Room for a fresh chapter</p>
@@ -177,19 +215,42 @@
     <div class="library-grid" [class.list-layout]="view() === 'list'">
       @for (entry of visibleEntries(); track entry.id; let i = $index) {
         <article class="library-card">
-          <div class="cover-area">
-            <ktob-book-cover
-              [title]="title(entry)"
-              [author]="works()[entry.workId]?.authors?.[0] || ''"
-              [variant]="i"
-              [compact]="view() === 'list'"
-            />
+          <div class="cover-shell">
+            <a
+              class="cover-area"
+              [routerLink]="['/books', entry.id]"
+              [attr.aria-label]="'Open ' + title(entry)"
+            >
+              <ktob-book-cover
+                [title]="title(entry)"
+                [author]="works()[entry.workId]?.authors?.[0] || ''"
+                [variant]="i"
+                [compact]="view() === 'list'"
+              />
+            </a>
+            @if (!entry.archivedAt) {
+              <button
+                type="button"
+                class="card-favorite"
+                [class.is-favorite]="entry.favorite"
+                [attr.aria-pressed]="entry.favorite"
+                [attr.aria-label]="
+                  (entry.favorite ? 'Remove from favorites: ' : 'Favorite: ') + title(entry)
+                "
+                [disabled]="!!changing()"
+                (click)="favorite(entry)"
+              >
+                <ktob-icon name="heart" [size]="18" />
+              </button>
+            }
           </div>
           <div class="book-info">
             <span class="shelf-label" [class.archived-label]="!!entry.archivedAt">{{
               entry.archivedAt ? 'Archived' : shelfLabel(entry)
             }}</span>
-            <h2>{{ title(entry) }}</h2>
+            <h2>
+              <a [routerLink]="['/books', entry.id]">{{ title(entry) }}</a>
+            </h2>
             <p class="book-author">{{ authors(entry) }}</p>
             @if (!works()[entry.workId]) {
               <p class="missing-metadata">Book details couldn't be loaded. Refresh to try again.</p>
@@ -232,9 +293,10 @@
       }
     </div>
   }
-  @if (!loading() && entries().length >= 25) {
+  @if (!loading() && hasMore()) {
     <p class="page-limit-note">
-      Showing your 25 most recently added books. Search and shelf filters apply to these books.
+      Showing your {{ entries().length }} most recently added books. Search, counts, and shelf
+      filters apply to these loaded books.
     </p>
   }
   <footer class="library-footnote">
@@ -243,36 +305,16 @@
   </footer>
 </section>
 
-<dialog
+<ktob-confirmation-dialog
   #archiveDialog
-  class="archive-dialog"
-  aria-labelledby="archive-dialog-title"
-  aria-describedby="archive-dialog-description"
-  (cancel)="cancelArchive($event)"
-  (close)="onDialogClosed()"
->
-  <div class="dialog-icon"><ktob-icon name="archive" [size]="26" /></div>
-  <h2 id="archive-dialog-title">Set this book aside?</h2>
-  <p id="archive-dialog-description">
-    {{ pendingArchive() ? '“' + title(pendingArchive()!) + '”' : 'This book' }} will move to your
-    archive. It stays in your library, and you can restore it at any time.
-  </p>
-  <div class="dialog-actions">
-    <button
-      type="button"
-      class="btn btn-secondary"
-      autofocus
-      [disabled]="!!changing()"
-      (click)="cancelArchive()"
-    >
-      Keep on my shelf</button
-    ><button
-      type="button"
-      class="btn btn-primary"
-      [disabled]="!!changing()"
-      (click)="confirmArchive()"
-    >
-      {{ changing() ? 'Archiving…' : 'Archive book' }}
-    </button>
-  </div>
-</dialog>
+  title="Set this book aside?"
+  [description]="
+    (pendingArchive() ? '“' + title(pendingArchive()!) + '”' : 'This book') +
+    ' will move to your archive. It stays in your library, and you can restore it at any time.'
+  "
+  cancelLabel="Keep on my shelf"
+  confirmLabel="Archive book"
+  [busy]="!!changing()"
+  (confirmed)="confirmArchive()"
+  (closed)="onDialogClosed()"
+/>

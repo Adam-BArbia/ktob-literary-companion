@@ -99,10 +99,6 @@
   color: #5f6f62;
   cursor: pointer;
 }
-.view-controls button.selected {
-  background: #edf1e9;
-  color: #244b43;
-}
 .library-notice {
   display: flex;
   gap: 10px;
@@ -250,13 +246,6 @@
   cursor: pointer;
   border-radius: 4px;
 }
-.book-action:hover {
-  background: #f1f4ec;
-}
-.book-action:disabled {
-  opacity: 0.55;
-  cursor: wait;
-}
 .list-layout {
   grid-template-columns: 1fr;
   gap: 12px;
@@ -332,12 +321,6 @@
   color: #244b43;
   margin: 0 auto 24px;
 }
-.art-book {
-  display: none;
-}
-.art-book-three {
-  display: block;
-}
 .page-limit-note {
   margin-top: 22px;
   font-size: 12px;
@@ -364,73 +347,6 @@
   margin: 25px 0 20px;
   font-size: 13px;
   color: #5f6f62;
-}
-.skeleton-card {
-  padding: 20px;
-}
-.skeleton-cover {
-  height: 205px;
-  margin-bottom: 20px;
-}
-.skeleton-title {
-  height: 21px;
-  width: 85%;
-  margin-bottom: 10px;
-}
-.skeleton-author {
-  height: 14px;
-  width: 60%;
-}
-.archive-dialog {
-  border: 1px solid #e2e5dd;
-  border-radius: 20px;
-  padding: 32px;
-  max-width: 460px;
-  width: calc(100% - 40px);
-  margin: auto;
-  background: #fff;
-  color: #253a33;
-  box-shadow: 0 30px 90px #132d352b;
-}
-.archive-dialog::backdrop {
-  background: #182b268c;
-  backdrop-filter: blur(3px);
-}
-.dialog-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: #edf1e8;
-  color: #244b43;
-  margin-bottom: 22px;
-}
-.archive-dialog h2 {
-  font-family: Georgia, serif;
-  font-size: 30px;
-  line-height: 1.2;
-  letter-spacing: -0.025em;
-  font-weight: 400;
-}
-.archive-dialog p {
-  font-size: 14px;
-  line-height: 1.8;
-  color: #5f6f62;
-  margin-top: 15px;
-  overflow-wrap: anywhere;
-}
-.dialog-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 28px;
-}
-.dialog-actions .btn {
-  font-size: 12px;
-  flex: 1;
-  padding-inline: 12px;
 }
 @media (max-width: 1000px) {
   .library-toolbar {
@@ -520,9 +436,6 @@
   .library-header {
     flex-direction: column;
   }
-  .library-header > .btn {
-    margin-top: 0;
-  }
   .cover-area {
     min-height: 180px;
     padding: 20px 17px;
@@ -533,21 +446,123 @@
   .book-info {
     padding: 12px;
   }
-  .archive-dialog {
-    padding: 25px;
-  }
-  .dialog-actions {
-    flex-direction: column-reverse;
-  }
-  .dialog-actions .btn {
-    width: 100%;
-  }
 }
 .library-header .page-heading {
   margin-top: 13px;
 }
-.notice a {
+.cover-shell {
+  position: relative;
+}
+.cover-area {
+  text-decoration: none;
+}
+.card-favorite {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  background: #fffefaee;
+  border: 1px solid #dfe4dc;
+  border-radius: 50%;
+  color: #64736b;
+}
+.card-favorite.is-favorite {
+  color: #a45e3d;
+  background: #f9eee5;
+  border-color: #dab9a4;
+}
+.book-info h2 a {
+  text-decoration: none;
+}
+.book-info h2 a:hover {
   text-decoration: underline;
-  text-underline-offset: 3px;
-  font-weight: 600;
+  text-underline-offset: 4px;
+}
+.list-layout .cover-shell {
+  flex: none;
+}
+.library-filter-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 0 0;
+  font-size: 11px;
+  color: #64736b;
+}
+.library-filter-row > div,
+.library-filter-row a {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.library-filter-row select {
+  min-height: 44px;
+  border: 1px solid #dfe4dc;
+  border-radius: 7px;
+  padding: 8px;
+  background: #fffefa;
+  max-width: 180px;
+  color: #253a33;
+}
+.library-filter-row a {
+  min-height: 44px;
+  text-decoration: none;
+  color: #244b43;
+}
+.library-filter-row a:hover {
+  text-decoration: underline;
+}
+.shelf-filters {
+  flex-wrap: wrap;
+}
+.shelf-filters button {
+  font-size: 12px;
+  padding-inline: 10px;
+}
+@media (max-width: 560px) {
+  .library-filter-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .library-filter-row select {
+    font-size: 16px;
+  }
+  .shelf-filters button {
+    font-size: 11px;
+    gap: 5px;
+    padding-inline: 7px;
+  }
+  .shelf-filters button ktob-icon {
+    display: none;
+  }
+}
+
+.skeleton-card {
+  padding: 20px;
+}
+.skeleton-cover {
+  height: 205px;
+  margin-bottom: 20px;
+}
+.skeleton-title {
+  height: 21px;
+  margin-bottom: 10px;
+}
+.skeleton-author {
+  height: 14px;
+  width: 60%;
+}
+.art-book {
+  display: none;
+}
+.art-book-three {
+  display: block;
+}
+.view-controls button.selected {
+  background: #edf1e9;
 }
