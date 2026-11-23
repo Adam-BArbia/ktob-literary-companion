@@ -1,5 +1,5 @@
 # Multi-stage Java 21 build: Maven never runs in the runtime image.
-# Render root directory: apps/api ; Dockerfile path (repo-relative): apps/api/Dockerfile
+# Render root directory: apps/api ; Dockerfile path defaults to ./Dockerfile relative to this root.
 FROM eclipse-temurin:21-jdk-jammy AS builder
 WORKDIR /workspace
 COPY .mvn/ .mvn/

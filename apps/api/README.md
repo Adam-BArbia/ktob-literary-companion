@@ -80,7 +80,7 @@ On Render, use:
 - **Runtime:** Docker, **Branch:** `main`
 - **Region:** Frankfurt; **Instance:** Free ($0/month), when eligible
 - **Root Directory:** `apps/api`
-- **Dockerfile Path:** `apps/api/Dockerfile` (Render labels this path as repository-relative)
+- **Dockerfile Path:** leave at default `./Dockerfile` when Root Directory is `apps/api` (no manual override necessary).
 - **Port:** `8080` by default; the Spring app also honors Render's `PORT`
 
 Start with no production DB migration. Before enabling database-backed routes,
