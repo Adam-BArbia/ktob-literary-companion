@@ -47,6 +47,63 @@ class OpenLibraryClientTest {
     }
 
     @Test
+    void retriesTransientUpstreamFailureAndRequestsOnlyNeededFields() throws Exception {
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        var calls = new java.util.concurrent.atomic.AtomicInteger();
+        AtomicReference<String> requestQuery = new AtomicReference<>();
+        server.createContext("/search.json", ex -> {
+            requestQuery.set(ex.getRequestURI().getRawQuery());
+            int attempt = calls.incrementAndGet();
+            byte[] body = (attempt == 1
+                ? "{\"message\":\"temporarily unavailable\"}"
+                : "{\"docs\":[{\"key\":\"OL82563W\",\"title\":\"The Little Prince\","
+                    + "\"author_name\":[\"Antoine de Saint-Exupéry\"],\"language\":[\"eng\"]}]}").getBytes(
+                        java.nio.charset.StandardCharsets.UTF_8);
+            ex.getResponseHeaders().add("Content-Type", "application/json");
+            ex.sendResponseHeaders(attempt == 1 ? 503 : 200, body.length);
+            try (var out = ex.getResponseBody()) { out.write(body); }
+        });
+        server.start();
+        try {
+            var client = new OpenLibraryClient(
+                URI.create("http://127.0.0.1:" + server.getAddress().getPort()),
+                "ktob-test@example.invalid", HttpClient.newHttpClient(), new JsonMapper());
+            var results = client.search("The Little Prince", 10);
+            assertEquals(2, calls.get(), "Transient 503 should be retried once");
+            assertEquals(1, results.size());
+            assertEquals("The Little Prince", results.getFirst().title());
+            assertEquals("/works/OL82563W", results.getFirst().reference());
+            assertTrue(requestQuery.get().contains("fields=key%2Ctitle%2Cauthor_name%2Clanguage"));
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
+    void doesNotRetryNonTransientClientErrors() throws Exception {
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        var calls = new java.util.concurrent.atomic.AtomicInteger();
+        server.createContext("/search.json", ex -> {
+            calls.incrementAndGet();
+            byte[] body = "{}".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            ex.sendResponseHeaders(403, body.length);
+            try (var out = ex.getResponseBody()) { out.write(body); }
+        });
+        server.start();
+        try {
+            var client = new OpenLibraryClient(
+                URI.create("http://127.0.0.1:" + server.getAddress().getPort()),
+                "ktob-test@example.invalid", HttpClient.newHttpClient(), new JsonMapper());
+            ApiException error = assertThrows(ApiException.class,
+                () -> client.search("The Little Prince", 10));
+            assertEquals("CATALOG_UNAVAILABLE", error.code());
+            assertEquals(1, calls.get(), "Non-transient 403 should not be retried");
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
     void unavailableWithoutIdentificationDoesNotContactProvider() {
         var client=new OpenLibraryClient(URI.create("https://openlibrary.org"),"",
             HttpClient.newHttpClient(),new JsonMapper());
