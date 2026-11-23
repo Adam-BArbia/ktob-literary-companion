@@ -68,3 +68,27 @@ The path and exact response shape are defined by `docs/architecture/openapi.json
 GitHub Actions workflow `.github/workflows/api-ci.yml` runs `./mvnw -B -ntp verify` on Java 21 for changes to `apps/api`. The full document-only pipeline remains separate.
 
 **Next**: Begin Sprint 1 authentication and Open Library/catalog vertical slice. New controller implementations must be added to `docs/implementation/implemented-operations.json` in lockstep with `docs/architecture/openapi.json`; 56 operations are planned, not yet working. The integrated foundation CI builds both applications and checks only the disposable Postgres service readiness; it does not claim migrations or database integration tests.
+
+## Render Docker deployment (Java 21)
+
+Container definition: `apps/api/Dockerfile`, with a non-root Java 21 runtime
+and a multi-stage Maven build. CI compiles and boots the actual image, checks
+`GET /api/v1/health`, and ensures unauthenticated private routes return 401.
+
+On Render, use:
+- **Name:** `ktob-api`
+- **Runtime:** Docker, **Branch:** `main`
+- **Region:** Frankfurt; **Instance:** Free ($0/month), when eligible
+- **Root Directory:** `apps/api`
+- **Dockerfile Path:** `apps/api/Dockerfile` (Render labels this path as repository-relative)
+- **Port:** `8080` by default; the Spring app also honors Render's `PORT`
+
+Start with no production DB migration. Before enabling database-backed routes,
+apply the reviewed Flyway schema in a controlled KTOB-only migration step,
+configure production PostgreSQL/JWKS credentials on Render, and set
+`KTOB_DB_ENABLED=true` only after the migration has been verified.
+Never set `KTOB_AUTO_MIGRATE=true` on production. The public health route
+is available without database access for a safe initial deployment.
+
+Never copy production database passwords into the Dockerfile, Git commits,
+`ARG` values, or browser/Vercel variables.

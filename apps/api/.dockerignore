@@ -1,0 +1,12 @@
+.git
+.github
+.vscode
+.idea
+.env
+.env.*
+*.log
+target/
+**/target/
+**/.DS_Store
+README.md
+mvnw.cmd

@@ -1,0 +1,43 @@
+name: KTOB Docker Runtime Check
+on:
+  push:
+    paths:
+      - 'apps/api/**'
+      - '.github/workflows/api-container-ci.yml'
+  pull_request:
+    paths:
+      - 'apps/api/**'
+      - '.github/workflows/api-container-ci.yml'
+permissions:
+  contents: read
+
+jobs:
+  docker-runtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Build Render-compatible Java 21 image
+        run: docker build -t ktob-api:ci apps/api
+      - name: Boot container with no project credentials (fail-closed)
+        run: |
+          docker run -d --name ktob-ci --memory=512m --cpus=1 -p 18080:8080 ktob-api:ci
+          for attempt in $(seq 1 75); do
+            if curl --fail --silent http://localhost:18080/api/v1/health | grep -q '"status":"ok"'; then
+              echo "KTOB Java 21 container healthy"
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs ktob-ci
+          exit 1
+      - name: Verify auth fails closed without KTOB keys
+        run: |
+          actual="$(curl --silent --output /dev/null --write-out '%{http_code}' http://localhost:18080/api/v1/me)"
+          test "$actual" = "401"
+      - name: Dump logs on failure
+        if: failure()
+        run: docker logs ktob-ci || true
