@@ -71,4 +71,53 @@ describe('KtobApiService secure requests', () => {
     }
     http.expectNone((request) => request.url.includes('/library'));
   });
+
+  it('clears a reading rating with explicit null and sends no unrelated status change', async () => {
+    const pending = api.updateExperience('reading', { rating: null });
+    await Promise.resolve();
+    await Promise.resolve();
+    const req = http.expectOne('http://localhost:8080/api/v1/experiences/reading');
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual({ rating: null });
+    expect(req.request.headers.get('Authorization')).toBe('Bearer test-token-only');
+    req.flush({ data: { id: 'reading', rating: null } });
+    expect((await pending).data.rating).toBeNull();
+  });
+
+  it('keeps a private note in the authenticated Java service with its explicit exclusion flag', async () => {
+    const body = {
+      kind: 'QUOTE' as const,
+      body: 'Private quotation',
+      emotionTags: [],
+      allowForPersonalization: false,
+    };
+    const pending = api.createJournal('reading', body);
+    await Promise.resolve();
+    await Promise.resolve();
+    const req = http.expectOne('http://localhost:8080/api/v1/experiences/reading/journal');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual(body);
+    req.flush({
+      data: { ...body, id: 'note', experienceId: 'reading', createdAt: '2026-01-01T00:00:00Z' },
+    });
+    expect((await pending).data.allowForPersonalization).toBe(false);
+  });
+
+  it('patches favorite independently and reads bounded cursor pages', async () => {
+    const favorite = api.setFavorite('entry', true);
+    await Promise.resolve();
+    await Promise.resolve();
+    const patch = http.expectOne('http://localhost:8080/api/v1/library/entry');
+    expect(patch.request.body).toEqual({ favorite: true });
+    patch.flush({ data: { id: 'entry', favorite: true } });
+    await favorite;
+    const page = api.journal('reading', 'opaque+cursor');
+    await Promise.resolve();
+    await Promise.resolve();
+    const req = http.expectOne((r) => r.url.endsWith('/experiences/reading/journal'));
+    expect(req.request.params.get('limit')).toBe('100');
+    expect(req.request.params.get('cursor')).toBe('opaque+cursor');
+    req.flush({ data: [], meta: { nextCursor: null } });
+    await page;
+  });
 });

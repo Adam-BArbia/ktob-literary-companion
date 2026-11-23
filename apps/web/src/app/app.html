@@ -25,6 +25,9 @@
             ariaCurrentWhenActive="page"
             >Discover</a
           >
+          <a routerLink="/diary" routerLinkActive="active-link" ariaCurrentWhenActive="page"
+            >Reading diary</a
+          >
         </nav>
       }
       <div class="header-actions">
@@ -88,6 +91,13 @@
           ><ktob-icon name="search" /> Discover</a
         >
         @if (auth.user()) {
+          <a
+            routerLink="/diary"
+            routerLinkActive="active-link"
+            ariaCurrentWhenActive="page"
+            (click)="closeMenu()"
+            ><ktob-icon name="book-open" /> Reading diary</a
+          >
           <a
             routerLink="/settings"
             routerLinkActive="active-link"

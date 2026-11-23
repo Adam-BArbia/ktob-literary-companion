@@ -1,0 +1,509 @@
+<section class="book-page">
+  <nav class="book-navigation" aria-label="Book navigation">
+    <a routerLink="/library"><ktob-icon name="arrow-left" [size]="16" /> My library</a>
+    <a routerLink="/diary"><ktob-icon name="book-open" [size]="16" /> Reading diary</a>
+  </nav>
+
+  @if (error()) {
+    <div class="notice notice-error page-notice" role="alert">
+      <p>{{ error() }}</p>
+      @if (needsSignIn()) {
+        <a routerLink="/auth" [queryParams]="{ returnUrl: '/books/' + entryId }">Sign in again</a>
+      } @else if (!entry()) {
+        <button type="button" class="text-action" (click)="load()" [disabled]="loading()">
+          Try again
+        </button>
+      }
+    </div>
+  }
+  @if (notice()) {
+    <div class="notice notice-success page-notice" role="status">
+      <ktob-icon name="check" [size]="18" />
+      <p>{{ notice() }}</p>
+      <button
+        type="button"
+        class="icon-action"
+        aria-label="Dismiss notification"
+        (click)="notice.set('')"
+      >
+        <ktob-icon name="x" [size]="17" />
+      </button>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="book-loading" role="status">
+      <div class="skeleton loading-cover" aria-hidden="true"></div>
+      <p>Opening your book and its stories…</p>
+    </div>
+  } @else if (entry(); as bookEntry) {
+    <div #readingActions tabindex="-1">
+      <ktob-book-hero
+        [entry]="bookEntry"
+        [work]="work()"
+        [activeStatus]="active()?.status ?? null"
+        [hasReadings]="!!readings().length"
+        [busy]="busy() || journalSaving()"
+        (start)="startReading()"
+        (finish)="showFinish($event)"
+        (statusChange)="changeStatus($event)"
+        (favorite)="favorite()"
+        (restore)="restore()"
+      />
+    </div>
+
+    @if (archived()) {
+      <div class="archive-banner">
+        <ktob-icon name="archive" />
+        <p>
+          This book is in your archive. Its history and words are here to revisit. Restore it to
+          make changes.
+        </p>
+      </div>
+    }
+
+    @if (finishMode()) {
+      <form
+        class="finished-form paper-panel"
+        (ngSubmit)="saveFinished()"
+        aria-labelledby="finished-form-title"
+      >
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">One more chapter remembered</p>
+            <h2 #finishedHeading tabindex="-1" id="finished-form-title">
+              {{
+                finishMode() === 'historical'
+                  ? 'Log a finished read.'
+                  : 'You reached the last page.'
+              }}
+            </h2>
+          </div>
+          <button
+            type="button"
+            class="icon-action"
+            aria-label="Close finished reading form"
+            [disabled]="busy()"
+            (click)="finishMode.set(null)"
+          >
+            <ktob-icon name="x" />
+          </button>
+        </div>
+        <p class="muted">
+          This records a finished reading. Dates and a rating are optional; leave a date blank if
+          you don't remember.
+        </p>
+        <div class="date-fields">
+          <label
+            ><span class="field-label">Started on <span class="optional">optional</span></span
+            ><input
+              class="field-input"
+              type="date"
+              name="startedOn"
+              [(ngModel)]="startedOn"
+              [disabled]="busy()"
+          /></label>
+          <label
+            ><span class="field-label">Finished on <span class="optional">optional</span></span
+            ><input
+              class="field-input"
+              type="date"
+              name="finishedOn"
+              [(ngModel)]="finishedOn"
+              [min]="startedOn"
+              [disabled]="busy()"
+          /></label>
+          <div class="finished-rating">
+            <span class="field-label">Your rating <span class="optional">optional</span></span
+            ><ktob-rating
+              [value]="finishRating"
+              (valueChange)="finishRating = $event"
+              [disabled]="busy()"
+            />
+          </div>
+        </div>
+        <div class="form-actions">
+          <button
+            type="button"
+            class="btn btn-ghost"
+            [disabled]="busy()"
+            (click)="finishMode.set(null)"
+          >
+            Cancel</button
+          ><button class="btn btn-primary" type="submit" [disabled]="busy()">
+            {{ busy() ? 'Saving…' : 'Save finished reading' }}<ktob-icon name="check" [size]="17" />
+          </button>
+        </div>
+      </form>
+    }
+
+    <div class="book-content">
+      <section class="journal-column" aria-labelledby="journal-title">
+        <div class="section-heading journal-heading">
+          <div>
+            <p class="eyebrow">Between the lines</p>
+            <h2 id="journal-title">Your private <em>journal.</em></h2>
+          </div>
+          @if (selected() && !archived()) {
+            <button
+              type="button"
+              class="btn btn-secondary"
+              [disabled]="busy() || journalSaving()"
+              (click)="openEditor('NOTE')"
+            >
+              <ktob-icon name="plus" [size]="16" /> Add a note
+            </button>
+          }
+        </div>
+        @if (selected(); as reading) {
+          <div class="journal-context">
+            <span>{{ statusLabel(reading.status) }}</span
+            ><span aria-hidden="true">·</span
+            ><span>{{ formatDate(reading.finishedOn || reading.startedOn) }}</span
+            ><ktob-icon name="lock" [size]="13" />
+          </div>
+          @if (editorOpen()) {
+            <form
+              class="journal-editor paper-panel"
+              (ngSubmit)="saveJournal()"
+              aria-labelledby="editor-heading"
+            >
+              <div class="editor-top">
+                <h3 id="editor-heading">
+                  {{ editingId() ? 'A second thought.' : 'What stayed with you?' }}
+                </h3>
+                <span class="private-label"
+                  ><ktob-icon name="lock" [size]="13" /> Private to you</span
+                >
+              </div>
+              <label for="note-kind" class="field-label">Entry type</label>
+              <select
+                id="note-kind"
+                name="noteKind"
+                class="field-input note-kind"
+                [(ngModel)]="noteKind"
+                [disabled]="journalSaving() || archived()"
+              >
+                @for (kind of kinds; track kind.value) {
+                  <option [value]="kind.value">{{ kind.label }}</option>
+                }
+              </select>
+              <label for="note-body" class="field-label note-body-label">{{
+                noteKind === 'QUOTE' ? 'The words you want to keep' : 'Your words'
+              }}</label>
+              <textarea
+                #noteBody
+                id="note-body"
+                name="noteBody"
+                class="field-input notebook-text"
+                [(ngModel)]="noteText"
+                rows="8"
+                maxlength="20000"
+                [disabled]="journalSaving() || archived()"
+                [attr.aria-invalid]="!!editorError()"
+                aria-describedby="note-body-hint note-error"
+                [placeholder]="
+                  noteKind === 'QUOTE'
+                    ? 'Keep a passage here. Add a page number in your own words, if you know it.'
+                    : 'A feeling, a question, a sentence you cannot stop thinking about…'
+                "
+              ></textarea>
+              <div class="writing-hints">
+                <p id="note-body-hint">Your words are saved only when you choose Save.</p>
+                <span>{{ noteText.length.toLocaleString() }} / 20,000</span>
+              </div>
+              <label for="emotion-tags" class="field-label"
+                >Emotion tags <span class="optional">optional</span></label
+              >
+              <input
+                id="emotion-tags"
+                name="emotionTags"
+                class="field-input"
+                [(ngModel)]="emotionTags"
+                [disabled]="journalSaving() || archived()"
+                placeholder="Moved, curious, hopeful"
+                aria-describedby="tags-hint"
+              />
+              <p id="tags-hint" class="field-hint">
+                Separate up to 12 tags with commas. These are your feelings, never inferred.
+              </p>
+              <label class="permission-choice"
+                ><input
+                  type="checkbox"
+                  name="allowForPersonalization"
+                  [(ngModel)]="allowForPersonalization"
+                  [disabled]="journalSaving() || archived()"
+                /><span
+                  >Allow this entry in personalized suggestions if I separately enable AI
+                  personalization.<small
+                    >Off by default. This does not enable AI or send this entry to a
+                    provider.</small
+                  ></span
+                ></label
+              >
+              @if (editorError()) {
+                <p id="note-error" role="alert" class="notice notice-error">
+                  {{ editorError() }} Your draft is still here.
+                </p>
+              }
+              @if (needsSignIn()) {
+                <a
+                  routerLink="/auth"
+                  [queryParams]="{ returnUrl: '/books/' + bookEntry.id }"
+                  class="text-link"
+                  >Sign in again</a
+                >
+              }
+              <div class="form-actions">
+                <button
+                  type="button"
+                  class="btn btn-ghost"
+                  [disabled]="journalSaving()"
+                  (click)="closeEditor()"
+                >
+                  Cancel</button
+                ><button
+                  type="submit"
+                  class="btn btn-primary"
+                  [disabled]="journalSaving() || busy() || archived()"
+                >
+                  {{
+                    journalSaving()
+                      ? 'Saving your words…'
+                      : editingId()
+                        ? 'Save changes'
+                        : 'Save to journal'
+                  }}<ktob-icon name="check" [size]="16" />
+                </button>
+              </div>
+            </form>
+          }
+          @if (journalError()) {
+            <div class="notice notice-error" role="alert">
+              <p>{{ journalError() }}</p>
+              <button
+                type="button"
+                class="text-action"
+                (click)="loadJournal()"
+                [disabled]="journalLoading()"
+              >
+                Reload journal
+              </button>
+            </div>
+          }
+          @if (journalLoading()) {
+            <p class="loading-label" role="status">Opening these pages…</p>
+          }
+          @for (note of journalEntries(); track note.id) {
+            <ktob-journal-note
+              [note]="note"
+              [readonly]="archived()"
+              [busy]="busy() || journalSaving()"
+              (edit)="openEditor(note.kind, note)"
+              (remove)="confirm('delete', $event, note)"
+            />
+          }
+          @if (!journalLoading() && !journalError() && !journalEntries().length && !editorOpen()) {
+            <div class="journal-empty paper-panel">
+              <span class="empty-mark" aria-hidden="true">“</span>
+              <h3>The page is yours.</h3>
+              <p>
+                Write a review, keep a quotation, or capture a passing thought. It doesn't have to
+                be perfect. It only has to be yours.
+              </p>
+              @if (!archived()) {
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  [disabled]="busy()"
+                  (click)="openEditor('REVIEW')"
+                >
+                  Write a review<ktob-icon name="arrow-right" [size]="17" />
+                </button>
+              }
+            </div>
+          }
+          @if (journalCursor()) {
+            <button
+              type="button"
+              class="btn btn-secondary load-more"
+              [disabled]="journalLoading()"
+              (click)="loadJournal(true)"
+            >
+              Read earlier entries
+            </button>
+          }
+        } @else {
+          <div class="journal-empty paper-panel">
+            <span class="empty-mark" aria-hidden="true">“</span>
+            <h3>Every reading leaves a trace.</h3>
+            <p>
+              Start reading or log a finished read to give your thoughts a home. Each reread gets
+              its own rating and journal.
+            </p>
+            @if (!archived()) {
+              <button
+                type="button"
+                class="btn btn-secondary"
+                [disabled]="busy()"
+                (click)="showFinish('historical')"
+              >
+                Log a finished read<ktob-icon name="arrow-right" [size]="17" />
+              </button>
+            }
+          </div>
+        }
+      </section>
+
+      <aside class="reading-sidebar" aria-label="Reading history and rating">
+        @if (selected(); as reading) {
+          <section class="rating-panel paper-panel" aria-labelledby="rating-title">
+            <p class="eyebrow">This reading, in stars</p>
+            <h2 id="rating-title">Your impression.</h2>
+            @if (archived()) {
+              <ktob-rating [value]="reading.rating ?? null" [readonly]="true" />
+              @if (reading.rating == null) {
+                <p class="muted">Not rated</p>
+              }
+            } @else {
+              <ktob-rating
+                [value]="ratingDraft"
+                (valueChange)="ratingDraft = $event"
+                [disabled]="busy()"
+              />
+              <p class="rating-hint">
+                Choose 1–5 stars, including half stars. Use arrow keys to adjust.
+              </p>
+              <button
+                type="button"
+                class="btn btn-secondary rating-save"
+                [disabled]="busy() || ratingDraft === (reading.rating ?? null)"
+                (click)="saveRating()"
+              >
+                {{
+                  busy()
+                    ? 'Saving…'
+                    : ratingDraft !== (reading.rating ?? null)
+                      ? 'Save rating'
+                      : reading.rating == null
+                        ? 'Not rated yet'
+                        : 'Rating saved'
+                }}
+              </button>
+            }
+            <p class="rating-context">
+              Only this reading is rated. Your other reads keep their own stars.
+            </p>
+            @if (!archived()) {
+              <details class="progress-details">
+                <summary>Reading progress</summary>
+                <label for="reading-progress" class="field-label"
+                  >Your estimate <span class="optional">optional</span></label
+                >
+                <div class="progress-input">
+                  <input
+                    id="reading-progress"
+                    type="number"
+                    name="progress"
+                    class="field-input"
+                    min="0"
+                    max="100"
+                    step="1"
+                    [(ngModel)]="progressDraft"
+                    [disabled]="busy()"
+                  /><span>%</span
+                  ><button
+                    type="button"
+                    class="btn btn-secondary"
+                    [disabled]="busy() || progressDraft === (reading.progressPercent ?? null)"
+                    (click)="saveProgress()"
+                  >
+                    Save
+                  </button>
+                </div>
+                <p class="field-hint">Progress does not change your reading status.</p>
+              </details>
+            }
+          </section>
+        }
+        <section class="history-panel paper-panel" aria-labelledby="history-title">
+          <p class="eyebrow">The chapters of your reading</p>
+          <h2 id="history-title">Reading history.</h2>
+          @if (!readings().length) {
+            <p class="muted history-empty">No readings yet. This book is waiting on your shelf.</p>
+          }
+          <div class="history-list">
+            @for (reading of readings(); track reading.id; let i = $index) {
+              <button
+                type="button"
+                class="history-item"
+                [class.selected]="selectedId() === reading.id"
+                [attr.aria-pressed]="selectedId() === reading.id"
+                [disabled]="busy() || journalSaving()"
+                (click)="selectReading(reading.id)"
+              >
+                <span class="history-dot" aria-hidden="true"></span
+                ><span class="history-item-content"
+                  ><span class="history-status">{{ statusLabel(reading.status) }}</span
+                  ><span class="history-date">{{
+                    formatDate(reading.finishedOn || reading.startedOn)
+                  }}</span>
+                  @if (reading.rating != null) {
+                    <ktob-rating [value]="reading.rating ?? null" [readonly]="true" />
+                  }
+                  @if (reading.progressPercent != null) {
+                    <span class="history-progress">{{ reading.progressPercent }}% recorded</span>
+                  }</span
+                ><ktob-icon name="chevron-right" [size]="15" />
+              </button>
+            }
+          </div>
+          @if (readingCursor()) {
+            <button
+              type="button"
+              class="text-action"
+              [disabled]="busy()"
+              (click)="loadMoreReadings()"
+            >
+              Load earlier readings
+            </button>
+          }
+          <p class="history-footnote">Open a reading to revisit its rating and words.</p>
+        </section>
+        <section class="companion-note">
+          <ktob-icon name="sparkles" [size]="20" />
+          <h3>A little more perspective.</h3>
+          <p>The literary companion is currently unavailable. Your journal stays private.</p>
+          <a routerLink="/advisor" class="text-link"
+            >About the companion<ktob-icon name="arrow-up-right" [size]="14"
+          /></a>
+        </section>
+        @if (!archived()) {
+          <button
+            type="button"
+            class="archive-action"
+            [disabled]="busy() || journalSaving()"
+            (click)="confirm('archive', $event.currentTarget)"
+          >
+            <ktob-icon name="archive" [size]="16" /> Archive this book
+          </button>
+        }
+      </aside>
+    </div>
+  }
+</section>
+
+<ktob-confirmation-dialog
+  #confirmation
+  [title]="pendingAction() === 'archive' ? 'Keep it in your archive?' : 'Delete these words?'"
+  [description]="
+    pendingAction() === 'archive'
+      ? 'The book, every reading, and your journal will be preserved. You can restore it whenever you like.'
+      : 'This journal entry will be permanently removed. Your book, reading history, and rating will stay as they are.'
+  "
+  [confirmLabel]="pendingAction() === 'archive' ? 'Archive book' : 'Delete entry'"
+  [icon]="pendingAction() === 'archive' ? 'archive' : 'book-open'"
+  [busy]="busy()"
+  (confirmed)="executeConfirmed()"
+  (closed)="confirmationClosed()"
+/>

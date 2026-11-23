@@ -1,0 +1,100 @@
+<header class="book-hero">
+  <figure class="book-artwork">
+    <ktob-book-cover
+      [title]="work()?.title || 'Title unavailable'"
+      [author]="work()?.authors?.[0] || ''"
+    />
+    <figcaption>Original KTOB artwork</figcaption>
+  </figure>
+  <div class="book-introduction">
+    <p class="eyebrow">A book in your life</p>
+    <h1>{{ work()?.title }}</h1>
+    <p class="book-byline">{{ work()?.authors?.join(', ') || 'Author not listed' }}</p>
+    <div class="book-badges">
+      <span class="status-badge">{{
+        entry().archivedAt ? 'Archived' : statusLabel(entry().shelfStatus)
+      }}</span>
+      <span class="source-label"
+        ><ktob-icon [name]="work()?.origin === 'MANUAL' ? 'lock' : 'book-open'" [size]="14" />{{
+          work()?.origin === 'MANUAL' ? 'Private manual book' : 'Book metadata from Open Library'
+        }}</span
+      >
+    </div>
+    <p class="book-invitation">Some books stay with you. Keep the thoughts they leave behind.</p>
+    <div class="book-actions">
+      @if (entry().archivedAt) {
+        <button type="button" class="btn btn-primary" [disabled]="busy()" (click)="restore.emit()">
+          <ktob-icon name="rotate-ccw" [size]="17" /> Restore book
+        </button>
+      } @else {
+        @if (!activeStatus()) {
+          <button type="button" class="btn btn-primary" [disabled]="busy()" (click)="start.emit()">
+            <ktob-icon name="book-open" [size]="17" />{{
+              hasReadings() ? 'Read again' : 'Start reading'
+            }}
+          </button>
+          <button
+            type="button"
+            class="btn btn-secondary"
+            [disabled]="busy()"
+            (click)="finish.emit('historical')"
+          >
+            Log a finished read
+          </button>
+        } @else {
+          <button
+            type="button"
+            class="btn btn-primary"
+            [disabled]="busy()"
+            (click)="finish.emit('finish')"
+          >
+            <ktob-icon name="check" [size]="18" /> Finish reading
+          </button>
+          <button
+            type="button"
+            class="btn btn-secondary"
+            [disabled]="busy()"
+            (click)="
+              statusChange.emit(activeStatus() === 'PAUSED' ? 'CURRENTLY_READING' : 'PAUSED')
+            "
+          >
+            {{ activeStatus() === 'PAUSED' ? 'Resume reading' : 'Pause reading' }}
+          </button>
+        }
+        <button
+          type="button"
+          class="favorite-action"
+          [class.is-favorite]="entry().favorite"
+          [attr.aria-pressed]="entry().favorite"
+          [attr.aria-label]="entry().favorite ? 'Remove from favorites' : 'Add to favorites'"
+          [disabled]="busy()"
+          (click)="favorite.emit()"
+        >
+          <ktob-icon name="heart" [size]="21" /><span>{{
+            entry().favorite ? 'Favorite' : 'Favorite this book'
+          }}</span>
+        </button>
+      }
+    </div>
+    @if (activeStatus() && !entry().archivedAt) {
+      <div class="secondary-actions">
+        <button
+          type="button"
+          class="text-action"
+          [disabled]="busy()"
+          (click)="statusChange.emit('DID_NOT_FINISH')"
+        >
+          Set as did not finish
+        </button>
+        <button
+          type="button"
+          class="text-action"
+          [disabled]="busy()"
+          (click)="finish.emit('historical')"
+        >
+          Log an earlier finished read
+        </button>
+      </div>
+    }
+  </div>
+</header>

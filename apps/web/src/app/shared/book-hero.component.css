@@ -1,0 +1,172 @@
+:host {
+  display: block;
+}
+.book-hero {
+  display: grid;
+  grid-template-columns: 222px minmax(0, 1fr);
+  gap: 56px;
+  padding: 8px 0 42px;
+  align-items: center;
+}
+.book-artwork {
+  margin: 0;
+  padding: 22px 26px 12px;
+  background: var(--color-sage);
+  border-radius: 12px;
+}
+.book-artwork ktob-book-cover {
+  display: block;
+  transform: rotate(-3deg);
+  margin-bottom: 24px;
+}
+.book-artwork figcaption {
+  text-align: center;
+  font-size: 9px;
+  color: var(--color-muted);
+  letter-spacing: 0.04em;
+}
+.book-introduction h1 {
+  font: 400 clamp(2rem, 4.4vw, 3.9rem)/1.08 var(--font-serif);
+  letter-spacing: -0.045em;
+  margin: 13px 0 12px;
+  overflow-wrap: anywhere;
+}
+.book-byline {
+  font-size: 17px;
+  color: var(--color-muted);
+  overflow-wrap: anywhere;
+}
+.book-badges {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+.status-badge {
+  padding: 5px 9px;
+  border-radius: 5px;
+  font-size: 11px;
+  background: var(--color-sage);
+  font-weight: 600;
+}
+.source-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--color-muted);
+  font-size: 11px;
+}
+.book-invitation {
+  font: italic 18px/1.6 var(--font-serif);
+  color: var(--color-muted);
+  margin: 22px 0;
+}
+.book-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.favorite-action {
+  background: transparent;
+  border: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-muted);
+  font-size: 12px;
+  min-height: 44px;
+  padding: 8px;
+  border-radius: 7px;
+}
+.favorite-action.is-favorite {
+  color: var(--color-accent);
+  background: #f5e9df;
+}
+.secondary-actions {
+  display: flex;
+  gap: 16px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+@media (max-width: 1000px) {
+  .book-hero {
+    gap: 35px;
+  }
+  .book-actions .favorite-action span {
+    display: none;
+  }
+}
+@media (max-width: 760px) {
+  .book-hero {
+    grid-template-columns: 135px minmax(0, 1fr);
+    gap: 24px;
+  }
+  .book-artwork {
+    padding: 17px 15px 9px;
+  }
+  .book-artwork figcaption {
+    font-size: 8px;
+  }
+  .book-artwork ktob-book-cover {
+    margin-bottom: 16px;
+  }
+  .book-introduction h1 {
+    font-size: 31px;
+  }
+  .book-byline {
+    font-size: 14px;
+  }
+  .book-badges {
+    gap: 9px;
+    margin-top: 14px;
+  }
+  .book-invitation {
+    font-size: 15px;
+    margin: 16px 0;
+  }
+}
+@media (max-width: 560px) {
+  .book-hero {
+    grid-template-columns: 1fr;
+    gap: 23px;
+    padding-top: 0;
+  }
+  .book-artwork {
+    width: 150px;
+    padding: 16px 20px 9px;
+  }
+  .book-introduction h1 {
+    font-size: 37px;
+  }
+  .book-byline {
+    font-size: 16px;
+  }
+  .book-actions {
+    gap: 9px;
+  }
+  .book-actions .btn {
+    font-size: 12px;
+    padding-inline: 13px;
+  }
+  .book-actions .favorite-action span {
+    display: block;
+  }
+  .book-actions .favorite-action {
+    padding-left: 0;
+  }
+}
+.text-action {
+  background: transparent;
+  border: 0;
+  font-size: 12px;
+  min-height: 44px;
+  padding: 6px 3px;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  color: inherit;
+}
+button:disabled {
+  opacity: 0.55;
+}

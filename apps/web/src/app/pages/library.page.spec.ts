@@ -45,6 +45,7 @@ describe('Library shelf workflows', () => {
     workById: vi.fn(),
     archiveEntry: vi.fn(),
     restoreEntry: vi.fn(),
+    setFavorite: vi.fn(),
   };
 
   beforeEach(() => {
@@ -102,5 +103,25 @@ describe('Library shelf workflows', () => {
     expect(page.entries().find((item) => item.id === first.id)?.archivedAt).toBeNull();
     expect(page.lastArchived()).toBeNull();
     expect(page.error()).toBeTruthy();
+  });
+
+  it('persists favorites without changing unrelated fields and filters real reading status', async () => {
+    const page = TestBed.createComponent(LibraryPage).componentInstance;
+    await page.load();
+    api.setFavorite.mockResolvedValue({
+      data: { ...first, favorite: true, shelfStatus: 'FINISHED' },
+    });
+    await page.favorite(first);
+    expect(api.setFavorite).toHaveBeenCalledWith('first', true);
+    page.setShelf('favorites');
+    expect(page.visibleEntries().map((e) => e.id)).toEqual(['first']);
+    page.status.set('CURRENTLY_READING');
+    expect(page.visibleEntries()).toEqual([]);
+    page.status.set('FINISHED');
+    expect(page.visibleEntries()).toHaveLength(1);
+    expect(page.shelfLabel({ ...first, shelfStatus: 'CURRENTLY_READING' })).toBe(
+      'Currently reading',
+    );
+    expect(page.shelfLabel({ ...first, shelfStatus: 'DID_NOT_FINISH' })).toBe('Did not finish');
   });
 });

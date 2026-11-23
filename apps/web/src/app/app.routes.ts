@@ -28,6 +28,23 @@ export const routes: Routes = [
     title: 'My library · KTOB',
   },
   {
+    path: 'books/:entryId',
+    loadComponent: () => import('./pages/book.page').then((m) => m.BookPage),
+    canActivate: [authGuard],
+    canDeactivate: [
+      (page: { hasUnsavedDraft(): boolean }) =>
+        !page.hasUnsavedDraft() ||
+        window.confirm('Leave this book and discard your unsaved journal draft?'),
+    ],
+    title: 'Your book & journal · KTOB',
+  },
+  {
+    path: 'diary',
+    loadComponent: () => import('./pages/diary.page').then((m) => m.DiaryPage),
+    canActivate: [authGuard],
+    title: 'My reading diary · KTOB',
+  },
+  {
     path: 'catalog/search',
     loadComponent: () => import('./pages/catalog.page').then((m) => m.CatalogPage),
     canActivate: [authGuard],

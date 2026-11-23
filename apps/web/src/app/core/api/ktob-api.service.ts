@@ -28,6 +28,38 @@ export interface ReaderProfile {
   id: string;
   displayName: string;
 }
+export type ReadingStatus = 'CURRENTLY_READING' | 'PAUSED' | 'FINISHED' | 'DID_NOT_FINISH';
+export interface ReadingExperience {
+  id: string;
+  libraryEntryId: string;
+  editionId?: string | null;
+  status: ReadingStatus;
+  startedOn?: string | null;
+  finishedOn?: string | null;
+  rating?: number | null;
+  progressPercent?: number | null;
+}
+export interface ExperienceWrite {
+  status: ReadingStatus;
+  historicalImport?: boolean;
+  startedOn?: string | null;
+  finishedOn?: string | null;
+  rating?: number | null;
+  progressPercent?: number | null;
+}
+export type ExperiencePatch = Partial<Omit<ExperienceWrite, 'historicalImport'>>;
+export type JournalKind = 'REVIEW' | 'REFLECTION' | 'QUOTE' | 'NOTE' | 'EMOTION';
+export interface JournalWrite {
+  kind: JournalKind;
+  body: string;
+  emotionTags: string[];
+  allowForPersonalization: boolean;
+}
+export interface JournalEntry extends JournalWrite {
+  id: string;
+  experienceId: string;
+  createdAt: string;
+}
 export interface ApiData<T> {
   data: T;
 }
@@ -102,12 +134,15 @@ export class KtobApiService {
     return this.request('POST', '/catalog/manual-works', undefined, { title, authors });
   }
 
-  listLibrary(includeArchived = false): Promise<ApiPage<LibraryEntry>> {
-    return this.request(
-      'GET',
-      '/library',
-      new HttpParams().set('includeArchived', String(includeArchived)),
-    );
+  listLibrary(
+    includeArchived = false,
+    cursor?: string,
+    limit?: number,
+  ): Promise<ApiPage<LibraryEntry>> {
+    let params = new HttpParams().set('includeArchived', String(includeArchived));
+    if (cursor) params = params.set('cursor', cursor);
+    if (limit) params = params.set('limit', limit);
+    return this.request('GET', '/library', params);
   }
 
   addToLibrary(workId: string): Promise<ApiData<LibraryEntry>> {
@@ -120,5 +155,69 @@ export class KtobApiService {
 
   restoreEntry(id: string): Promise<ApiData<LibraryEntry>> {
     return this.request('POST', '/library/' + encodeURIComponent(id) + '/restore');
+  }
+
+  libraryEntry(id: string): Promise<ApiData<LibraryEntry>> {
+    return this.request('GET', '/library/' + encodeURIComponent(id));
+  }
+
+  setFavorite(id: string, favorite: boolean): Promise<ApiData<LibraryEntry>> {
+    return this.request('PATCH', '/library/' + encodeURIComponent(id), undefined, { favorite });
+  }
+
+  experiences(entryId: string, cursor?: string): Promise<ApiPage<ReadingExperience>> {
+    return this.request(
+      'GET',
+      '/library/' + encodeURIComponent(entryId) + '/experiences',
+      this.pageParams(cursor),
+    );
+  }
+
+  experience(id: string): Promise<ApiData<ReadingExperience>> {
+    return this.request('GET', '/experiences/' + encodeURIComponent(id));
+  }
+
+  createExperience(entryId: string, body: ExperienceWrite): Promise<ApiData<ReadingExperience>> {
+    return this.request(
+      'POST',
+      '/library/' + encodeURIComponent(entryId) + '/experiences',
+      undefined,
+      body,
+    );
+  }
+
+  updateExperience(id: string, body: ExperiencePatch): Promise<ApiData<ReadingExperience>> {
+    return this.request('PATCH', '/experiences/' + encodeURIComponent(id), undefined, body);
+  }
+
+  journal(experienceId: string, cursor?: string): Promise<ApiPage<JournalEntry>> {
+    return this.request(
+      'GET',
+      '/experiences/' + encodeURIComponent(experienceId) + '/journal',
+      this.pageParams(cursor),
+    );
+  }
+
+  createJournal(experienceId: string, body: JournalWrite): Promise<ApiData<JournalEntry>> {
+    return this.request(
+      'POST',
+      '/experiences/' + encodeURIComponent(experienceId) + '/journal',
+      undefined,
+      body,
+    );
+  }
+
+  updateJournal(id: string, body: Partial<JournalWrite>): Promise<ApiData<JournalEntry>> {
+    return this.request('PATCH', '/journal/' + encodeURIComponent(id), undefined, body);
+  }
+
+  deleteJournal(id: string): Promise<void> {
+    return this.request('DELETE', '/journal/' + encodeURIComponent(id));
+  }
+
+  private pageParams(cursor?: string): HttpParams {
+    let params = new HttpParams().set('limit', 100);
+    if (cursor) params = params.set('cursor', cursor);
+    return params;
   }
 }

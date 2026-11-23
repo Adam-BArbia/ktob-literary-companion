@@ -10,16 +10,24 @@ import {
 } from '../core/api/ktob-api.service';
 import { IconComponent } from '../shared/icon.component';
 import { BookCoverComponent } from '../shared/book-cover.component';
+import { mapInBatches, readingStatusLabel } from '../core/api/reading-helpers';
+import { ConfirmationDialogComponent } from '../shared/confirmation-dialog.component';
 
 @Component({
   selector: 'app-library-page',
-  imports: [FormsModule, RouterLink, IconComponent, BookCoverComponent],
+  imports: [
+    FormsModule,
+    RouterLink,
+    IconComponent,
+    BookCoverComponent,
+    ConfirmationDialogComponent,
+  ],
   templateUrl: './library.page.html',
   styleUrl: './library.page.css',
 })
 export class LibraryPage implements OnInit {
   private readonly api = inject(KtobApiService);
-  @ViewChild('archiveDialog') private archiveDialog?: ElementRef<HTMLDialogElement>;
+  @ViewChild('archiveDialog') private archiveDialog?: ConfirmationDialogComponent;
   @ViewChild('shelfFilter') private shelfFilter?: ElementRef<HTMLButtonElement>;
   private previousFocus: HTMLElement | null = null;
   readonly entries = signal<LibraryEntry[]>([]);
@@ -29,13 +37,18 @@ export class LibraryPage implements OnInit {
   readonly error = signal('');
   readonly notice = signal('');
   readonly needsSignIn = signal(false);
-  readonly shelf = signal<'active' | 'archived'>('active');
+  readonly shelf = signal<'active' | 'favorites' | 'archived'>('active');
+  readonly status = signal('');
+  readonly hasMore = signal(false);
   readonly view = signal<'grid' | 'list'>('grid');
   readonly query = signal('');
   readonly pendingArchive = signal<LibraryEntry | null>(null);
   readonly lastArchived = signal<LibraryEntry | null>(null);
   readonly skeletons = [0, 1, 2, 3];
   readonly activeCount = computed(() => this.entries().filter((entry) => !entry.archivedAt).length);
+  readonly favoriteCount = computed(
+    () => this.entries().filter((entry) => !entry.archivedAt && entry.favorite).length,
+  );
   readonly archivedCount = computed(
     () => this.entries().filter((entry) => !!entry.archivedAt).length,
   );
@@ -44,6 +57,8 @@ export class LibraryPage implements OnInit {
     const works = this.works();
     return this.entries().filter((entry) => {
       if ((this.shelf() === 'archived') !== !!entry.archivedAt) return false;
+      if (this.shelf() === 'favorites' && !entry.favorite) return false;
+      if (this.status() && entry.shelfStatus !== this.status()) return false;
       if (!query) return true;
       const work = works[entry.workId];
       return [work?.title ?? '', ...(work?.authors ?? [])]
@@ -63,17 +78,23 @@ export class LibraryPage implements OnInit {
     this.error.set('');
     this.needsSignIn.set(false);
     try {
-      const entries = (await this.api.listLibrary(true)).data;
+      const entries: LibraryEntry[] = [];
+      let cursor: string | undefined;
+      for (let page = 0; page < 5; page++) {
+        const result = await this.api.listLibrary(true, cursor, 100);
+        entries.push(...result.data.filter((item) => !entries.some((old) => old.id === item.id)));
+        cursor = result.meta?.nextCursor ?? undefined;
+        if (!cursor) break;
+      }
+      this.hasMore.set(!!cursor);
       const works: Record<string, BookWork> = {};
-      await Promise.all(
-        [...new Set(entries.map((entry) => entry.workId))].map(async (id) => {
-          try {
-            works[id] = (await this.api.workById(id)).data;
-          } catch {
-            /* A missing title must not prevent access to the rest of the library. */
-          }
-        }),
-      );
+      await mapInBatches([...new Set(entries.map((entry) => entry.workId))], async (id) => {
+        try {
+          works[id] = (await this.api.workById(id)).data;
+        } catch {
+          /* A missing title must not prevent access to the rest of the library. */
+        }
+      });
       this.works.set(works);
       this.entries.set(entries);
     } catch (error) {
@@ -90,25 +111,38 @@ export class LibraryPage implements OnInit {
     return this.works()[entry.workId]?.authors.join(', ') || 'Author not listed';
   }
   shelfLabel(entry: LibraryEntry): string {
-    const labels: Record<string, string> = {
-      WANT_TO_READ: 'Want to read',
-      READING: 'Reading',
-      FINISHED: 'Finished',
-      PAUSED: 'Paused',
-      ABANDONED: 'Set aside',
-    };
-    return labels[entry.shelfStatus] ?? 'On your shelf';
+    return readingStatusLabel(entry.shelfStatus);
   }
 
-  setShelf(value: 'active' | 'archived'): void {
+  setShelf(value: 'active' | 'favorites' | 'archived'): void {
     this.shelf.set(value);
+  }
+
+  async favorite(entry: LibraryEntry): Promise<void> {
+    if (this.changing() || entry.archivedAt) return;
+    this.changing.set(entry.id);
+    this.error.set('');
+    try {
+      const updated = (await this.api.setFavorite(entry.id, !entry.favorite)).data;
+      this.entries.update((items) => items.map((item) => (item.id === entry.id ? updated : item)));
+      this.notice.set(
+        updated.favorite
+          ? `“${this.title(entry)}” is a favorite.`
+          : `“${this.title(entry)}” was removed from favorites.`,
+      );
+      this.lastArchived.set(null);
+    } catch (error) {
+      this.setError(error);
+    } finally {
+      this.changing.set(null);
+    }
   }
 
   requestArchive(entry: LibraryEntry, trigger: EventTarget | null): void {
     if (this.changing()) return;
     this.previousFocus = trigger instanceof HTMLElement ? trigger : null;
     this.pendingArchive.set(entry);
-    this.archiveDialog?.nativeElement.showModal();
+    this.archiveDialog?.open(trigger);
   }
 
   cancelArchive(event?: Event): void {
@@ -116,7 +150,7 @@ export class LibraryPage implements OnInit {
       event?.preventDefault();
       return;
     }
-    this.archiveDialog?.nativeElement.close();
+    this.archiveDialog?.close();
     this.pendingArchive.set(null);
   }
 
@@ -141,10 +175,10 @@ export class LibraryPage implements OnInit {
       );
       this.lastArchived.set(entry);
       this.notice.set(`“${this.title(entry)}” was moved to your archive.`);
-      this.archiveDialog?.nativeElement.close();
+      this.archiveDialog?.close();
     } catch (error) {
       this.setError(error);
-      this.archiveDialog?.nativeElement.close();
+      this.archiveDialog?.close();
     } finally {
       this.changing.set(null);
     }
