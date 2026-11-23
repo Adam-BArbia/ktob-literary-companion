@@ -22,9 +22,9 @@ let nextRatingId = 0;
                   <rect x="0" y="0" [attr.width]="fill(star) * 0.24" height="24" />
                 </clipPath>
               </defs>
-              <path class="outline" [attr.d]="starPath" />
+              <path class="ktob-rating-track" [attr.d]="starPath" />
               <path
-                class="fill"
+                class="ktob-rating-fill"
                 [attr.d]="starPath"
                 [attr.clip-path]="'url(#' + groupName + '-clip-' + star + ')'"
               />
@@ -102,10 +102,10 @@ let nextRatingId = 0;
       display: block;
       pointer-events: none;
     }
-    .outline {
+    .ktob-rating-track {
       fill: #dfe4dc;
     }
-    .fill {
+    .ktob-rating-fill {
       fill: #a45e3d;
     }
     .star input {
