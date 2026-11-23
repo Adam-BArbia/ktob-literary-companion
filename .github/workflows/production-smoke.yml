@@ -64,6 +64,21 @@ jobs:
           assert not any(k in config for k in ('DATABASE_PASSWORD', 'service_role', 'SUPABASE_SECRET_KEY'))
           print('PASS frontend points to the intended KTOB API and public Supabase project')
 
+          for route in ('/auth', '/library', '/catalog/search'):
+              status, _, html = fetch(frontend + route)
+              assert status == 200 and b'<html' in html.lower(), f'Angular deep link {route}: HTTP {status}'
+          print('PASS Angular SPA deep links for sign-in, library and catalog')
+
+          jwks_url = os.environ['SUPABASE_ORIGIN'] + '/auth/v1/.well-known/jwks.json'
+          status, _, jwks_body = fetch(jwks_url)
+          assert status == 200, f'Supabase JWKS: HTTP {status}'
+          jwks = json.loads(jwks_body)
+          assert any(k.get('kty') == 'EC' and k.get('crv') == 'P-256'
+                     and k.get('alg', 'ES256') == 'ES256'
+                     and bool(k.get('x')) and bool(k.get('y'))
+                     for k in jwks.get('keys', [])), 'No usable ES256 public signing key'
+          print('PASS Supabase Auth publishes a valid ES256 JWKS signing key')
+
           status, _, body = fetch(api + '/api/v1/health')
           assert status == 200 and json.loads(body).get('status') == 'ok', f'API health: HTTP {status}'
           print('PASS live Java API health')
