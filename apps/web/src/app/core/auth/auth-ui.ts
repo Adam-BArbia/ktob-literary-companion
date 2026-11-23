@@ -10,9 +10,11 @@ export function authReturnUrl(value: string | null): string {
   }
   try {
     const url = new URL(value, 'https://ktob.invalid');
+    // Angular decodes path segments and separates matrix parameters before matching routes.
+    const firstSegment = decodeURIComponent(url.pathname.split('/')[1].split(/[;(]/, 1)[0]);
     if (
       url.origin !== 'https://ktob.invalid' ||
-      /^\/(?:auth|sign-up|sign-in)(?:\/|$)/.test(url.pathname)
+      ['auth', 'sign-up', 'sign-in'].includes(firstSegment)
     ) {
       return '/library';
     }

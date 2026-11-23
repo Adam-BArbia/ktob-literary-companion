@@ -21,6 +21,31 @@ describe('Authentication presentation boundaries', () => {
     }
   });
 
+  it.each([
+    '/%61uth',
+    '/%61uth/sign-up',
+    '/%73ign-up',
+    '/%73ign-in',
+    '/auth;source=email',
+    '/auth;source=email/sign-up?returnUrl=/auth',
+    '/sign-up;source=email',
+    '/sign-in;source=email',
+    '/%61uth;source=email',
+    '/%ZZ',
+  ])('rejects encoded or parameterized authentication return paths: %s', (path) => {
+    expect(authReturnUrl(path)).toBe('/library');
+  });
+
+  it('preserves internal destinations with safe encoding, matrix parameters, and fragments', () => {
+    for (const path of [
+      '/%63atalog/search?q=Virginia%20Woolf',
+      '/library;view=grid?filter=favorites#books',
+      '/catalog/search?q=auth',
+    ]) {
+      expect(authReturnUrl(path)).toBe(path);
+    }
+  });
+
   it('provides actionable provider errors without exposing internal messages', () => {
     expect(authFailure({ code: 'email_not_confirmed' })).toContain('confirm your email');
     expect(authFailure({ code: 'invalid_credentials' })).toContain('do not match');
