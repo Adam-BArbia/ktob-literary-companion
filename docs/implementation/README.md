@@ -25,6 +25,7 @@ This directory transforms the approved [Gate B product decisions](../architectur
 | 15 | [Sprint 1 authenticated foundation](15-sprint1-progress.md) | Baseline SOA slice and its original verification boundaries |
 | 16 | [Editorial UI design guide](16-ui-design-guide.md) | Palette, components, interaction and accessibility |
 | Release | [Reading-journal release and demonstration](overnight-release-demo.md) | Release evidence, demo sequence, fallbacks and SOA explanation |
+| Research | [Free AI API options](free-ai-api-options.md) | Current candidate comparison, no-card evidence, quotas and privacy limits; B16 remains open |
 
 ## Source-of-truth and change control
 

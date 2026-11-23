@@ -6,15 +6,15 @@ Demo: **Tuesday, 24 November 2026**, Tunisia time.
 
 The prepared release expands the existing authenticated library into a private reading journal: separate reading experiences, half-star ratings, reviews/reflections/quotes/notes/emotions, favorites, book details and a diary. Each reread has its own rating and journal. AI remains a separate provider qualification gate; the main demonstration does not require it.
 
-**Current release status: AUTHORIZED; PUBLICATION AND DEPLOYMENT IN PROGRESS.** The owner explicitly authorized publishing the prepared changes, merging PRs after CI, applying the reviewed additive V2 migration after safety checks, and deploying to the existing services. This resolves the earlier automatic approval rejection. The evidence table below separates completed local verification from pending production actions.
+**Current release status: DEPLOYED; AUTHENTICATED ACCEPTANCE STILL OUTSTANDING.** The owner explicitly authorized publication, merging after CI, the additive migration after safety checks, and deployment to the existing services. Backend PR #3 and frontend PR #4 passed their checks and were merged. Supabase V2, the Render backend and the Vercel production frontend are deployed. Public API and production-page checks passed. No signed-in reader session was available, so authenticated journal interaction, refresh persistence and live two-account verification remain unexecuted.
 
 The repository's [implemented operations](implemented-operations.json) lists implemented Java routes. It does not prove that a migration or deployment has been applied. The complete OpenAPI design still contains 57 operations, including planned features.
 
-**Release order:** Release A contains the additive database change and tested Java APIs. Release B contains the Angular book/journal/diary views and follows successful backend deployment. The first backend PR does not make the new UI available. The walkthrough below is the acceptance sequence for the integrated release, and should be presented only after Release B is verified.
+**Release order:** Release A delivered the additive database change, tested Java APIs, and discovery ranking correction. Release B delivered the Angular book/journal/diary views after successful backend deployment. Run the acceptance sequence below with an authorized signed-in reader before presenting the private reading/journal features; the recorded public-page checks do not establish those authenticated results.
 
 | Item | Evidence / status |
 |---|---|
-| Baseline main | `65044662983b5750914abea53d2a583ae275d29b` |
+| Pre-release main | `65044662983b5750914abea53d2a583ae275d29b` |
 | Production web | https://ktob-web-front.vercel.app |
 | Production API | https://ktob-api.onrender.com/api/v1/health |
 | Repository | https://github.com/Adam-BArbia/ktob-literary-companion |
@@ -22,36 +22,47 @@ The repository's [implemented operations](implemented-operations.json) lists imp
 | Existing Render baseline deployment | `dep-dc2bogfb9u1s73cn94dg`, source `65044662983b5750914abea53d2a583ae275d29b`; observed before this release, not a new deployment. |
 | Existing Vercel baseline deployment | `dpl_wG9vdgrY7prKR9m8anmohPaLPXDS`; observed before this release, not a new deployment. |
 | Target Supabase project | KTOB, `afavrsrffoyctyvvpxcv` |
-| New migration | `V2__reading_experiences_and_journal.sql`; verified with V1 against disposable PostgreSQL 17.12, seven application tables, browser-access denial and restricted-role checks. **Production application unexecuted.** |
+| New migration | **Applied successfully** to KTOB as `20261123225716_reading_experiences_and_private_journal_v2`. Payload is the reviewed `V2__reading_experiences_and_journal.sql` with transaction-local 5-second lock and 60-second statement timeouts. Postchecks verified constraints, indexes and new-table grants. |
 | Backend local validation | Final Maven `verify` passed: **41 tests, zero failures/errors/skips**. The reading/journal release first passed 37 tests, including 11 new HTTP + PostgreSQL integration tests and five new unit tests; the discovery follow-up added three PostgreSQL + HTTP-stub integration tests and one provider result-bound test. Runnable Java application jar built. |
 | Frontend local validation | **89 tests across 12 files passed**; Angular production build passed with a **324.12 kB initial bundle** and the existing 8 kB component-style hard limits unchanged. Includes deterministic SVG half-star geometry coverage. This is not deployed UI or browser visual verification. |
 | Implemented API operations | **20 of 57**: previous 11 plus library PATCH, four Reading operations and four Journal operations. Registry and actual controller mappings agree. |
-| GitHub release branch / commit / PR | Authorized; publication pending. Baseline SHA above is the existing production source, not a new release SHA. |
-| GitHub CI for this release | **Unexecuted:** local passing tests are not a remote CI result. |
-| Render backend release | **Unexecuted:** no new deployment ID. |
-| Vercel preview / production release | **Unexecuted:** no new preview URL or deployment ID. The production URL above remains the existing release. |
-| Live API smoke / real two-account verification of new operations | **Unexecuted:** script prepared for after backend deployment. |
-| Deployed UI / browser refresh verification of new features | **Unexecuted:** requires frontend release after backend verification. |
-| Discovery ranking follow-up | Implemented and included in the final 41-test backend run. Preserves current provider order, stably promotes normalized exact titles, keeps adaptations, deduplicates canonical work IDs, and bounds accepted provider results. Private manual matches remain reader-scoped. Independent source review found no ordering, privacy or result-count blocker. **Not deployed.** |
+| Backend GitHub PR / commits | [PR #3](https://github.com/Adam-BArbia/ktob-literary-companion/pull/3) **merged** after checks. Reviewed head: `fb3bf8edbde81829136cebb392b0fd7eeb7b6164`. Squash merge on main: `a1f10afb8676188f606aa606a1b1864cfa453aae`. Includes the four discovery follow-up files. |
+| GitHub CI for backend release | **All nine check runs successful** on the PR head; separate Vercel status also successful. These checks concern Release A and do not establish deployment of the new Angular views. |
+| Render backend release | **LIVE:** `dep-dc2c9t15efls73dhbjlg`, commit `a1f10afb8676188f606aa606a1b1864cfa453aae`; completed 23 November 2026 at `22:59:37.988Z`. |
+| Frontend GitHub PR / commits | [PR #4](https://github.com/Adam-BArbia/ktob-literary-companion/pull/4) **merged** after checks. Reviewed head: `5aacdb700f961f78afb8ce474d2a893e37285dbb`. Squash merge on main: `6e5069304ce220f9fcc3e961fddcd85ef21c0cc8`. |
+| GitHub CI for frontend release | **All five check runs successful** on the PR head; separate Vercel status successful. |
+| New UI Vercel preview | **READY:** `dpl_Gtf2BPhAd1z7wTRoW7SuV551AWw8`, [preview URL](https://ktob-web-front-db50h4wro-fleet-luma.vercel.app). Public pages loaded in the browser. Its origin is intentionally excluded from the production API's CORS allowlist. |
+| New UI Vercel production release | **READY:** `dpl_4MBdxm8dThgZDuBUnogpvzx9PqA7`, commit `6e5069304ce220f9fcc3e961fddcd85ef21c0cc8`; [deployment URL](https://ktob-web-front-h1ujo66b4-fleet-luma.vercel.app), production alias https://ktob-web-front.vercel.app. The frontend-only merge did not redeploy the API; its live backend deployment remains the one recorded above. |
+| Public live API checks | **Passed:** health GET `200`; all nine new operations returned anonymous `401`; production-origin PATCH preflight returned `200` with the exact allowed origin and required methods. Preview-origin preflight returned the expected `403`; CORS was not broadened. |
+| Authenticated API smoke / real two-account verification | **Unexecuted:** no authenticated session was available. The prepared isolated-account smoke script has not been run against production. |
+| Public browser checks | Preview homepage/navigation loaded visually and the diary auth-return route worked. Production reload showed the new **Reading diary** navigation, **Service connected**, and a clean homepage. Clicking the production diary link redirected to `https://ktob-web-front.vercel.app/auth?returnUrl=%2Fdiary`. |
+| Remaining authenticated UI acceptance | **Unexecuted:** journal interaction, saved-rating/journal refresh persistence and two-account production checks. No signed-in reader session was available; no authenticated success is inferred from public-page checks. |
+| Discovery ranking follow-up | Included in the live Render backend and final 41-test backend run. Preserves current provider order, stably promotes normalized exact titles, keeps adaptations, deduplicates canonical work IDs, and bounds accepted provider results. Private manual matches remain reader-scoped. Ordering/privacy/limits passed independent source review and local tests; authenticated live search was not recorded. |
 | Real AI inference | Not verified; do not demonstrate or claim live AI without a qualified provider and actual successful inference |
 
 ### Migration history and production guard
 
-The existing production schema is tracked by the Supabase migration ledger, with `20261123204102_reader_catalog_library_sprint1` and `20261123204134_ktob_app_least_privilege_runtime_grants`. There is no production Flyway history table. Local and CI databases replay the repository's Flyway V1/V2 files; hosted changes are reviewed SQL recorded in the existing Supabase ledger. Do not create a competing production history or enable `KTOB_AUTO_MIGRATE=true`.
+The production Supabase migration ledger now contains `20261123204102_reader_catalog_library_sprint1`, `20261123204134_ktob_app_least_privilege_runtime_grants`, and the applied `20261123225716_reading_experiences_and_private_journal_v2`. There is no production Flyway history table. Local and CI databases replay the repository's Flyway V1/V2 files; hosted changes are reviewed SQL recorded in the existing Supabase ledger. Do not create a competing production history or enable `KTOB_AUTO_MIGRATE=true`.
 
-Apply the additive reading/journal SQL to the verified KTOB project before deploying code that queries the new tables. Recheck tables, constraints, indexes, restricted runtime grants and browser denial after application. Existing library/profile/catalog rows are retained. A deployment rollback should restore the prior application version while retaining the additive tables and any new reader material; it should not drop journals or reset the schema.
+V2 was applied before deployment of code that queries its new tables. Production postchecks found all constraints and indexes valid. The runtime role has SELECT/INSERT/UPDATE on reading experiences with DELETE denied, and SELECT/INSERT/UPDATE/DELETE on journal entries. Both browser roles retain no `app` schema usage and no SELECT on either new table. Counts and content fingerprints for all five preexisting application tables matched before and after migration. A deployment rollback should restore the prior application version while retaining the additive tables and any new reader material; it should not drop journals or reset the schema.
 
-### Recovery review and remaining preflight evidence
+### Migration safety and recovery evidence
 
-Static review of the exact V2 SQL finds no modification or removal of existing reader rows. Its only existing-table change adds `UNIQUE(id,work_id)` to `library_entries`; existing uniqueness of the primary-key `id` already guarantees those pairs are unique. The migration otherwise creates two tables, their indexes/constraints, and permissions on those new tables. Creating the additional unique constraint still requires a database lock, so inspect current table size and blocking transactions before application.
+Static review of the exact V2 SQL finds no modification or removal of existing reader rows. Its only existing-table change adds `UNIQUE(id,work_id)` to `library_entries`; existing uniqueness of the primary-key `id` already guarantees those pairs are unique. The migration otherwise creates two tables, their indexes/constraints, and permissions on those new tables.
+
+Read-only preflight at 22:54–22:55 UTC on 23 November confirmed the healthy KTOB target on PostgreSQL 17.12, the two expected baseline ledger entries, five application tables, 20 validated constraints and 10 valid/ready indexes. No other active transactions, application locks, blockers or prepared transactions were observed. The library table had one row and occupied 57,344 bytes including indexes. Counts were two reader profiles, two privacy settings, 41 catalog works, zero editions and one library entry; those counts and all five tables' content fingerprints remained identical after V2. No private row contents were retrieved for these checks.
+
+Effective privileges showed no browser-role schema/table access, no elevated `ktob_app` role flags or inherited memberships, and no global or `app` default-ACL entries. The configured Data API schema list was not visible through the inspected PostgreSQL settings; the verified claim is effective browser-role denial. The migration payload set `SET LOCAL lock_timeout='5s'` and `SET LOCAL statement_timeout='60s'`, without an explicit transaction-control wrapper.
 
 The safe application rollback is to return Render and Vercel to their recorded prior deployment versions while **keeping V2 tables and all reader material**. Baseline Java source `65044662983b5750914abea53d2a583ae275d29b` does not query the new tables; its existing schema queries remain compatible. This compatibility was reviewed in source, not tested as a deployed rollback. Keep production `KTOB_AUTO_MIGRATE=false`. Earlier code temporarily cannot display the new reading/journal features, but it does not erase their data.
 
-For a migration or transport failure, inspect both the Supabase ledger and actual schema before retrying. Do not assume a timeout means nothing committed, and do not rerun an applied V2. Confirm that the chosen migration mechanism applies the SQL and records its ledger entry atomically. If a later correction is needed, create a separate reviewed migration and fix the specific constraint, permission or application behavior while retaining existing rows. Do not use DROP, schema reset, destructive rollback or an older whole-database restore as the normal release rollback.
+Supabase's [migration transaction guidance](https://supabase.com/kb/troubleshooting/partial-migrations-and-schema-inconsistencies-from-embedded-transactions-13ae82) describes the runner's built-in transaction wrapper and warns against embedded transaction-control commands. The [official MCP source](https://github.com/supabase/mcp/blob/main/packages/mcp-server-supabase/src/platform/api-platform.ts) forwards the payload once to the Management API migration endpoint; the [public self-hosted runner](https://github.com/supabase/supabase/blob/master/apps/studio/lib/api/self-hosted/migrations.ts) places the SQL and ledger insertion in one transaction. The hosted handler's internal implementation was not independently source-verified. The successful ledger and schema postchecks establish the actual outcome of this application; a hosted failure/rollback scenario was not exercised.
 
-An actual restorable production backup has **not** been verified. Supabase's [backup documentation](https://supabase.com/docs/guides/platform/backups) recommends manual exports for Free projects; automated recovery must not be assumed from the existence of the hosted database. A migration-safety backup should capture the private application schema/data, relevant grants and existing migration history using an authorized connection, remain private, and be restore-tested in a separate disposable database. An application-only dump is not a complete Supabase Auth/account backup. Do not publish reader data or backup contents in GitHub or demo artifacts.
+For any later migration or transport failure, inspect both the Supabase ledger and actual schema before retrying. Do not assume a timeout means nothing committed, and do not rerun this applied V2. If a correction is needed, create a separate reviewed migration and fix the specific constraint, permission or application behavior while retaining existing rows. Do not use DROP, schema reset, destructive rollback or an older whole-database restore as the normal release rollback.
 
-Before production application, record the current target/schema/ledger state and table sizes; verify lock/statement-timeout and transaction behavior for the selected migration path; confirm the actual backup/recovery option; reconfirm the existing Render and Vercel baseline deployment IDs recorded above; and verify that the runtime role, private-schema exposure and automatic-migration setting still match the reviewed configuration. The additive change and local tests reduce migration risk, but do not replace these production checks.
+**Full-data backup export and restore testing were not executed.** Automatic approval review rejected the requested export because migration authorization did not include disclosure of full private production rows through the connector response. No raw private rows were retrieved, and the export was not retried through another route. Supabase's [backup documentation](https://supabase.com/docs/guides/platform/backups) recommends manual exports for Free projects; neither automated recovery nor an actual restorable backup is claimed here. Any future backup needs an authorized private destination and a separate restore test; an application-only dump would not be a complete Supabase Auth/account backup.
+
+For this exact additive release, the accepted recovery path combines the verified schema/permission/lock preflight, bounded migration locks, unchanged before/after counts and content fingerprints, post-migration constraints/grants checks, and application rollback that retains new tables and data. This supports the migration's limited scope; it does not establish recovery from an unrelated whole-database loss. Prior Render and Vercel deployment IDs are recorded above for application recovery.
 
 ### Documentation validation completed locally
 
@@ -59,9 +70,9 @@ Before production application, record the current target/schema/ledger state and
 - `python docs/implementation/validate_handoff.py`: passed, all 57 operation assignments and local document links.
 - Workflow-pinned PlantUML 1.2025.4: syntax validation passed; all 16 diagrams rendered to SVG without renderer errors.
 
-Java and Angular local validation are recorded separately in the evidence table above. Remote CI, deployment and live acceptance checks remain unexecuted and must receive their own evidence before the release is called complete.
+Java and Angular local validation are recorded separately in the evidence table above. Both PRs passed remote CI; the production migration, Render and Vercel deployments, public API checks, and preview/production public-page checks have completed. Authenticated acceptance remains outstanding and must receive its own evidence before the integrated release is called fully verified.
 
-The completed Java run used disposable PostgreSQL 17.12 with `KTOB_TEST_POSTGRES=true`, `KTOB_AUTO_MIGRATE=true` **only for that disposable database**, and a local test JDBC configuration. The integration tests use Spring Security's test JWT context; they do not prove a real Supabase token or deployed production workflow. The live smoke check below verifies that separate boundary after release.
+The completed Java run used disposable PostgreSQL 17.12 with `KTOB_TEST_POSTGRES=true`, `KTOB_AUTO_MIGRATE=true` **only for that disposable database**, and a local test JDBC configuration. The integration tests use Spring Security's test JWT context; they do not prove a real Supabase token or deployed production workflow. The public live checks establish liveness, anonymous rejection and CORS behavior. The authenticated smoke check below remains required to verify persistence and ownership with real test-account tokens.
 
 ### Repeatable live API smoke check
 
@@ -70,7 +81,7 @@ The completed Java run used disposable PostgreSQL 17.12 with `KTOB_TEST_POSTGRES
 - `API_BASE_URL`: the verified deployment URL ending in `/api/v1`.
 - `QA_READER_A_TOKEN` and `QA_READER_B_TOKEN`: valid access tokens for **two distinct, owner-authorized, isolated test accounts** in the KTOB Supabase project. Obtain them through the normal test-user authentication flow and provide them securely in the process environment. Do not paste credentials into this document, shell history or logs.
 
-After the additive migration and backend deployment are verified, run:
+The additive migration and backend deployment are verified. Once both isolated test accounts and their valid access tokens are available, run:
 
 ```sh
 python3 scripts/smoke_reading_journal.py
@@ -115,6 +126,8 @@ If AI is unavailable, show its honest unavailable state briefly and continue wit
 ### Provider qualification result for this release
 
 **Gate B16 remains unmet. No real inference was performed, and no live AI adapter is claimed.** The existing honest unavailable interface remains the appropriate product state.
+
+The [free AI API comparison](free-ai-api-options.md) evaluates current alternatives, no-card evidence, quotas and data handling. It recommends candidates for later evaluation; no provider has been activated or qualified for this account.
 
 Groq's [production models](https://console.groq.com/docs/models) include `openai/gpt-oss-20b` and `openai/gpt-oss-120b`. Its [published free-plan limits](https://console.groq.com/docs/rate-limits) list 30 requests/minute, 1,000 requests/day, 8,000 tokens/minute and 200,000 tokens/day for these models; the actual account/organization quota remains authoritative. The [billing FAQ](https://console.groq.com/docs/billing-faqs) describes adding a payment method when upgrading to Developer. These references make Groq a candidate, not evidence that this account has working access.
 
