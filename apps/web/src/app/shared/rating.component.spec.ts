@@ -2,6 +2,27 @@ import { TestBed } from '@angular/core/testing';
 import { RatingComponent } from './rating.component';
 
 describe('Half-star rating control', () => {
+  it('does not acquire Tailwind utility outlines on editable or read-only SVG stars', () => {
+    const utility = document.createElement('style');
+    utility.textContent = '.outline { outline-style: solid; outline-width: 1px; }';
+    document.head.appendChild(utility);
+    try {
+      const fixture = TestBed.createComponent(RatingComponent);
+      fixture.componentRef.setInput('value', 4.5);
+      for (const readonly of [false, true]) {
+        fixture.componentRef.setInput('readonly', readonly);
+        fixture.detectChanges();
+        const paths = Array.from(fixture.nativeElement.querySelectorAll('svg path')) as SVGElement[];
+        expect(paths).toHaveLength(10);
+        for (const path of paths) {
+          expect(getComputedStyle(path).outlineStyle).not.toBe('solid');
+        }
+      }
+    } finally {
+      utility.remove();
+    }
+  });
+
   it('offers native keyboard-operable radio choices from 1 through 5, with half steps', () => {
     const fixture = TestBed.createComponent(RatingComponent);
     fixture.componentRef.setInput('value', 4.5);
@@ -53,8 +74,8 @@ describe('Half-star rating control', () => {
     const fifthStar = fixture.nativeElement.querySelectorAll('svg')[4] as SVGElement;
     expect(fifthStar.getAttribute('viewBox')).toBe('0 0 24 24');
     expect(fifthStar.querySelector('rect')?.getAttribute('width')).toBe('12');
-    expect(fifthStar.querySelector('path.outline')?.getAttribute('d')).toBe(
-      fifthStar.querySelector('path.fill')?.getAttribute('d'),
+    expect(fifthStar.querySelector('path.ktob-rating-track')?.getAttribute('d')).toBe(
+      fifthStar.querySelector('path.ktob-rating-fill')?.getAttribute('d'),
     );
     fixture.componentRef.setInput('readonly', true);
     fixture.detectChanges();
