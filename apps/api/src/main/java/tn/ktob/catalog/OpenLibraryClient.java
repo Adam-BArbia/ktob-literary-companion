@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import tn.ktob.api.shared.ApiException;
 import tools.jackson.databind.JsonNode;
@@ -19,6 +21,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 /** Calls Open Library metadata only. No scraped storefront, invented offers, or AI. */
 public final class OpenLibraryClient {
+    private static final Logger LOG = LoggerFactory.getLogger(OpenLibraryClient.class);
     private final URI base;
     private final String contact;
     private final HttpClient http;
@@ -64,38 +67,80 @@ public final class OpenLibraryClient {
 
     private List<FoundWork> fetch(String query, int limit) {
         String encoded = URLEncoder.encode(query, StandardCharsets.UTF_8);
-        URI url = base.resolve("/search.json?q="+encoded+"&limit="+Math.min(limit,25));
-        try {
-            HttpRequest request=HttpRequest.newBuilder(url)
-                .timeout(Duration.ofSeconds(6))
-                .header("User-Agent","KTOB (contact: "+contact+")")
-                .header("Accept","application/json")
-                .GET().build();
-            HttpResponse<String> response=http.send(request,HttpResponse.BodyHandlers.ofString());
-            if(response.statusCode()!=200) throw unavailable();
-            JsonNode rows=json.readTree(response.body()).path("docs");
-            if(!rows.isArray()) throw unavailable();
-            List<FoundWork> result=new ArrayList<>();
-            for(JsonNode d:rows){
-                String key=d.path("key").asText("");
-                String title=d.path("title").asText("").trim();
-                if(!key.matches("/works/OL[0-9]+W") || title.isBlank()) continue;
-                List<String> authors=new ArrayList<>();
-                JsonNode arr=d.path("author_name");
-                if(arr.isArray()) for(JsonNode a:arr) {
-                    String text=a.asText("").trim();
-                    if(!text.isEmpty() && authors.size()<12) authors.add(text);
+        // A small, explicit field set avoids slow, oversized Open Library responses.
+        URI url = base.resolve("/search.json?q=" + encoded
+            + "&fields=key%2Ctitle%2Cauthor_name%2Clanguage&limit=" + Math.min(limit, 25));
+        HttpRequest request = HttpRequest.newBuilder(url)
+            .timeout(Duration.ofSeconds(15))
+            .header("User-Agent", "KTOB (contact: " + contact + ")")
+            .header("Accept", "application/json")
+            .GET().build();
+
+        for (int attempt = 0; attempt < 2; attempt++) {
+            try {
+                HttpResponse<String> response =
+                    http.send(request, HttpResponse.BodyHandlers.ofString());
+                int status = response.statusCode();
+                if (status != 200) {
+                    // No query, contact information, response body or token is logged.
+                    LOG.warn("Open Library search returned HTTP {}", status);
+                    if (attempt == 0 && (status == 429 || status >= 500 && status < 600)) {
+                        retryDelay();
+                        continue;
+                    }
+                    throw unavailable();
                 }
-                String language=null;
-                JsonNode languages=d.path("language");
-                if(languages.isArray() && languages.size()>0) {
-                    language=languages.get(0).asText(null);
+                JsonNode rows = json.readTree(response.body()).path("docs");
+                if (!rows.isArray()) {
+                    LOG.warn("Open Library search response lacked a docs array");
+                    throw unavailable();
                 }
-                result.add(new FoundWork(key,title,List.copyOf(authors),language));
+                List<FoundWork> result = new ArrayList<>();
+                for (JsonNode d : rows) {
+                    String key = d.path("key").asText("");
+                    String title = d.path("title").asText("").trim();
+                    if (!key.matches("/works/OL[0-9]+W") || title.isBlank()) continue;
+                    List<String> authors = new ArrayList<>();
+                    JsonNode authorsNode = d.path("author_name");
+                    if (authorsNode.isArray()) for (JsonNode author : authorsNode) {
+                        String name = author.asText("").trim();
+                        if (!name.isEmpty() && authors.size() < 12) authors.add(name);
+                    }
+                    String language = null;
+                    JsonNode languages = d.path("language");
+                    if (languages.isArray() && languages.size() > 0) {
+                        language = languages.get(0).asText(null);
+                    }
+                    result.add(new FoundWork(key, title, List.copyOf(authors), language));
+                }
+                return List.copyOf(result);
+            } catch (ApiException e) {
+                throw e;
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                LOG.warn("Open Library lookup interrupted");
+                throw unavailable();
+            } catch (Exception e) {
+                LOG.warn("Open Library lookup transport or decoding failure: {}",
+                    e.getClass().getSimpleName());
+                if (attempt == 0) {
+                    retryDelay();
+                    continue;
+                }
+                throw unavailable();
             }
-            return List.copyOf(result);
-        } catch (ApiException e) { throw e; }
-        catch (Exception e) { throw unavailable(); }
+        }
+        throw unavailable();
+    }
+
+    /** Back off before one retry, respecting Open Library's request rate limits. */
+    private static void retryDelay() {
+        try {
+            Thread.sleep(1200);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw unavailable();
+        }
     }
 
     private static ApiException unavailable() {
