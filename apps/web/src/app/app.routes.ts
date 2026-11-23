@@ -1,21 +1,81 @@
 import { Routes } from '@angular/router';
-import { DashboardPage } from './pages/dashboard.page';
-import { SectionPage } from './pages/section.page';
-import { AuthPage } from './pages/auth.page';
-import { LibraryPage } from './pages/library.page';
-import { CatalogPage } from './pages/catalog.page';
 import { authGuard } from './core/auth/auth.guard';
 
 export const routes: Routes = [
-  { path: '', pathMatch: 'full', component: DashboardPage, title: 'Home · KTOB' },
-  { path: 'auth', component: AuthPage, title: 'Sign in · KTOB' },
-  { path: 'library', component: LibraryPage, canActivate: [authGuard], title: 'My library · KTOB' },
-  { path: 'catalog/search', component: CatalogPage, canActivate: [authGuard], title: 'Discover · KTOB' },
-  { path: 'advisor', component: SectionPage, canActivate: [authGuard],
-    data: { title: 'Literary advisor', eyebrow: 'THINK BETWEEN THE LINES', description: 'Literary conversations and recommendations will require your explicit AI processing consent. No provider is enabled.', milestone: 'Sprint 4' }, title: 'Advisor · KTOB' },
-  { path: 'collections', component: SectionPage, canActivate: [authGuard],
-    data: { title: 'Collections', eyebrow: 'MAKE IT YOURS', description: 'Organize works into personal reading collections, independently of reading status.', milestone: 'Sprint 2' }, title: 'Collections · KTOB' },
-  { path: 'settings', component: SectionPage, canActivate: [authGuard],
-    data: { title: 'Settings & privacy', eyebrow: 'YOUR WORDS, YOUR RULES', description: 'Your display name, privacy controls, content boundaries and essentials export will appear here.', milestone: 'Sprint 3' }, title: 'Settings · KTOB' },
-  { path: '**', redirectTo: '' },
+  {
+    path: '',
+    pathMatch: 'full',
+    loadComponent: () => import('./pages/dashboard.page').then((m) => m.DashboardPage),
+    title: 'A home for your reading life · KTOB',
+  },
+  {
+    path: 'auth/sign-up',
+    loadComponent: () => import('./pages/sign-up.page').then((m) => m.SignUpPage),
+    title: 'Create your account · KTOB',
+  },
+  {
+    path: 'auth',
+    pathMatch: 'full',
+    loadComponent: () => import('./pages/auth.page').then((m) => m.AuthPage),
+    title: 'Welcome back · KTOB',
+  },
+  { path: 'sign-up', redirectTo: 'auth/sign-up', pathMatch: 'full' },
+  { path: 'sign-in', redirectTo: 'auth', pathMatch: 'full' },
+  {
+    path: 'library',
+    loadComponent: () => import('./pages/library.page').then((m) => m.LibraryPage),
+    canActivate: [authGuard],
+    title: 'My library · KTOB',
+  },
+  {
+    path: 'catalog/search',
+    loadComponent: () => import('./pages/catalog.page').then((m) => m.CatalogPage),
+    canActivate: [authGuard],
+    title: 'Discover your next read · KTOB',
+  },
+  {
+    path: 'settings',
+    loadComponent: () => import('./pages/settings.page').then((m) => m.SettingsPage),
+    canActivate: [authGuard],
+    title: 'Account & privacy · KTOB',
+  },
+  {
+    path: 'advisor',
+    loadComponent: () => import('./pages/section.page').then((m) => m.SectionPage),
+    canActivate: [authGuard],
+    data: {
+      title: 'A little more perspective.',
+      icon: 'sparkles',
+      description:
+        'A thoughtful space for literary conversations is on its way. The advisor is not available yet, and your books are not being sent to an AI service.',
+    },
+    title: 'Literary advisor · KTOB',
+  },
+  {
+    path: 'collections',
+    loadComponent: () => import('./pages/section.page').then((m) => m.SectionPage),
+    canActivate: [authGuard],
+    data: {
+      title: 'Little worlds of your own.',
+      icon: 'library',
+      description:
+        'Personal collections are on their way. For now, keep your discoveries together in your library, ready for whatever you feel like reading next.',
+    },
+    title: 'Collections · KTOB',
+  },
+  {
+    path: 'about',
+    loadComponent: () => import('./pages/about.page').then((m) => m.AboutPage),
+    title: 'About KTOB',
+  },
+  {
+    path: 'privacy',
+    loadComponent: () => import('./pages/privacy.page').then((m) => m.PrivacyPage),
+    title: 'Your privacy · KTOB',
+  },
+  {
+    path: '**',
+    loadComponent: () => import('./pages/not-found.page').then((m) => m.NotFoundPage),
+    title: 'Page not found · KTOB',
+  },
 ];

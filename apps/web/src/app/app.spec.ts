@@ -18,8 +18,11 @@ describe('KTOB app shell', () => {
     ensureReady.mockClear();
     await TestBed.configureTestingModule({
       imports: [App],
-      providers: [provideRouter(routes), { provide: HealthService, useValue: { state, check } },
-        { provide: AuthService, useValue: { user, ensureReady, status: signal('unconfigured') } }],
+      providers: [
+        provideRouter(routes),
+        { provide: HealthService, useValue: { state, check } },
+        { provide: AuthService, useValue: { user, ensureReady, status: signal('unconfigured') } },
+      ],
     }).compileComponents();
   });
 
@@ -29,7 +32,7 @@ describe('KTOB app shell', () => {
     const html = fixture.nativeElement as HTMLElement;
     expect(html.querySelector('a[aria-label="KTOB home"]')).not.toBeNull();
     expect(html.querySelector('nav[aria-label="Main navigation"]')).not.toBeNull();
-    expect(html.textContent).toContain('Java API connected');
+    expect(html.textContent).toContain('Service connected');
     expect(check).toHaveBeenCalledOnce();
   });
 
@@ -39,10 +42,14 @@ describe('KTOB app shell', () => {
     const app = fixture.componentInstance;
     app.toggleMenu();
     fixture.detectChanges();
-    expect((fixture.nativeElement as HTMLElement).querySelector('nav[aria-label="Mobile navigation"]')).not.toBeNull();
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('nav[aria-label="Mobile navigation"]'),
+    ).not.toBeNull();
     app.closeMenu();
     fixture.detectChanges();
-    expect((fixture.nativeElement as HTMLElement).querySelector('nav[aria-label="Mobile navigation"]')).toBeNull();
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('nav[aria-label="Mobile navigation"]'),
+    ).toBeNull();
   });
 
   it('displays truthful backend outage and retry', () => {
@@ -51,8 +58,10 @@ describe('KTOB app shell', () => {
     state.set('offline');
     fixture.detectChanges();
     const html = fixture.nativeElement as HTMLElement;
-    expect(html.textContent).toContain('Java API unavailable');
-    const button = Array.from(html.querySelectorAll('button')).find(b => b.textContent?.trim() === 'Retry');
+    expect(html.textContent).toContain('Connection unavailable');
+    const button = Array.from(html.querySelectorAll('button')).find(
+      (b) => b.textContent?.trim() === 'Retry',
+    );
     expect(button).toBeDefined();
     button!.click();
     expect(check).toHaveBeenCalledTimes(2);

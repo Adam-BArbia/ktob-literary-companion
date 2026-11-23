@@ -64,10 +64,10 @@ jobs:
           assert not any(k in config for k in ('DATABASE_PASSWORD', 'service_role', 'SUPABASE_SECRET_KEY'))
           print('PASS frontend points to the intended KTOB API and public Supabase project')
 
-          for route in ('/auth', '/library', '/catalog/search'):
+          for route in ('/auth', '/auth/sign-up', '/sign-up', '/library', '/catalog/search', '/about', '/privacy'):
               status, _, html = fetch(frontend + route)
               assert status == 200 and b'<html' in html.lower(), f'Angular deep link {route}: HTTP {status}'
-          print('PASS Angular SPA deep links for sign-in, library and catalog')
+          print('PASS Angular SPA deep links for registration, sign-in, library, catalog and public information')
 
           jwks_url = os.environ['SUPABASE_ORIGIN'] + '/auth/v1/.well-known/jwks.json'
           status, _, jwks_body = fetch(jwks_url)

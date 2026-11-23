@@ -1,0 +1,278 @@
+<section class="library-page">
+  <header class="library-header">
+    <div>
+      <p class="eyebrow">The books you keep close</p>
+      <h1 class="page-heading">My <em>library.</em></h1>
+      <p class="page-description">A little space for your next great read.</p>
+    </div>
+    <a routerLink="/catalog/search" class="btn btn-primary"
+      ><ktob-icon name="plus" [size]="18" /> Add a book</a
+    >
+  </header>
+
+  <div class="library-toolbar">
+    <div class="shelf-filters" role="group" aria-label="Library shelves">
+      <button
+        #shelfFilter
+        type="button"
+        [class.selected]="shelf() === 'active'"
+        [attr.aria-pressed]="shelf() === 'active'"
+        (click)="setShelf('active')"
+      >
+        <ktob-icon name="book-open" [size]="18" /> My shelf
+        @if (!loading()) {
+          <span>{{ activeCount() }}</span>
+        }
+      </button>
+      <button
+        type="button"
+        [class.selected]="shelf() === 'archived'"
+        [attr.aria-pressed]="shelf() === 'archived'"
+        (click)="setShelf('archived')"
+      >
+        <ktob-icon name="archive" [size]="18" /> Archived
+        @if (!loading()) {
+          <span>{{ archivedCount() }}</span>
+        }
+      </button>
+    </div>
+    <div class="library-controls">
+      <div class="library-search">
+        <ktob-icon name="search" [size]="17" /><label for="library-query" class="sr-only"
+          >Search your loaded books by title or author</label
+        >
+        <input
+          id="library-query"
+          type="search"
+          name="libraryQuery"
+          [ngModel]="query()"
+          (ngModelChange)="query.set($event)"
+          placeholder="Search your books"
+        />
+      </div>
+      <div class="view-controls" role="group" aria-label="Book layout">
+        <button
+          type="button"
+          aria-label="Grid view"
+          [attr.aria-pressed]="view() === 'grid'"
+          [class.selected]="view() === 'grid'"
+          (click)="view.set('grid')"
+        >
+          <ktob-icon name="grid" [size]="18" />
+        </button>
+        <button
+          type="button"
+          aria-label="List view"
+          [attr.aria-pressed]="view() === 'list'"
+          [class.selected]="view() === 'list'"
+          (click)="view.set('list')"
+        >
+          <ktob-icon name="list" [size]="18" />
+        </button>
+      </div>
+    </div>
+  </div>
+
+  @if (error()) {
+    <div role="alert" class="notice notice-error library-notice">
+      <ktob-icon name="alert-circle" />
+      <div>
+        <p>{{ error() }}</p>
+        @if (needsSignIn()) {
+          <a routerLink="/auth" [queryParams]="{ returnUrl: '/library' }">Sign in again</a>
+        } @else {
+          <button
+            type="button"
+            (click)="load()"
+            [disabled]="loading() || !!changing()"
+            class="text-button"
+          >
+            Try again
+          </button>
+        }
+      </div>
+    </div>
+  }
+  @if (notice()) {
+    <div role="status" class="notice notice-success library-notice">
+      <ktob-icon name="check" />
+      <p>{{ notice() }}</p>
+      @if (lastArchived()) {
+        <button
+          type="button"
+          class="text-button undo-button"
+          (click)="undoArchive()"
+          [disabled]="!!changing()"
+        >
+          Undo
+        </button>
+      }
+      <button
+        type="button"
+        class="dismiss-notice"
+        aria-label="Dismiss notification"
+        (click)="notice.set(''); lastArchived.set(null)"
+      >
+        <ktob-icon name="x" [size]="16" />
+      </button>
+    </div>
+  }
+
+  @if (loading()) {
+    <p role="status" class="loading-label">Opening your library…</p>
+    <div class="library-grid" aria-hidden="true">
+      @for (item of skeletons; track item) {
+        <div class="library-card skeleton-card">
+          <div class="skeleton skeleton-cover"></div>
+          <div class="skeleton skeleton-title"></div>
+          <div class="skeleton skeleton-author"></div>
+        </div>
+      }
+    </div>
+  } @else if (!error() && visibleEntries().length === 0) {
+    <section class="library-empty" aria-labelledby="empty-library-title">
+      <div class="empty-art" aria-hidden="true">
+        <div class="art-orbit"></div>
+        <div class="art-book art-book-one"></div>
+        <div class="art-book art-book-two"></div>
+        <div class="art-book art-book-three"><ktob-icon name="book-open" [size]="28" /></div>
+        <span class="art-line"></span>
+      </div>
+      @if (query().trim()) {
+        <p class="eyebrow">A little more looking</p>
+        <h2 id="empty-library-title">No books found here.</h2>
+        <p>Nothing on this shelf matches “{{ query() }}”. Try another title or author.</p>
+        <button class="btn btn-secondary" type="button" (click)="query.set('')">
+          Clear search
+        </button>
+      } @else if (shelf() === 'archived') {
+        <p class="eyebrow">Room for a fresh chapter</p>
+        <h2 id="empty-library-title">Your archive is quiet.</h2>
+        <p>
+          Books you archive will appear here. They stay in your library, ready to return whenever
+          you are.
+        </p>
+        <button type="button" class="btn btn-secondary" (click)="setShelf('active')">
+          <ktob-icon name="arrow-left" [size]="17" /> Back to my shelf
+        </button>
+      } @else {
+        <p class="eyebrow">Every great library starts somewhere</p>
+        <h2 id="empty-library-title">Make room for your first book.</h2>
+        <p>
+          That book on your mind deserves a place here. Find a favorite or add a title of your own.
+        </p>
+        <a routerLink="/catalog/search" class="btn btn-primary"
+          >Find your first book <ktob-icon name="arrow-right" [size]="18"
+        /></a>
+      }
+    </section>
+  } @else if (visibleEntries().length > 0) {
+    <div class="shelf-summary">
+      <p role="status">
+        {{ visibleEntries().length }} {{ visibleEntries().length === 1 ? 'book' : 'books' }}
+        {{ shelf() === 'archived' ? 'in your archive' : 'on your shelf' }}
+      </p>
+      <span><ktob-icon name="lock" [size]="13" /> Private to you</span>
+    </div>
+    <div class="library-grid" [class.list-layout]="view() === 'list'">
+      @for (entry of visibleEntries(); track entry.id; let i = $index) {
+        <article class="library-card">
+          <div class="cover-area">
+            <ktob-book-cover
+              [title]="title(entry)"
+              [author]="works()[entry.workId]?.authors?.[0] || ''"
+              [variant]="i"
+              [compact]="view() === 'list'"
+            />
+          </div>
+          <div class="book-info">
+            <span class="shelf-label" [class.archived-label]="!!entry.archivedAt">{{
+              entry.archivedAt ? 'Archived' : shelfLabel(entry)
+            }}</span>
+            <h2>{{ title(entry) }}</h2>
+            <p class="book-author">{{ authors(entry) }}</p>
+            @if (!works()[entry.workId]) {
+              <p class="missing-metadata">Book details couldn't be loaded. Refresh to try again.</p>
+            }
+            <div class="card-bottom">
+              <span class="book-origin"
+                ><ktob-icon
+                  [name]="works()[entry.workId]?.origin === 'MANUAL' ? 'lock' : 'book-open'"
+                  [size]="13"
+                />{{
+                  works()[entry.workId]?.origin === 'MANUAL' ? 'Private entry' : 'Saved book'
+                }}</span
+              >
+              @if (entry.archivedAt) {
+                <button
+                  type="button"
+                  class="book-action"
+                  [disabled]="!!changing()"
+                  [attr.aria-label]="'Restore ' + title(entry)"
+                  (click)="restore(entry)"
+                >
+                  <ktob-icon name="rotate-ccw" [size]="16" />{{
+                    changing() === entry.id ? 'Restoring…' : 'Restore'
+                  }}
+                </button>
+              } @else {
+                <button
+                  type="button"
+                  class="book-action"
+                  [disabled]="!!changing()"
+                  [attr.aria-label]="'Archive ' + title(entry)"
+                  (click)="requestArchive(entry, $event.currentTarget)"
+                >
+                  <ktob-icon name="archive" [size]="16" /> Archive
+                </button>
+              }
+            </div>
+          </div>
+        </article>
+      }
+    </div>
+  }
+  @if (!loading() && entries().length >= 25) {
+    <p class="page-limit-note">
+      Showing your 25 most recently added books. Search and shelf filters apply to these books.
+    </p>
+  }
+  <footer class="library-footnote">
+    <span><ktob-icon name="lock" [size]="14" /> Your library belongs to you.</span>
+    <p>Archive a book to make space. Restore it whenever you like.</p>
+  </footer>
+</section>
+
+<dialog
+  #archiveDialog
+  class="archive-dialog"
+  aria-labelledby="archive-dialog-title"
+  aria-describedby="archive-dialog-description"
+  (cancel)="cancelArchive($event)"
+  (close)="onDialogClosed()"
+>
+  <div class="dialog-icon"><ktob-icon name="archive" [size]="26" /></div>
+  <h2 id="archive-dialog-title">Set this book aside?</h2>
+  <p id="archive-dialog-description">
+    {{ pendingArchive() ? '“' + title(pendingArchive()!) + '”' : 'This book' }} will move to your
+    archive. It stays in your library, and you can restore it at any time.
+  </p>
+  <div class="dialog-actions">
+    <button
+      type="button"
+      class="btn btn-secondary"
+      autofocus
+      [disabled]="!!changing()"
+      (click)="cancelArchive()"
+    >
+      Keep on my shelf</button
+    ><button
+      type="button"
+      class="btn btn-primary"
+      [disabled]="!!changing()"
+      (click)="confirmArchive()"
+    >
+      {{ changing() ? 'Archiving…' : 'Archive book' }}
+    </button>
+  </div>
+</dialog>

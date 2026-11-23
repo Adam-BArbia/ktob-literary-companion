@@ -27,7 +27,9 @@ describe('HealthService', () => {
   it('marks backend offline on server error without showing a false green state', () => {
     service.check();
     http.expectOne('/ktob-config.json').flush({ apiBaseUrl: '/api/v1' });
-    http.expectOne('/api/v1/health').flush({ message: 'unavailable' }, { status: 503, statusText: 'Unavailable' });
+    http
+      .expectOne('/api/v1/health')
+      .flush({ message: 'unavailable' }, { status: 503, statusText: 'Unavailable' });
     expect(service.state()).toBe('offline');
   });
 

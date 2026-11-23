@@ -1,0 +1,54 @@
+<section class="home-hero" aria-labelledby="home-title">
+  <div class="hero-copy">
+    <p class="eyebrow hero-eyebrow"><span></span> YOUR NEXT CHAPTER STARTS HERE</p>
+    <h1 id="home-title">A home for your<br /><em>reading life.</em></h1>
+    <p class="hero-description">
+      For the books you find, the stories you love,<br class="desktop-break" />
+      and the ones still waiting to be discovered.
+    </p>
+    <div class="hero-actions">
+      @if (auth.user()) {
+        <a routerLink="/library" class="btn btn-primary"
+          >Open my library <ktob-icon name="arrow-right" [size]="18"
+        /></a>
+        <a routerLink="/catalog/search" class="btn btn-ghost"
+          >Discover books <ktob-icon name="arrow-up-right" [size]="17"
+        /></a>
+      } @else {
+        <a routerLink="/auth/sign-up" class="btn btn-primary"
+          >Begin your library <ktob-icon name="arrow-right" [size]="18"
+        /></a>
+        <a routerLink="/auth" class="btn btn-ghost">I already have an account</a>
+      }
+    </div>
+    <p class="hero-reassurance">
+      <ktob-icon name="lock" [size]="13" /> Your books. Your space. Always personal.
+    </p>
+  </div>
+  <div class="hero-scene" aria-hidden="true">
+    <div class="scene-arch">
+      <span class="arch-line"></span><span class="arch-line second"></span>
+    </div>
+    <span class="scene-star star-one">✧</span><span class="scene-star star-two">✧</span>
+    <span class="scene-label">A LITTLE SPACE FOR<br />SOMETHING GOOD.</span>
+    <div class="hero-book back-book">
+      <ktob-book-cover
+        title="The Art of Noticing"
+        author="Find wonder in the everyday"
+        [variant]="1"
+      />
+    </div>
+    <div class="hero-book front-book">
+      <ktob-book-cover
+        title="One More Chapter"
+        author="Your reading life, collected"
+        [variant]="0"
+      />
+    </div>
+    <div class="scene-note">
+      <span class="note-icon"><ktob-icon name="bookmark" [size]="17" /></span
+      ><span>A story worth keeping.<small>Your next favorite is out there.</small></span>
+    </div>
+    <span class="scene-caption">READ SLOWLY. KEEP SOMETHING.</span>
+  </div>
+</section>

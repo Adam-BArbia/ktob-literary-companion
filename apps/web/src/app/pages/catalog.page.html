@@ -1,0 +1,299 @@
+<section class="catalog-page">
+  <header class="catalog-intro">
+    <div>
+      <p class="eyebrow">A little curiosity goes a long way</p>
+      <h1 class="page-heading">Find your next <em>chapter.</em></h1>
+      <p class="page-description">
+        An old favorite. A new perspective. Find the books you want to keep close.
+      </p>
+    </div>
+    <span class="source-note"
+      ><ktob-icon name="book-open" [size]="18" /> Book discovery with Open Library</span
+    >
+  </header>
+
+  <section class="search-panel" aria-label="Find a book">
+    <form (ngSubmit)="search()" class="search-form">
+      <label for="catalog-query" class="sr-only">Search by book title or author</label>
+      <div class="search-field">
+        <ktob-icon name="search" [size]="22" />
+        <input
+          id="catalog-query"
+          name="query"
+          [(ngModel)]="query"
+          required
+          maxlength="180"
+          type="search"
+          placeholder="Search by title or author"
+          autocomplete="off"
+          [disabled]="searching()"
+        />
+      </div>
+      <button type="submit" class="btn btn-primary" [disabled]="searching() || !query.trim()">
+        {{ searching() ? 'Searching…' : 'Find books' }} <ktob-icon name="arrow-right" [size]="18" />
+      </button>
+    </form>
+    <div class="suggestions">
+      <span>A place to start</span>
+      @for (suggestion of suggestions; track suggestion) {
+        <button type="button" (click)="chooseSuggestion(suggestion)" [disabled]="searching()">
+          {{ suggestion }}
+        </button>
+      }
+    </div>
+  </section>
+
+  @if (error()) {
+    <div role="alert" class="notice notice-error catalog-notice">
+      <ktob-icon name="alert-circle" />
+      <div>
+        <p>{{ error() }}</p>
+        @if (needsSignIn()) {
+          <a routerLink="/auth" [queryParams]="{ returnUrl: '/catalog/search' }">Sign in again</a>
+        } @else {
+          <p class="error-help">You can try again, or add the book yourself below.</p>
+        }
+      </div>
+    </div>
+  }
+  @if (notice()) {
+    <div role="status" class="notice notice-success catalog-notice">
+      <ktob-icon name="check" />
+      <p>{{ notice() }} <a routerLink="/library">View my library</a></p>
+    </div>
+  }
+
+  @if (searching()) {
+    <section class="results-section" aria-busy="true" aria-label="Search results">
+      <p role="status" class="result-count">Looking for your next read…</p>
+      <div class="book-grid" aria-hidden="true">
+        @for (item of skeletons; track item) {
+          <div class="result-card skeleton-card">
+            <div class="skeleton skeleton-cover"></div>
+            <div class="skeleton skeleton-title"></div>
+            <div class="skeleton skeleton-author"></div>
+          </div>
+        }
+      </div>
+    </section>
+  } @else if (searched() && books().length > 0) {
+    <section class="results-section" aria-labelledby="results-heading">
+      <div class="section-row">
+        <h2 id="results-heading">A few possibilities</h2>
+        <p class="result-count" role="status">
+          {{ books().length }} {{ books().length === 1 ? 'result' : 'results' }} for “{{
+            lastQuery()
+          }}”
+        </p>
+      </div>
+      <div class="book-grid">
+        @for (book of books(); track book.id; let i = $index) {
+          <article class="result-card">
+            <div class="cover-area">
+              <ktob-book-cover
+                [title]="book.title"
+                [author]="book.authors[0] || ''"
+                [variant]="i"
+              />
+            </div>
+            <div class="result-details">
+              <span class="book-source"
+                ><ktob-icon
+                  [name]="book.origin === 'MANUAL' ? 'lock' : 'book-open'"
+                  [size]="13"
+                />{{ book.origin === 'MANUAL' ? 'Your private entry' : 'Open Library' }}</span
+              >
+              <h3>{{ book.title }}</h3>
+              <p class="book-author">{{ book.authors.join(', ') || 'Author not listed' }}</p>
+              <button
+                type="button"
+                class="btn btn-secondary add-button"
+                (click)="add(book)"
+                [class.is-added]="added().has(book.id)"
+                [disabled]="adding().has(book.id) || added().has(book.id)"
+                [attr.aria-describedby]="addErrors()[book.id] ? 'book-error-' + book.id : null"
+                [attr.aria-label]="
+                  added().has(book.id)
+                    ? book.title + ' added to library'
+                    : 'Add ' + book.title + ' to library'
+                "
+              >
+                <ktob-icon [name]="added().has(book.id) ? 'check' : 'plus'" [size]="17" />
+                {{
+                  adding().has(book.id)
+                    ? 'Adding…'
+                    : added().has(book.id)
+                      ? 'On your shelf'
+                      : 'Add to library'
+                }}
+              </button>
+              @if (addErrors()[book.id]; as failure) {
+                <div [id]="'book-error-' + book.id" class="field-error" role="alert">
+                  <p>{{ failure.message }}</p>
+                  @if (failure.signIn) {
+                    <a
+                      class="text-link"
+                      routerLink="/auth"
+                      [queryParams]="{ returnUrl: '/catalog/search' }"
+                      >Sign in again</a
+                    >
+                  } @else if (failure.duplicate) {
+                    <a class="text-link" routerLink="/library">Open my library</a>
+                  }
+                </div>
+              }
+            </div>
+          </article>
+        }
+      </div>
+      <p class="metadata-note">
+        Book details are supplied by Open Library or by you. Artwork is a KTOB placeholder.
+      </p>
+    </section>
+  } @else if (searched() && !error()) {
+    <section class="empty-state search-empty" aria-labelledby="no-results-title">
+      <span class="empty-icon"><ktob-icon name="search" [size]="28" /></span>
+      <h2 id="no-results-title">That story is still out there.</h2>
+      <p>
+        No books matched “{{ lastQuery() }}”. Try a shorter title or the author's name, or add your
+        own entry.
+      </p>
+      <button type="button" class="btn btn-secondary" (click)="openManual()">
+        Add a book yourself <ktob-icon name="plus" [size]="17" />
+      </button>
+    </section>
+  } @else if (!searched()) {
+    <section class="discovery-note" aria-labelledby="discovery-heading">
+      <div class="discovery-symbol" aria-hidden="true">
+        <ktob-icon name="book-open" [size]="36" />
+      </div>
+      <div>
+        <p class="eyebrow">Good books find good company</p>
+        <h2 id="discovery-heading">Follow your curiosity.</h2>
+        <p>
+          Search for a book you love, explore an author you've heard about, or start with a
+          suggestion above. Your next favorite is waiting to be found.
+        </p>
+      </div>
+    </section>
+  }
+
+  <section class="manual-panel" aria-labelledby="manual-heading">
+    <div class="manual-heading-row">
+      <div class="manual-heading-copy">
+        <span class="manual-icon"><ktob-icon name="plus" [size]="22" /></span>
+        <div>
+          <h2 id="manual-heading">A book of your own</h2>
+          <p>Can't find it? Give it a place on your shelf.</p>
+        </div>
+      </div>
+      <button
+        #manualToggle
+        type="button"
+        class="btn btn-ghost"
+        [attr.aria-expanded]="manualOpen()"
+        aria-controls="manual-form-panel"
+        (click)="toggleManual()"
+      >
+        {{ manualOpen() ? 'Close form' : 'Add manually' }}
+        <ktob-icon [name]="manualOpen() ? 'x' : 'plus'" [size]="17" />
+      </button>
+    </div>
+    <div id="manual-form-panel" [hidden]="!manualOpen()">
+      <form #manualForm="ngForm" (ngSubmit)="createManual()" class="manual-form" novalidate>
+        <p class="manual-privacy">
+          <ktob-icon name="lock" [size]="15" /> This entry is private to you and won't appear in the
+          public catalog.
+        </p>
+        @if (
+          manualAttempted() &&
+          (!manualTitle.trim() ||
+            manualTitle.trim().length > 500 ||
+            manualAuthor.trim().length > 200)
+        ) {
+          <p class="notice notice-error" role="alert">
+            Check the highlighted fields before saving your book.
+          </p>
+        }
+        <div class="manual-fields">
+          <div>
+            <label for="manual-title" class="field-label"
+              >Book title <span aria-hidden="true">*</span></label
+            >
+            <input
+              id="manual-title"
+              name="title"
+              [(ngModel)]="manualTitle"
+              required
+              maxlength="500"
+              #titleField="ngModel"
+              #manualTitleInput
+              [disabled]="manualBusy()"
+              class="field-input"
+              placeholder="The title on the cover"
+              [attr.aria-invalid]="
+                (manualAttempted() || titleField.touched) &&
+                (!manualTitle.trim() || manualTitle.trim().length > 500)
+              "
+              aria-describedby="manual-title-error"
+            />
+            <p id="manual-title-error" class="field-error">
+              @if ((manualAttempted() || titleField.touched) && !manualTitle.trim()) {
+                Enter a book title.
+              } @else if (
+                (manualAttempted() || titleField.touched) && manualTitle.trim().length > 500
+              ) {
+                Keep the title to 500 characters or fewer.
+              }
+            </p>
+          </div>
+          <div>
+            <label for="manual-author" class="field-label"
+              >Author <span class="optional">(optional)</span></label
+            >
+            <input
+              id="manual-author"
+              name="author"
+              [(ngModel)]="manualAuthor"
+              #authorField="ngModel"
+              #manualAuthorInput
+              maxlength="200"
+              [disabled]="manualBusy()"
+              class="field-input"
+              placeholder="Who wrote it?"
+              [attr.aria-invalid]="
+                (manualAttempted() || authorField.touched) && manualAuthor.trim().length > 200
+              "
+              aria-describedby="manual-author-error"
+            />
+            <p id="manual-author-error" class="field-error">
+              @if ((manualAttempted() || authorField.touched) && manualAuthor.trim().length > 200) {
+                Keep the author name to 200 characters or fewer.
+              }
+            </p>
+          </div>
+        </div>
+        @if (manualError()) {
+          <div role="alert" class="notice notice-error">
+            <p>{{ manualError() }}</p>
+            @if (needsSignIn()) {
+              <a routerLink="/auth" [queryParams]="{ returnUrl: '/catalog/search' }"
+                >Sign in again</a
+              >
+            }
+          </div>
+        }
+        @if (manualNotice()) {
+          <p role="status" class="notice notice-success">
+            {{ manualNotice() }} <a routerLink="/library">View my library</a>
+          </p>
+        }
+        <button type="submit" class="btn btn-primary" [disabled]="manualBusy()">
+          <ktob-icon name="plus" [size]="18" />{{
+            manualBusy() ? 'Saving your book…' : 'Save to my library'
+          }}
+        </button>
+      </form>
+    </div>
+  </section>
+</section>
