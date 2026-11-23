@@ -2,6 +2,8 @@
 
 Based on [UML 02/03](../uml/README.md), [conceptual model](../architecture/03-persistence-model.md), and [OpenAPI v0.3](../architecture/openapi.json). **Do not execute anything in Supabase from these instructions until Sprint 1 migration review.**
 
+**Implementation update:** The numbered table below is the original logical plan, not the current file list. Actual Flyway files are `V1__reader_catalog_library.sql` and additive `V2__reading_experiences_and_journal.sql`. V2 creates experiences/journals, adds the entry/work composite reference and bounded constraints, and explicitly controls browser/runtime grants. [Physical mappings](../architecture/03-persistence-model.md#current-physical-mapping) and [release evidence](overnight-release-demo.md) distinguish implemented SQL from production application. Do not rename or edit an already applied migration to match the logical numbers below.
+
 ## Connectivity / schemas
 
 Supabase Auth owns `auth.users.id`; no application password table. Store business data under a non-exposed `app` schema and revoke browser-facing roles' direct access. Java is the only caller. Prefer a dedicated least-privilege backend DB role with explicit grants for app tables/sequences and separate migration credentials; **never** use `service_role` from Angular. Verify actual server's `search_path`, JWT signing mode, TLS, and pooler settings in Sprint 1. Supabase's session pooler is intended for a persistent IPv4-only server (e.g. Render); direct access may be IPv6-only on free projects. The Flyway migration connection and application JDBC URL may differ.

@@ -19,7 +19,7 @@ else Active entry
  Library -> DB : ensure no other open experience
  DB --> Library : new experience (history preserved)
 else Explicit historical import
- API -> Library : validate historical flag and final status
+ API -> Library : validate historical flag and requested status
  Library -> DB : insert past experience, preserve existing
  DB --> Library : new historical experience
  end
@@ -46,6 +46,14 @@ opt Reader saves reflection
  Library --> API : saved journal entry
 API --> UI : 201 journal entry
 end
+opt Reader edits or deletes a journal entry
+ UI -> API : PATCH or DELETE /journal/{journalId}
+ API -> Guard : verify owner through experience and library entry
+ API -> Library : reject archived parent; validate partial journal patch
+ Library -> DB : update or delete this note only
+ Library --> API : updated note or deleted
+ API --> UI : 200 journal entry / 204 deleted
+end
 end
 note over Library,DB
 Every descendant write rechecks parent archivedAt; 409 if archived,
@@ -54,5 +62,7 @@ Rating is optional (1..5, 0.5 steps); progressPercent optional (0..100 integer).
 Progress and status do not auto-update each other.
 Library shelf is derived, not persisted as experience status.
 Excluded notes never enter external AI context.
+Parent entry is locked during writes to serialize with archive.
+Terminal status stays immutable; rating/date metadata remains editable.
 end note
 @enduml

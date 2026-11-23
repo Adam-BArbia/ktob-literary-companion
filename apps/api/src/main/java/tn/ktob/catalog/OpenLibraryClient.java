@@ -8,6 +8,7 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -96,12 +97,13 @@ public final class OpenLibraryClient {
                     throw unavailable();
                 }
                 List<FoundWork> result = new ArrayList<>();
+                var seen = new HashSet<String>();
                 for (JsonNode d : rows) {
                     String key = d.path("key").asText("");
                     String title = d.path("title").asText("").trim();
                     // Open Library documents both bare OL work IDs and /works/ paths.
                     if (key.matches("OL[0-9]+W")) key = "/works/" + key;
-                    if (!key.matches("/works/OL[0-9]+W") || title.isBlank()) continue;
+                    if (!key.matches("/works/OL[0-9]+W") || title.isBlank() || !seen.add(key)) continue;
                     List<String> authors = new ArrayList<>();
                     JsonNode authorsNode = d.path("author_name");
                     if (authorsNode.isArray()) for (JsonNode author : authorsNode) {
@@ -114,6 +116,7 @@ public final class OpenLibraryClient {
                         language = languages.get(0).asText(null);
                     }
                     result.add(new FoundWork(key, title, List.copyOf(authors), language));
+                    if (result.size() >= Math.min(limit, 25)) break;
                 }
                 return List.copyOf(result);
             } catch (ApiException e) {

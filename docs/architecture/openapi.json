@@ -1,14 +1,18 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "KTOB - Java Business API (DESIGN DRAFT)",
+    "title": "KTOB - Java Business API",
     "version": "0.3.0",
-    "description": "Proposed REST/JSON contract for review; not deployed. SOAP/REST academic constraint pending. No application implementation authorized. Cross-document remediation v0.2: privacy, cardinality, lifecycle, pagination, canonical manual works and archival semantics. Final consistency correction: conditional book ownership, optional chat personalization, archived mutation 409, merged acquisition monetary validation and currency-scoped offer filters. User-approved R1 product defaults: optional half-star ratings, percentage progress, minimal optional profile onboarding, and per-request spoiler authorization. External provider/deletion work and Gate C remain unapproved."
+    "description": "R1 REST/JSON contract with 57 designed operations. Only operations in docs/implementation/implemented-operations.json are implemented; deployment and verification evidence is recorded separately. Supabase JWT authentication, owner-scoped private business data, archival preservation, independent per-reading half-star ratings/progress, and explicit per-call AI consent/spoiler policy. Optional AI, seller research and full account deletion remain gated until qualified."
   },
   "servers": [
     {
-      "url": "https://api.ktob.example.invalid/api/v1",
-      "description": "Placeholder only: replace after deployment. This URL is intentionally nonfunctional."
+      "url": "https://ktob-api.onrender.com/api/v1",
+      "description": "Production API. Availability of each operation is tracked in implemented-operations.json and the release evidence."
+    },
+    {
+      "url": "http://localhost:8080/api/v1",
+      "description": "Local Java API for development and disposable-database testing."
     }
   ],
   "security": [
@@ -1882,7 +1886,7 @@
             }
           }
         },
-        "description": "Partial nonempty update. Invalid status transitions 422; FINISHED/DID_NOT_FINISH are terminal (historical correction of dates/rating only). No concurrent open sessions. ARCHIVED ENTRY WRITE GUARD: verify reader ownership first (404 for non-owner); reject owned archived parent with 409 LIBRARY_ENTRY_ARCHIVED, no write. Historical reads remain allowed after archive. Rating and progressPercent are independent of status; invalid ranges/steps rejected with 422."
+        "description": "Partial nonempty update. Invalid status transitions 422; FINISHED/DID_NOT_FINISH statuses are terminal; dates, rating, progress and edition may be corrected without changing terminal status. No concurrent open sessions. ARCHIVED ENTRY WRITE GUARD: verify reader ownership first (404 for non-owner); reject owned archived parent with 409 LIBRARY_ENTRY_ARCHIVED, no write. Historical reads remain allowed after archive. Rating and progressPercent are independent of status; invalid ranges/steps rejected with 422."
       }
     },
     "/experiences/{experienceId}/journal": {
@@ -4474,16 +4478,23 @@
           },
           "body": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 20000,
+            "pattern": "\\S"
           },
           "emotionTags": {
             "type": "array",
             "items": {
-              "type": "string"
-            }
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 40,
+              "pattern": "\\S"
+            },
+            "maxItems": 12
           },
           "allowForPersonalization": {
-            "type": "boolean"
+            "type": "boolean",
+            "default": false
           }
         },
         "required": [
@@ -5905,13 +5916,19 @@
           },
           "body": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 20000,
+            "pattern": "\\S"
           },
           "emotionTags": {
             "type": "array",
             "items": {
-              "type": "string"
-            }
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 40,
+              "pattern": "\\S"
+            },
+            "maxItems": 12
           },
           "allowForPersonalization": {
             "type": "boolean"

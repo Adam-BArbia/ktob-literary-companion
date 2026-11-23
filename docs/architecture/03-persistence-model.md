@@ -1,10 +1,25 @@
-# Conceptual Supabase PostgreSQL model — design draft v0.2 (NOT SQL)
+# Supabase PostgreSQL model — R1 design and implemented subset
 
-Tables and constraints below are candidates. **No SQL, migrations, RLS policy or live database change has been performed.** Derived from [UML library](../uml/02-domain-library.puml) and [UML advisor](../uml/03-domain-advisor.puml).
+The relation catalogue below describes the complete R1 design, including planned tables. Executable SQL is versioned under `apps/api/src/main/resources/db/migration`; deployment evidence is maintained in the [release record](../implementation/overnight-release-demo.md). The model is derived from [UML library](../uml/02-domain-library.puml) and [UML advisor](../uml/03-domain-advisor.puml). A documented relation is not evidence that its endpoint or migration is live.
+
+## Current physical mapping
+
+| Versioned migration | Physical implementation |
+|---|---|
+| `V1__reader_catalog_library.sql` | `reader_profiles`, `privacy_settings`, `catalog_works`, `catalog_editions`, `library_entries` |
+| `V2__reading_experiences_and_journal.sql` | Additive `reading_experiences`, `journal_entries`, and a composite unique key on `library_entries(id,work_id)` |
+
+V1 uses UUID `id` columns for works, editions and library entries. `reader_profiles.reader_id` is established from a verified Supabase JWT subject; the portable migration does **not** create a physical foreign key to `auth.users`. Author names are stored as `catalog_works.authors text[]`; the normalized `contributors`/`work_credits` design remains planned. Do not mistake those conceptual relations for deployed tables.
+
+V2 reading rows contain `id`, `library_entry_id`, `work_id`, optional `edition_id`, `status`, nullable `started_on`/`finished_on`, `rating numeric(2,1)`, `progress_percent smallint`, and internal `created_at`. Composite references bind the entry and optional edition to the same work. A partial unique index permits at most one CURRENTLY_READING or PAUSED row per entry. Dates must be ordered when both are supplied; rating and progress have independent bounds and no default values.
+
+V2 journals reference a reading by `experience_id`; ownership follows the reading's library entry. They store one of the five documented kinds, a nonblank body of at most 20,000 characters, `emotion_tags text[]`, a false-by-default personalization flag and immutable `created_at`. The API limits tags to 12 nonblank strings of at most 40 characters each. Journal deletion affects only that note; no cascading library/history deletion is introduced.
+
+V2 revokes new-table access from PUBLIC and, when present, Supabase `anon` and `authenticated`. The restricted `ktob_app` role receives SELECT/INSERT/UPDATE on experiences and SELECT/INSERT/UPDATE/DELETE on journals. The schema remains private and must not be exposed through the browser Data API. Production application still requires the migration preflight and deployment verification; automatic production migration remains disabled.
 
 ## Ownership and canonical identity
 
-`auth.users.id` is authoritative for each reader. Proposed private, **non-exposed** `app` schema holds all business tables. Spring Boot operates using a restricted database role and must independently verify Supabase access-token identity and owner-scoped access; service/admin database connections can bypass RLS, so RLS is not a substitute for Java ownership checks. Never expose `service_role` credentials to Angular.
+`auth.users.id` is authoritative for each reader. The private, **non-exposed** `app` schema holds business tables. Spring Boot operates using a restricted database role and must independently verify Supabase access-token identity and owner-scoped access; service/admin database connections can bypass RLS, so RLS is not a substitute for Java ownership checks. Never expose `service_role` credentials to Angular.
 
 **One works table, not two ID namespaces:** `app.catalog_works(work_id, origin, owner_reader_id, ...)`. When origin is `OPEN_LIBRARY`, `owner_reader_id IS NULL`, source ID/provenance recorded, available for reads; for `MANUAL`, owner UUID is required and work visible *only* to that owner. `catalog_editions(work_id,...)` and `library_entries(work_id,...)` use a normal FK to this **same** work table. No separate `manual_works` table; reader-local metadata overrides are deferred.
 
@@ -75,4 +90,4 @@ Tables and constraints below are candidates. **No SQL, migrations, RLS policy or
 
 UUID keys, `timestamptz` event times, `date` reading dates, `numeric(12,2)` prices, `text` for reflections, JSONB only for provenance/variable source fields. Restrict external URLs to trusted/validated `https:` where possible. In exposed schemas enable RLS; private schema should use least privilege, independent Java authorization and defense-in-depth RLS where practical. For service-role/bypass-RLS connections, explicitly scope SQL to verified reader.
 
-After human approval: author versioned Flyway migrations, choose secure connection settings appropriate for Render/Supabase, write cross-reader isolation and referential tests. Do not create migrations before the design gate.
+For each further migration: use an additive versioned Flyway file, verify it on disposable PostgreSQL, and review actual target schema, grants and recovery options before production application. Preserve independent cross-reader isolation and referential tests; never enable automatic production migration.

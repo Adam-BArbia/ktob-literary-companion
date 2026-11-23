@@ -158,5 +158,14 @@ Optional rating: 1.0..5.0, step 0.5; no rating is null.
 Optional progressPercent: integer 0..100, not inferred from pages.
 Progress never implicitly changes reading status.
 WANT_TO_READ is NOT a ReadingStatus.
+createdAt is an internal ordering field, not a response field.
+Terminal status is immutable; metadata can be corrected.
+end note
+note right of JournalEntry
+Private by default; allowForPersonalization defaults false.
+Body: nonblank, at most 20,000 characters.
+At most 12 emotion tags, 1..40 characters each.
+createdAt records creation, not the last edit.
+Individual note deletion preserves its reading experience.
 end note
 @enduml

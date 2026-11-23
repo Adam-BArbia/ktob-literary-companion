@@ -3,8 +3,8 @@ package tn.ktob.api.shared;
 import org.springframework.http.HttpStatus;
 
 /**
- * Bounded pagination inputs only. Future database queries must use a reader-
- * scoped authenticated opaque cursor; never treat caller cursor as a SQL offset.
+ * Bounded pagination inputs. Database queries independently validate their opaque
+ * anchor against the authenticated reader/list; a cursor is never a SQL offset.
  */
 public record PageWindow(int limit, String cursor) {
     public static final int DEFAULT_LIMIT = 25;

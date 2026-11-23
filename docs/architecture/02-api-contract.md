@@ -1,6 +1,6 @@
-# KTOB HTTP contracts — design draft v0.2
+# KTOB HTTP contracts — R1 design and implementation contract
 
-**Source of machine-readable paths:** [openapi.json](openapi.json). All paths below have the provisional `/api/v1` prefix. The OpenAPI document is a **design artifact**, not a live deployment.
+**Source of machine-readable paths:** [openapi.json](openapi.json). All paths below use the `/api/v1` prefix. OpenAPI describes the full R1 design; only operations listed in the [implementation register](../implementation/implemented-operations.json) have application implementations. The [release evidence and demo](../implementation/overnight-release-demo.md) records validation and deployment separately.
 
 ## Global contract
 
@@ -33,6 +33,8 @@
 **Reading session:** `POST /library/{entryId}/experiences` with `{"status":"CURRENTLY_READING","startedOn":"2026-11-20"}` creates one open experience. Historical entry with `FINISHED` / `PAUSED` / `DID_NOT_FINISH` requires `"historicalImport":true`. `WANT_TO_READ` is only a projected library shelf; it is **not** a valid experience status. Invalid PATCH transition returns `422`.
 
 **Journal exclusion:** `POST /experiences/{experienceId}/journal` with `{"kind":"REFLECTION","body":"A remembered scene","emotionTags":["wistful"],"allowForPersonalization":false}` saves a private note. This note is excluded from all personalized AI contexts regardless of broader flags.
+
+**Journal validation:** `kind`, `body` and `allowForPersonalization` are required on create. The editor sends `false` by default; saving a journal entry never enables AI consent. Body is nonblank and at most 20,000 characters. Optional emotion tags contain at most 12 nonblank strings, each at most 40 characters. PATCH requires at least one known property and preserves omitted values. These fields are not nullable. `createdAt` is the creation timestamp, not a last-edited timestamp. There is no journal spoiler field in this contract.
 
 **Recommendation batch:** `POST /recommendations` with `{"mode":"SURPRISE","prompt":"Gentle but different","usePersonalContext":false,"boundaryExceptionIds":[]}` requires **current AI-processing consent**, separate from personalization. On missing consent: `403` problem code `AI_PROCESSING_CONSENT_REQUIRED`, **no provider request**. On provider unavailable: `503`. On success `200`:
 ```json
@@ -73,6 +75,8 @@ Only actual verified provider results may use `VERIFIED_PROVIDER` here. `POST /l
 **Optional onboarding:** A reader profile is provisioned automatically upon first authenticated access with neutral `displayName="Reader"` if nothing has been chosen. `PATCH /me` optionally changes only `displayName` (1–100 characters). No profile questionnaire, public biography, age, or reading-history consent by implication.
 
 **Per-reading ratings and progress:** `ReadingExperience`, `ExperienceWrite` and `ExperiencePatch` now expose `rating` (nullable number 1–5 in 0.5 increments) and `progressPercent` (nullable **integer** 0–100). The previous `progress: String` is removed. Neither field implies a status transition. A FINISHED historical reading may omit progress or rating, and rereads retain separate values.
+
+**Historical corrections:** FINISHED and DID_NOT_FINISH are terminal **statuses**. Their rating, percentage, dates and edition may be corrected without reopening or relabelling the reading. Explicit null clears a nullable field; omission preserves its value. `created_at` is retained internally for deterministic pagination but is not a `ReadingExperience` response field. If both reader-supplied dates are absent, the diary must not invent a reading date.
 
 **Spoiler authorization per call:** `MessageWrite` (POST conversation message) and `RecommendationRequest` (POST recommendations) accept optional `spoilerLevel` and `fullBookSpoilersConfirmed`. Omitting both yields `NO_SPOILERS` with `false` confirmation. `FULL_BOOK_SPOILERS` requires `fullBookSpoilersConfirmed=true` in the **same request**; true confirmation without that level is rejected. Otherwise `422 SPOILER_CONFIRMATION_REQUIRED`, with **no external AI request and no committed conversation turn**. Successful response `ConversationTurn.spoilerLevel` and `RecommendationResult.spoilerLevel` report the effective level. For a `NO_SPOILERS` chat turn, the context builder must omit/redact older `FULL_BOOK_SPOILERS` conversation messages to avoid exposing prior revelations again. `Message.spoilerLevel` records the turn-level setting for audit. Explicit full spoilers are **not** account-level consent, do **not** bypass firm content boundaries, and do **not** substitute for `aiProcessingOptIn`. `NO_SPOILERS` means best-effort provider prompting and output screening, not a guarantee that generated text can never reveal a plot point.
 

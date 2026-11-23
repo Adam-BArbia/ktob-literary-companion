@@ -38,6 +38,8 @@ Input includes only: authenticated request text, effective spoiler policy, allow
 
 **Strict inference boundary:** Do not treat explicit user consent as proof that third-party retention terms are acceptable. Do not quietly transform chat into approved persistent memory. Recommendations remain a 0..N batch with firm content-boundary validation; unknown evidence ≠ safe. A new NO_SPOILERS turn must not receive full-spoiler prior history.
 
+**Overnight release qualification:** Official Groq model/quota/data-handling references were reviewed, but no user account/key, actual Tunisian access, inference latency or retention configuration was verified. B16 therefore remains unmet and no real inference occurred. See the [sourced qualification record](overnight-release-demo.md#provider-qualification-result-for-this-release). The existing unavailable UI is intentional; this release does not claim an operational AI adapter or conversation API.
+
 ## Verified bookstore search — source unselected
 
 `BookOfferPort` should expose `search(work, country, format, language, maxPrice, currency, cursor)`, but leave the live provider **disabled** until validated for real Tunisia-first results and legal terms.

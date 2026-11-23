@@ -111,4 +111,26 @@ class OpenLibraryClientTest {
         assertEquals(HttpStatus.SERVICE_UNAVAILABLE,failure.status());
         assertEquals("CATALOG_UNAVAILABLE",failure.code());
     }
+
+    @Test
+    void keepsProviderOrderDeduplicatesWorkIdsAndBoundsOversizedResultArrays() throws Exception {
+        HttpServer server=HttpServer.create(new InetSocketAddress("127.0.0.1",0),0);
+        server.createContext("/search.json",ex->{
+            byte[] body=("""
+                {"docs":[{"key":"OL201W","title":"First result"},
+                         {"key":"/works/OL201W","title":"Same work repeated"},
+                         {"key":"/works/OL202W","title":"Second result"},
+                         {"key":"/works/OL203W","title":"Third result"}]}
+                """).getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            ex.sendResponseHeaders(200,body.length);
+            try(var out=ex.getResponseBody()){out.write(body);}
+        });
+        server.start();
+        try {
+            var client=new OpenLibraryClient(URI.create("http://127.0.0.1:"+server.getAddress().getPort()),
+                "ktob-test@example.invalid",HttpClient.newHttpClient(),new JsonMapper());
+            assertEquals(java.util.List.of("/works/OL201W","/works/OL202W"),
+                client.search("some books",2).stream().map(OpenLibraryClient.FoundWork::reference).toList());
+        }finally{server.stop(0);}
+    }
 }

@@ -1,6 +1,6 @@
 # KTOB — 16 PlantUML Diagrams (design v0.2)
 
-All 16 numbered files are **editable PlantUML sources** in conventional UML categories, not Mermaid. They describe a proposed model, not implemented software.
+All 16 numbered files are **editable PlantUML sources** in conventional UML categories, not Mermaid. They describe the full R1 architecture, including features still planned. Consult the [implemented operation register](../implementation/implemented-operations.json) and [release evidence](../implementation/overnight-release-demo.md) for the implemented and deployed subset.
 
 | # | Model | File |
 |---|---|---|
@@ -43,4 +43,6 @@ Use *PlantUML by jebbs* for `.puml` previews (normally Alt+D). The separate *Pla
 
 ## Status
 
-R1 product-default approvals on 2026-11-20 are now reflected in the UML and OpenAPI contracts. No application code, SQL migration or provider deployment. Final Gate B sign-off and Gate C implementation authorization remain pending.
+R1 product-default approvals on 2026-11-20 are reflected in the UML and OpenAPI contracts. The application now has real Java/Angular code and versioned SQL migrations. The 24 November reading-journal release implements ratings, reading lifecycle and journal/favorites workflows; deployment and verification are recorded separately. Collections, acquisition, export and advisor diagrams remain design contracts unless their operations appear in the implementation register. AI/seller/deletion gates remain separate.
+
+The library domain diagram remains conceptual: `ReadingExperience.createdAt` is an internal ordering field, absent from the HTTP response; V1 stores author names in `catalog_works.authors`, with normalized contributors/credits still planned. V2 physical reading/journal keys and constraints are described in the [persistence model](../architecture/03-persistence-model.md).
