@@ -56,7 +56,7 @@ class OpenLibraryClientTest {
             int attempt = calls.incrementAndGet();
             byte[] body = (attempt == 1
                 ? "{\"message\":\"temporarily unavailable\"}"
-                : "{\"docs\":[{\"key\":\"/works/OL82563W\",\"title\":\"The Little Prince\","
+                : "{\"docs\":[{\"key\":\"OL82563W\",\"title\":\"The Little Prince\","
                     + "\"author_name\":[\"Antoine de Saint-Exupéry\"],\"language\":[\"eng\"]}]}").getBytes(
                         java.nio.charset.StandardCharsets.UTF_8);
             ex.getResponseHeaders().add("Content-Type", "application/json");
@@ -72,6 +72,7 @@ class OpenLibraryClientTest {
             assertEquals(2, calls.get(), "Transient 503 should be retried once");
             assertEquals(1, results.size());
             assertEquals("The Little Prince", results.getFirst().title());
+            assertEquals("/works/OL82563W", results.getFirst().reference());
             assertTrue(requestQuery.get().contains("fields=key%2Ctitle%2Cauthor_name%2Clanguage"));
         } finally {
             server.stop(0);
