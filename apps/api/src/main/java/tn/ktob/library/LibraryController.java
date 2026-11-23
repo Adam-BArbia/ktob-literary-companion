@@ -42,6 +42,13 @@ public class LibraryController {
         return new ApiData<>(library.get(ReaderIdentity.from(auth),UuidValue.parse(entryId)));
     }
 
+    @PatchMapping(path="/api/v1/library/{entryId}",consumes=MediaType.APPLICATION_JSON_VALUE,
+                  produces=MediaType.APPLICATION_JSON_VALUE)
+    public ApiData<LibraryEntry> updateMyLibraryEntry(@PathVariable String entryId,
+            @RequestBody String body,Authentication auth) {
+        return new ApiData<>(library.update(ReaderIdentity.from(auth),UuidValue.parse(entryId),body));
+    }
+
     @DeleteMapping(path="/api/v1/library/{entryId}")
     public ResponseEntity<Void> archive(@PathVariable String entryId,Authentication auth) {
         library.archive(ReaderIdentity.from(auth),UuidValue.parse(entryId));

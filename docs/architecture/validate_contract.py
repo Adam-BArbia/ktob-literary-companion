@@ -309,6 +309,36 @@ if 'Draft202012Validator' in globals():
     for item in bad_experiences:
         check(not accepts("ExperienceWrite", item),
               f"invalid reading values were accepted: {item}")
+    # Notebook payloads are bounded and never infer personalization permission.
+    for name in ("JournalWrite", "JournalPatch"):
+        Draft202012Validator.check_schema(SCHEMAS[name])
+    journal_base = {"kind": "REVIEW", "body": "A private reading reflection.",
+                    "allowForPersonalization": False}
+    for kind in ("REVIEW", "REFLECTION", "QUOTE", "NOTE", "EMOTION"):
+        check(accepts("JournalWrite", {**journal_base, "kind": kind}),
+              f"valid journal kind rejected: {kind}")
+    check(accepts("JournalWrite", {**journal_base, "body": "x" * 20000,
+                                  "emotionTags": ["x" * 40] * 12}),
+          "journal maximum boundary rejected")
+    for invalid in (
+        {**journal_base, "body": " "},
+        {**journal_base, "body": "x" * 20001},
+        {**journal_base, "emotionTags": ["tag"] * 13},
+        {**journal_base, "emotionTags": ["x" * 41]},
+        {**journal_base, "emotionTags": [" "]},
+        {**journal_base, "allowForPersonalization": None},
+        {**journal_base, "spoiler": True},
+    ):
+        check(not accepts("JournalWrite", invalid),
+              "invalid journal constraints or undocumented spoiler field accepted")
+    check(not accepts("JournalWrite", {"kind": "REVIEW", "body": "Private"}),
+          "journal create must explicitly send personalization permission")
+    check(accepts("JournalPatch", {"body": "An edited reflection"}) and
+          accepts("JournalPatch", {"emotionTags": []}),
+          "valid partial journal edits rejected")
+    for invalid in ({}, {"body": None}, {"kind": None}, {"emotionTags": None}):
+        check(not accepts("JournalPatch", invalid),
+              "empty or invalid null journal PATCH accepted")
     for name, base in (("MessageWrite", {"body": "Discuss this work"}),
                        ("RecommendationRequest",
                         {"mode": "BALANCED", "usePersonalContext": False})):

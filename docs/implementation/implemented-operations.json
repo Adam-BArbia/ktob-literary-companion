@@ -1,6 +1,6 @@
 {
   "contract": "docs/architecture/openapi.json",
-  "notes": "Only include controller methods with real tests. DB-dependent operations require KTOB_DB_ENABLED=true and verified JWT.",
+  "notes": "Only real controller methods with tests are registered. The reading-journal release adds nine operations verified against disposable PostgreSQL 17.12. DB-dependent operations require KTOB_DB_ENABLED=true and verified JWT. This registry describes source implementation, not production deployment; see overnight-release-demo.md.",
   "implemented": [
     "liveness",
     "getMyProfile",
@@ -12,6 +12,15 @@
     "addWorkToLibrary",
     "getMyLibraryEntry",
     "removeMyLibraryEntry",
-    "restoreMyLibraryEntry"
+    "restoreMyLibraryEntry",
+    "updateMyLibraryEntry",
+    "listMyReadingExperiences",
+    "createMyReadingExperience",
+    "getMyReadingExperience",
+    "updateMyReadingExperience",
+    "listMyJournalEntries",
+    "createMyJournalEntry",
+    "updateMyJournalEntry",
+    "deleteMyJournalEntry"
   ]
 }

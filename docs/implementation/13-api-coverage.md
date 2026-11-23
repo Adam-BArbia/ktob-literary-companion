@@ -2,6 +2,8 @@
 
 **Generated from the checked-in `docs/architecture/openapi.json` at architecture v0.3.0.** Paths, operationIds and their module tags are authoritative in the OpenAPI source. The milestone/UX column is the implementation assignment. Exactly **57** rows and **35** paths are expected.
 
+**Implementation status is separate:** [implemented-operations.json](implemented-operations.json) contains only implemented, tested routes. The reading-journal release uses the existing four Reading operations, four Journal operations and library PATCH; it introduces no new API operation. The integrated book page exposes reading history and journal together, and the diary consumes the same owner-scoped paginated APIs. [Release evidence](overnight-release-demo.md) records validation and deployment status.
+
 | operationId | Method & API path | Owner | Milestone | Frontend / evidence |
 |---|---|---|---|---|
 | `getMyProfile` | `GET /me` | Reader | M1 | /settings (profile GET/PATCH: /settings) |

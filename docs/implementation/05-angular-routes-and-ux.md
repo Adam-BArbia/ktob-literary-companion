@@ -2,6 +2,8 @@
 
 **All routes are proposed frontend routes**, distinct from backend HTTP paths. Use Angular standalone lazy-loaded feature components, responsive keyboard-operable forms, accessible labels, error summaries and live region feedback. Plan UI for desktop and mobile width even though R1 is a web application.
 
+**Reading-journal release mapping:** `/books/:entryId` integrates book overview, reading history and the selected reading's journal on one responsive page. A `reading` query parameter selects a reading when linking from the diary. `/diary` aggregates actual owned readings with explicit missing dates and no sample data. The nested routes below remain the original R1 navigation plan, not additional implemented endpoints. Actual lazy routes live in `apps/web/src/app/app.routes.ts`.
+
 | Route | Screen | Primary API operations / UI states |
 |---|---|---|
 | `/auth` | Sign in / register using Supabase Auth | Supabase Auth only; redirects if already signed in |

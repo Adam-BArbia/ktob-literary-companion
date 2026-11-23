@@ -1,6 +1,6 @@
 # KTOB — Implementation Handoff (2026-11-20)
 
-**Status:** IMPLEMENTATION UNDERWAY: Java health endpoint, Angular 22 shell and shared backend primitives are committed; remaining R1 features are **not implemented or deployed**. Begin coding from [Sprint 0](10-sprint-backlog.md) after pulling the repository. Do not present unselected AI/seller providers or unapproved account deletion as operational.
+**Status:** IMPLEMENTATION UNDERWAY. The authenticated catalog/library foundation is followed by the reading-journal release: per-reading ratings, lifecycle, private journal entries, favorites and reading views. The [operation register](implemented-operations.json) identifies implemented routes; [release evidence and demonstration](overnight-release-demo.md) distinguishes tests, previews and production deployment. Do not present the remaining R1 design, unselected AI/seller providers or unapproved account deletion as operational.
 
 This directory transforms the approved [Gate B product decisions](../architecture/08-gate-b-decision-review.md), [16 UML models](../uml/README.md), [OpenAPI 3.1 v0.3](../architecture/openapi.json) and [conceptual persistence design](../architecture/03-persistence-model.md) into a sequential implementation contract.
 
@@ -22,6 +22,9 @@ This directory transforms the approved [Gate B product decisions](../architectur
 | 12 | [First implementation handoff](12-start-implementation-checklist.md) | Exactly where to begin |
 | 13 | [All 57 operations assigned](13-api-coverage.md) | Full design implementation inventory |
 | 14 | [Sprint 0 engineering foundation](14-sprint0-foundation.md) | Current code, safety and CI status |
+| 15 | [Sprint 1 authenticated foundation](15-sprint1-progress.md) | Baseline SOA slice and its original verification boundaries |
+| 16 | [Editorial UI design guide](16-ui-design-guide.md) | Palette, components, interaction and accessibility |
+| Release | [Reading-journal release and demonstration](overnight-release-demo.md) | Release evidence, demo sequence, fallbacks and SOA explanation |
 
 ## Source-of-truth and change control
 
