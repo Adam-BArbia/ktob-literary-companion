@@ -1,0 +1,86 @@
+name: KTOB Production Public Smoke
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/production-smoke.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  public-integration:
+    name: Public deployment and security boundary smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Check frontend config, API liveness, authentication boundary and CORS
+        shell: bash
+        env:
+          FRONTEND_ORIGIN: https://ktob-web-front.vercel.app
+          API_ORIGIN: https://ktob-api.onrender.com
+          SUPABASE_ORIGIN: https://afavrsrffoyctyvvpxcv.supabase.co
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import time
+          from urllib.request import Request, urlopen
+          from urllib.error import HTTPError, URLError
+
+          frontend = os.environ['FRONTEND_ORIGIN']
+          api = os.environ['API_ORIGIN']
+
+          def fetch(url, *, method='GET', headers=None, attempts=5):
+              for attempt in range(attempts):
+                  try:
+                      with urlopen(Request(url, headers=headers or {}, method=method), timeout=150) as response:
+                          result = (response.status, response.headers, response.read(1024 * 256))
+                  except HTTPError as exc:
+                      result = (exc.code, exc.headers, exc.read(1024 * 256))
+                  except (URLError, OSError, TimeoutError) as exc:
+                      if attempt + 1 == attempts:
+                          raise AssertionError(f'{method} {url} is unreachable: {type(exc).__name__}') from exc
+                      time.sleep(8)
+                      continue
+                  if result[0] in (429, 500, 502, 503, 504) and attempt + 1 < attempts:
+                      time.sleep(8)
+                      continue
+                  return result
+              raise AssertionError(f'{method} {url} did not return a stable response')
+
+          status, _, page = fetch(frontend + '/')
+          assert status == 200 and b'<html' in page.lower(), f'Angular frontend: HTTP {status}'
+          print('PASS Angular homepage served over HTTPS')
+
+          status, _, body = fetch(frontend + '/ktob-config.json')
+          assert status == 200, f'Runtime config: HTTP {status}'
+          config = json.loads(body)
+          assert config.get('apiBaseUrl') == api + '/api/v1', 'Frontend API URL mismatch'
+          assert config.get('supabaseUrl') == os.environ['SUPABASE_ORIGIN'], 'Supabase project mismatch'
+          assert str(config.get('supabasePublishableKey', '')).startswith('sb_publishable_'), 'Supabase public key missing'
+          assert not any(k in config for k in ('DATABASE_PASSWORD', 'service_role', 'SUPABASE_SECRET_KEY'))
+          print('PASS frontend points to the intended KTOB API and public Supabase project')
+
+          status, _, body = fetch(api + '/api/v1/health')
+          assert status == 200 and json.loads(body).get('status') == 'ok', f'API health: HTTP {status}'
+          print('PASS live Java API health')
+
+          status, _, _ = fetch(api + '/api/v1/me')
+          assert status == 401, f'Protected reader route without token: HTTP {status}'
+          print('PASS anonymous reader API request rejected')
+
+          preflight = {'Origin': frontend, 'Access-Control-Request-Method': 'GET',
+                       'Access-Control-Request-Headers': 'authorization'}
+          status, headers, _ = fetch(api + '/api/v1/me', method='OPTIONS', headers=preflight)
+          assert status == 200, f'Expected CORS preflight HTTP 200; got {status}'
+          assert headers.get('Access-Control-Allow-Origin') == frontend, 'Allowed frontend CORS origin missing'
+          print('PASS production Vercel origin passes CORS preflight')
+
+          untrusted = dict(preflight, Origin='https://untrusted.example')
+          status, headers, _ = fetch(api + '/api/v1/me', method='OPTIONS', headers=untrusted)
+          assert headers.get('Access-Control-Allow-Origin') != untrusted['Origin'], 'Untrusted CORS origin allowed'
+          print('PASS untrusted website not allowed by CORS')
+          PY
