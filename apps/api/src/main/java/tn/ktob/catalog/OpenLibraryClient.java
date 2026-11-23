@@ -99,6 +99,8 @@ public final class OpenLibraryClient {
                 for (JsonNode d : rows) {
                     String key = d.path("key").asText("");
                     String title = d.path("title").asText("").trim();
+                    // Open Library documents both bare OL work IDs and /works/ paths.
+                    if (key.matches("OL[0-9]+W")) key = "/works/" + key;
                     if (!key.matches("/works/OL[0-9]+W") || title.isBlank()) continue;
                     List<String> authors = new ArrayList<>();
                     JsonNode authorsNode = d.path("author_name");
