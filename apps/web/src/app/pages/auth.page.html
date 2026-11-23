@@ -1,0 +1,140 @@
+<ktob-auth-frame>
+  <p class="auth-eyebrow">YOUR READING LIFE, PICKED UP AGAIN</p>
+  <h1 class="auth-title">Welcome back.</h1>
+  <p class="auth-intro">
+    Good stories are worth coming back to.<br />Sign in to your personal library.
+  </p>
+
+  @if (auth.status() === 'loading') {
+    <div class="auth-status auth-progress" role="status">
+      <span class="auth-spinner" aria-hidden="true"></span> Getting your sign-in ready…
+    </div>
+    <div class="auth-loading-lines" aria-hidden="true"><span></span><span></span><span></span></div>
+  } @else if (auth.status() !== 'ready') {
+    <div class="auth-status" role="alert">
+      <p class="auth-status-heading">Sign-in is temporarily unavailable</p>
+      <p>We couldn't connect to your reading space. Please try again in a moment.</p>
+      <button type="button" class="btn btn-secondary" (click)="auth.retry()">Try again</button>
+    </div>
+  } @else {
+    @if (error()) {
+      <div #errorSummary tabindex="-1" role="alert" class="notice notice-error auth-notice">
+        <strong>{{ error() }}</strong>
+        @if (form.invalid && submitted()) {
+          <ul>
+            @if (invalid('email')) {
+              <li><a href="#signin-email">Enter a valid email address.</a></li>
+            }
+            @if (invalid('password')) {
+              <li><a href="#signin-password">Enter your password.</a></li>
+            }
+          </ul>
+        }
+      </div>
+    }
+    @if (notice()) {
+      <p class="notice notice-success auth-notice" role="status">{{ notice() }}</p>
+    }
+    <form
+      [formGroup]="form"
+      (ngSubmit)="submit()"
+      class="auth-fields"
+      [attr.aria-busy]="busy()"
+      novalidate
+    >
+      <div class="auth-field">
+        <label for="signin-email" class="field-label">Email address</label>
+        <input
+          id="signin-email"
+          formControlName="email"
+          type="email"
+          autocomplete="email"
+          inputmode="email"
+          autocapitalize="none"
+          spellcheck="false"
+          placeholder="you@example.com"
+          required
+          class="field-input"
+          [readonly]="busy()"
+          [attr.aria-invalid]="invalid('email')"
+          [attr.aria-describedby]="invalid('email') ? 'signin-email-error' : null"
+        />
+        @if (invalid('email')) {
+          <p id="signin-email-error" class="field-error">
+            Enter a valid email address, such as you@example.com.
+          </p>
+        }
+      </div>
+      <div class="auth-field">
+        <label for="signin-password" class="field-label">Password</label>
+        <div class="password-field">
+          <input
+            id="signin-password"
+            formControlName="password"
+            [type]="showPassword() ? 'text' : 'password'"
+            autocomplete="current-password"
+            placeholder="Enter your password"
+            required
+            class="field-input"
+            [readonly]="busy()"
+            [attr.aria-invalid]="invalid('password')"
+            [attr.aria-describedby]="invalid('password') ? 'signin-password-error' : null"
+          />
+          <button
+            type="button"
+            class="password-toggle"
+            (click)="showPassword.set(!showPassword())"
+            [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+            [attr.aria-pressed]="showPassword()"
+          >
+            {{ showPassword() ? 'Hide' : 'Show' }}
+          </button>
+        </div>
+        @if (invalid('password')) {
+          <p id="signin-password-error" class="field-error">Enter your password to continue.</p>
+        }
+      </div>
+      <button type="submit" class="btn btn-primary auth-submit" [disabled]="busy()">
+        @if (busy() && !resending()) {
+          <span class="auth-spinner" aria-hidden="true"></span> Signing in…
+        } @else {
+          Sign in <span class="auth-submit-arrow" aria-hidden="true">→</span>
+        }
+      </button>
+    </form>
+    @if (needsConfirmation()) {
+      <button
+        class="auth-text-button"
+        type="button"
+        [disabled]="busy() || cooldown() > 0"
+        (click)="resend()"
+      >
+        {{
+          resending()
+            ? 'Requesting a new link…'
+            : cooldown()
+              ? 'Resend available in ' + cooldown() + 's'
+              : 'Resend confirmation email'
+        }}
+      </button>
+    }
+    <p class="auth-switch">
+      New to KTOB? <a routerLink="/auth/sign-up" [queryParams]="{ returnUrl }">Create an account</a>
+    </p>
+    <p class="auth-trust">
+      <svg
+        aria-hidden="true"
+        width="15"
+        height="17"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+      >
+        <path d="M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6z" />
+        <path d="m8.5 12 2.5 2.5 4.5-5" />
+      </svg>
+      Your books belong to your private library. Signing in does not enable AI processing.
+    </p>
+  }
+</ktob-auth-frame>

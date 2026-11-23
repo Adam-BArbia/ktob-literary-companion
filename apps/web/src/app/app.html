@@ -1,73 +1,144 @@
-<div class="min-h-screen bg-[#fbf8f4] text-[#43352e]">
-  <a href="#main-content" class="sr-only rounded bg-[#704d3b] p-3 text-white focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50">Skip to content</a>
-  <header class="sticky top-0 z-30 border-b border-[#e8dfd7] bg-[#fbf8f4]/95 backdrop-blur-lg">
-    <div class="mx-auto flex h-[76px] max-w-[1360px] items-center justify-between gap-5 px-5 sm:px-8 lg:px-12">
-      <a routerLink="/" (click)="closeMenu()" aria-label="KTOB home" class="flex items-center gap-3 rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#704d3b]">
-        <span class="flex size-10 items-center justify-center rounded-xl bg-[#72513e] text-[25px] font-semibold text-white shadow-sm" aria-hidden="true">K</span>
-        <span class="font-serif text-[29px] font-bold tracking-[-.055em] text-[#4a382e]">ktob<span class="text-[#ba8665]">.</span></span>
+<div class="app-shell" [class.auth-shell]="authLayout()" (keydown.escape)="closeMenuWithEscape()">
+  <a href="#main-content" class="skip-link">Skip to content</a>
+  <header class="site-header">
+    <div class="header-inner">
+      <a routerLink="/" (click)="closeMenu()" aria-label="KTOB home" class="brand">
+        <span class="brand-symbol"><ktob-icon name="book-open" [size]="23" /></span>
+        <span class="brand-word">ktob<span>.</span></span>
+        <span class="brand-caption">Keep Thoughts<br />On Books</span>
       </a>
-      <nav aria-label="Main navigation" class="hidden items-center gap-1 lg:flex">
-        <a routerLink="/" routerLinkActive="active-link" [routerLinkActiveOptions]="{exact:true}" class="nav-item">Home</a>
-        <a routerLink="/library" routerLinkActive="active-link" class="nav-item">My library</a>
-        <a routerLink="/catalog/search" routerLinkActive="active-link" class="nav-item">Discover</a>
-        <a routerLink="/collections" routerLinkActive="active-link" class="nav-item">Collections</a>
-        <a routerLink="/advisor" routerLinkActive="active-link" class="nav-item">Advisor</a>
-      </nav>
-      <div class="flex items-center gap-3">
+      @if (!authLayout()) {
+        <nav aria-label="Main navigation" class="desktop-nav">
+          <a
+            routerLink="/"
+            routerLinkActive="active-link"
+            [routerLinkActiveOptions]="{ exact: true }"
+            ariaCurrentWhenActive="page"
+            >Home</a
+          >
+          <a routerLink="/library" routerLinkActive="active-link" ariaCurrentWhenActive="page"
+            >My library</a
+          >
+          <a
+            routerLink="/catalog/search"
+            routerLinkActive="active-link"
+            ariaCurrentWhenActive="page"
+            >Discover</a
+          >
+        </nav>
+      }
+      <div class="header-actions">
         @if (auth.user()) {
-          <button type="button" (click)="signOut()" class="hidden rounded-xl border border-[#d5c4b5] px-4 py-2 text-sm font-semibold text-[#704d3b] sm:inline-flex">Sign out</button>
+          <a routerLink="/settings" class="account-link" aria-label="Account and privacy"
+            ><span class="avatar">{{ accountInitial() }}</span
+            ><span class="account-label">Your account</span></a
+          >
+          <button
+            type="button"
+            (click)="signOut()"
+            [disabled]="signOutBusy()"
+            class="sign-out desktop-action"
+            aria-label="Sign out"
+          >
+            <ktob-icon name="log-out" [size]="18" />
+          </button>
         } @else {
-          <a routerLink="/auth" class="hidden rounded-xl border border-[#d5c4b5] px-4 py-2 text-sm font-semibold text-[#704d3b] sm:inline-flex">Sign in</a>
+          <a routerLink="/auth" class="signin-link desktop-action">Sign in</a>
+          <a routerLink="/auth/sign-up" class="btn btn-primary header-cta"
+            >Create account <ktob-icon name="arrow-up-right" [size]="16"
+          /></a>
         }
-        <a routerLink="/settings" routerLinkActive="active-link" class="hidden min-h-10 items-center gap-2 rounded-xl border border-[#ded0c4] bg-white px-4 text-sm font-semibold text-[#72513e] transition hover:bg-[#f7eee6] sm:inline-flex">
-          <span aria-hidden="true">⚙</span><span>Settings</span>
-        </a>
-        <button type="button" class="flex size-11 items-center justify-center rounded-xl border border-[#ded0c4] bg-white text-2xl text-[#72513e] lg:hidden" [attr.aria-expanded]="menuOpen()" aria-controls="mobile-navigation" aria-label="Toggle navigation" (click)="toggleMenu()">
-          <span aria-hidden="true">{{ menuOpen() ? '×' : '≡' }}</span>
-        </button>
+        @if (!authLayout()) {
+          <button
+            id="menu-toggle"
+            type="button"
+            class="menu-toggle"
+            [attr.aria-expanded]="menuOpen()"
+            aria-controls="mobile-navigation"
+            [attr.aria-label]="menuOpen() ? 'Close navigation' : 'Open navigation'"
+            (click)="toggleMenu()"
+          >
+            <ktob-icon [name]="menuOpen() ? 'x' : 'menu'" />
+          </button>
+        }
       </div>
     </div>
-    @if (menuOpen()) {
-      <nav id="mobile-navigation" aria-label="Mobile navigation" class="border-t border-[#ebe1d9] bg-[#fbf8f4] px-5 py-3 shadow-md lg:hidden">
-        <div class="mx-auto flex max-w-[1360px] flex-col gap-1">
-          <a routerLink="/" routerLinkActive="active-link" [routerLinkActiveOptions]="{exact:true}" (click)="closeMenu()" class="mobile-link">Home</a>
-          <a routerLink="/library" routerLinkActive="active-link" (click)="closeMenu()" class="mobile-link">My library</a>
-          <a routerLink="/catalog/search" routerLinkActive="active-link" (click)="closeMenu()" class="mobile-link">Discover</a>
-          <a routerLink="/collections" routerLinkActive="active-link" (click)="closeMenu()" class="mobile-link">Collections</a>
-          <a routerLink="/advisor" routerLinkActive="active-link" (click)="closeMenu()" class="mobile-link">Advisor</a>
-          <a routerLink="/settings" routerLinkActive="active-link" (click)="closeMenu()" class="mobile-link">Settings</a>
-          @if (auth.user()) {
-            <button type="button" (click)="signOut()" class="mobile-link text-left">Sign out</button>
-          } @else {
-            <a routerLink="/auth" (click)="closeMenu()" class="mobile-link">Sign in / Create account</a>
-          }
-        </div>
+    @if (menuOpen() && !authLayout()) {
+      <nav id="mobile-navigation" aria-label="Mobile navigation" class="mobile-nav">
+        <a
+          routerLink="/"
+          routerLinkActive="active-link"
+          [routerLinkActiveOptions]="{ exact: true }"
+          ariaCurrentWhenActive="page"
+          (click)="closeMenu()"
+          ><ktob-icon name="home" /> Home</a
+        >
+        <a
+          routerLink="/library"
+          routerLinkActive="active-link"
+          ariaCurrentWhenActive="page"
+          (click)="closeMenu()"
+          ><ktob-icon name="library" /> My library</a
+        >
+        <a
+          routerLink="/catalog/search"
+          routerLinkActive="active-link"
+          ariaCurrentWhenActive="page"
+          (click)="closeMenu()"
+          ><ktob-icon name="search" /> Discover</a
+        >
+        @if (auth.user()) {
+          <a
+            routerLink="/settings"
+            routerLinkActive="active-link"
+            ariaCurrentWhenActive="page"
+            (click)="closeMenu()"
+            ><ktob-icon name="user" /> Account & privacy</a
+          >
+          <button type="button" [disabled]="signOutBusy()" (click)="signOut()">
+            <ktob-icon name="log-out" /> Sign out
+          </button>
+        } @else {
+          <a routerLink="/auth" (click)="closeMenu()"><ktob-icon name="user" /> Sign in</a>
+        }
       </nav>
     }
   </header>
 
-  <main id="main-content" class="mx-auto w-full max-w-[1360px] px-5 pb-16 pt-8 sm:px-8 sm:pt-11 lg:px-12">
+  <main id="main-content" tabindex="-1" [class.auth-main]="authLayout()">
+    @if (signOutError()) {
+      <p class="notice notice-error shell-error" role="alert">{{ signOutError() }}</p>
+    }
     <router-outlet />
   </main>
 
-  <footer class="border-t border-[#e8dfd7] bg-[#f6f0e9]">
-    <div class="mx-auto flex max-w-[1360px] flex-col gap-5 px-5 py-7 sm:px-8 md:flex-row md:items-center md:justify-between lg:px-12">
-      <div class="flex flex-wrap items-center gap-3 text-xs text-[#806f64]">
-        <span class="font-serif text-xl font-bold text-[#72513e]">ktob.</span>
-        <span>Read. Reflect. Discover.</span>
-        <span class="rounded-full border border-[#dcccc0] px-2.5 py-1">Early workspace preview</span>
+  <footer class="site-footer" [class.auth-footer]="authLayout()">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <a routerLink="/" class="brand-word" aria-label="Return to KTOB home">ktob<span>.</span></a
+        ><span>A little space for your reading life.</span>
       </div>
-      <div class="flex flex-wrap items-center gap-3 text-xs text-[#746b63]" aria-live="polite">
+      @if (!authLayout()) {
+        <nav aria-label="Footer navigation" class="footer-nav">
+          <a routerLink="/catalog/search">Discover</a>
+          <a routerLink="/about">About KTOB</a>
+          <a routerLink="/privacy">Privacy</a>
+        </nav>
+      }
+      <div class="service-status" aria-live="polite">
+        <span
+          class="status-dot"
+          [class.online]="health.state() === 'online'"
+          [class.offline]="health.state() === 'offline'"
+          aria-hidden="true"
+        ></span>
         @if (health.state() === 'checking') {
-          <span class="size-2 animate-pulse rounded-full bg-amber-500" aria-hidden="true"></span>
-          <span>Checking Java API…</span>
+          <span>Connecting to your workspace…</span>
         } @else if (health.state() === 'online') {
-          <span class="size-2 rounded-full bg-emerald-600" aria-hidden="true"></span>
-          <span>Java API connected</span>
+          <span>Service connected</span>
         } @else {
-          <span class="size-2 rounded-full bg-rose-500" aria-hidden="true"></span>
-          <span>Java API unavailable</span>
-          <button type="button" class="font-bold text-[#704d3b] underline underline-offset-2" (click)="health.check()">Retry</button>
+          <span>Connection unavailable</span
+          ><button type="button" (click)="health.check()">Retry</button>
         }
       </div>
     </div>

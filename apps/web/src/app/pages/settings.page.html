@@ -1,0 +1,157 @@
+<section class="settings-page" aria-labelledby="settings-heading">
+  <header class="settings-header">
+    <div>
+      <p class="eyebrow">MAKE YOURSELF AT HOME</p>
+      <h1 id="settings-heading" class="page-heading">Account &amp; privacy</h1>
+      <p class="page-description">A few details that make this reading space yours.</p>
+    </div>
+    <span class="private-label"
+      ><ktob-icon name="lock" [size]="15" /> Your space, kept private</span
+    >
+  </header>
+
+  <div class="settings-layout">
+    <section
+      class="profile-panel"
+      aria-labelledby="profile-heading"
+      [attr.aria-busy]="loading() || saving()"
+    >
+      <div class="panel-heading">
+        <div class="panel-icon"><ktob-icon name="user" [size]="22" /></div>
+        <div>
+          <h2 id="profile-heading">Your profile</h2>
+          <p>A familiar name for your reading life.</p>
+        </div>
+      </div>
+
+      @if (error()) {
+        <div #errorSummary class="notice notice-error settings-notice" role="alert" tabindex="-1">
+          <p>{{ error() }}</p>
+          @if (fieldError()) {
+            <a href="#display-name">Go to display name</a>
+          } @else if (needsSignIn()) {
+            <a routerLink="/auth" [queryParams]="{ returnUrl: '/settings' }"
+              >Sign in again <span aria-hidden="true">→</span></a
+            >
+          } @else if (!loaded()) {
+            <button type="button" class="btn btn-secondary" (click)="load()">Try again</button>
+          }
+        </div>
+      }
+
+      @if (loading()) {
+        <div class="profile-loading" role="status" aria-label="Loading your profile">
+          <span class="skeleton avatar-skeleton" aria-hidden="true"></span>
+          <div class="skeleton skeleton-line" aria-hidden="true"></div>
+          <div class="skeleton skeleton-input" aria-hidden="true"></div>
+          <div class="skeleton skeleton-line short" aria-hidden="true"></div>
+          <span class="loading-note">Getting your space ready…</span>
+        </div>
+      } @else if (loaded()) {
+        <div class="reader-identity">
+          <div class="reader-avatar" aria-hidden="true">{{ initials() }}</div>
+          <div>
+            <p class="reader-name">{{ savedName() }}</p>
+            <p class="reader-caption">A home for your next chapter.</p>
+          </div>
+        </div>
+
+        <form (ngSubmit)="save()" novalidate>
+          <div class="profile-field">
+            <div class="field-heading">
+              <label for="display-name" class="field-label"
+                >Display name <span class="required-label">(required)</span></label
+              >
+              <span class="character-count" aria-hidden="true">{{ displayName().length }}/100</span>
+            </div>
+            <input
+              id="display-name"
+              name="displayName"
+              class="field-input"
+              type="text"
+              required
+              maxlength="100"
+              autocomplete="nickname"
+              [ngModel]="displayName()"
+              (ngModelChange)="editName($event)"
+              [disabled]="saving()"
+              [attr.aria-invalid]="fieldError() ? 'true' : null"
+              [attr.aria-describedby]="fieldError() ? 'name-hint name-error' : 'name-hint'"
+            />
+            <p id="name-hint" class="field-hint">Choose the name you’d like to use in KTOB.</p>
+            @if (fieldError()) {
+              <p id="name-error" class="field-error">{{ fieldError() }}</p>
+            }
+          </div>
+
+          <div class="account-email">
+            <p class="field-label">Email address</p>
+            <p class="email-value">{{ auth.user()?.email || 'Email unavailable' }}</p>
+            <p class="field-hint">The email you use to sign in to your account.</p>
+          </div>
+
+          @if (notice()) {
+            <div class="notice notice-success save-notice" role="status">
+              <ktob-icon name="check" [size]="18" /><span>{{ notice() }}</span>
+            </div>
+          }
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary" [disabled]="saving() || !hasChanges()">
+              @if (saving()) {
+                <span class="saving-indicator" aria-hidden="true"></span>
+              }
+              {{ saving() ? 'Saving changes…' : 'Save changes' }}
+            </button>
+            @if (hasChanges()) {
+              <button
+                type="button"
+                class="btn btn-ghost"
+                [disabled]="saving()"
+                (click)="discardChanges()"
+              >
+                Discard changes
+              </button>
+            }
+          </div>
+        </form>
+      }
+    </section>
+
+    <aside class="privacy-panel" aria-labelledby="privacy-heading">
+      <div class="privacy-emblem"><ktob-icon name="lock" [size]="26" /></div>
+      <p class="eyebrow">A LITTLE PEACE OF MIND</p>
+      <h2 id="privacy-heading">Your books.<br />Your own space.</h2>
+      <p class="privacy-intro">Your reading life is personal. Here’s how your space works today.</p>
+      <ul class="privacy-list">
+        <li>
+          <ktob-icon name="check" [size]="17" />
+          <div>
+            <h3>A private library</h3>
+            <p>Your saved books and archived entries belong to your account.</p>
+          </div>
+        </li>
+        <li>
+          <ktob-icon name="check" [size]="17" />
+          <div>
+            <h3>Personal additions stay personal</h3>
+            <p>Books you enter manually are visible only to you.</p>
+          </div>
+        </li>
+        <li>
+          <ktob-icon name="check" [size]="17" />
+          <div>
+            <h3>No AI processing</h3>
+            <p>
+              The literary advisor is not available yet. Your reading data isn’t sent to an AI
+              provider.
+            </p>
+          </div>
+        </li>
+      </ul>
+      <a routerLink="/library" class="privacy-link"
+        >Back to my library <ktob-icon name="arrow-right" [size]="17"
+      /></a>
+    </aside>
+  </div>
+</section>

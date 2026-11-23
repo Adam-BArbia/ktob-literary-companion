@@ -1,0 +1,70 @@
+:host {
+  display: block;
+}
+.info-page {
+  max-width: 720px;
+  margin: 30px auto 20px;
+}
+.info-page > .page-heading {
+  margin-top: 20px;
+  font-size: clamp(40px, 5vw, 60px);
+}
+.lead {
+  font-size: 17px;
+  color: #5f6f62;
+  line-height: 1.9;
+  margin-top: 24px;
+  margin-bottom: 42px;
+  max-width: 580px;
+}
+.info-block {
+  padding: 25px 0;
+  border-top: 1px solid #dfe4d7;
+}
+.info-block h2 {
+  font-family: var(--font-serif);
+  font-size: 27px;
+  font-weight: 400;
+  letter-spacing: -0.025em;
+}
+.info-block p {
+  color: #66765f;
+  font-size: 14px;
+  line-height: 1.9;
+  margin-top: 12px;
+}
+.info-links {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-top: 15px;
+}
+.info-links a {
+  font-size: 12px;
+  color: #3d5f39;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-underline-offset: 4px;
+  min-height: 44px;
+}
+.info-page > .btn {
+  margin-top: 25px;
+}
+.info-caption {
+  font-size: 12px;
+  color: #5f6f62;
+  margin-top: 17px;
+}
+@media (max-width: 600px) {
+  .info-page {
+    margin-top: 10px;
+  }
+  .lead {
+    font-size: 15px;
+    margin-bottom: 30px;
+  }
+  .info-block p {
+    font-size: 13px;
+  }
+}

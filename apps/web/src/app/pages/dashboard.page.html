@@ -1,0 +1,94 @@
+<ktob-home-hero />
+
+<section class="reader-strip" aria-label="What you can do with KTOB">
+  <div><ktob-icon name="library" [size]="19" /><span>A library that feels like you</span></div>
+  <div><ktob-icon name="search" [size]="19" /><span>Find your next good read</span></div>
+  <div><ktob-icon name="lock" [size]="18" /><span>Private by design</span></div>
+</section>
+
+<section class="literary-corner" aria-labelledby="corner-title">
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">MAKE YOURSELF AT HOME</p>
+      <h2 id="corner-title">Your own little literary corner.</h2>
+    </div>
+    <p>Less noise. More books.</p>
+  </div>
+  <div class="corner-grid">
+    <a routerLink="/library" class="corner-card library-card"
+      ><div class="corner-icon"><ktob-icon name="library" [size]="24" /></div>
+      <span class="corner-number" aria-hidden="true">01</span>
+      <h3>Build your bookshelf</h3>
+      <p>Keep every book you want to read in one quiet, personal place.</p>
+      <span class="card-action"
+        >Explore your library <ktob-icon name="arrow-right" [size]="18" /></span
+    ></a>
+    <a routerLink="/catalog/search" class="corner-card discover-card"
+      ><div class="corner-icon"><ktob-icon name="search" [size]="24" /></div>
+      <span class="corner-number" aria-hidden="true">02</span>
+      <h3>Follow your curiosity</h3>
+      <p>Search for a title or author. See what catches your attention.</p>
+      <span class="card-action">Discover a book <ktob-icon name="arrow-right" [size]="18" /></span
+    ></a>
+    <a
+      routerLink="/catalog/search"
+      [queryParams]="{ manual: 'true' }"
+      class="corner-card personal-card"
+      ><div class="corner-icon"><ktob-icon name="book-open" [size]="24" /></div>
+      <span class="corner-number" aria-hidden="true">03</span>
+      <h3>Make room for every story</h3>
+      <p>Can’t find a book? Add your own private entry and make it yours.</p>
+      <span class="card-action"
+        >Add a book of your own <ktob-icon name="arrow-right" [size]="18" /></span
+    ></a>
+  </div>
+</section>
+
+<section class="reading-paths" aria-labelledby="paths-title">
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">WHERE WILL A BOOK TAKE YOU?</p>
+      <h2 id="paths-title">A few places to begin.</h2>
+    </div>
+    <a routerLink="/catalog/search" class="section-link"
+      >Explore the catalog <ktob-icon name="arrow-up-right" [size]="17"
+    /></a>
+  </div>
+  <p class="section-description">A small selection of classics to spark your next search.</p>
+  <div class="reading-grid">
+    @for (book of readingPaths; track book.title) {
+      <a
+        routerLink="/catalog/search"
+        [queryParams]="{ q: book.query }"
+        class="reading-card"
+        [attr.aria-label]="'Search for ' + book.title + ' by ' + book.author"
+      >
+        <div class="reading-cover">
+          <ktob-book-cover
+            [title]="book.title"
+            [author]="book.author"
+            [variant]="book.color"
+          /><span class="cover-link"><ktob-icon name="arrow-up-right" [size]="19" /></span>
+        </div>
+        <p class="reading-theme">{{ book.theme }}</p>
+        <h3>{{ book.title }}</h3>
+        <p class="reading-author">{{ book.author }}</p>
+      </a>
+    }
+  </div>
+</section>
+
+<section class="closing-note" aria-labelledby="closing-title">
+  <div class="closing-symbol" aria-hidden="true"><ktob-icon name="leaf" [size]="34" /></div>
+  <div>
+    <p class="eyebrow">A NOTE FROM KTOB</p>
+    <h2 id="closing-title">Good stories deserve a little space.</h2>
+    <p>
+      No reading targets to chase. No feed to keep up with. Just a place to start, at your own pace.
+    </p>
+  </div>
+  <a [routerLink]="auth.user() ? '/library' : '/auth/sign-up'" class="btn btn-secondary"
+    >{{ auth.user() ? 'Back to your books' : 'Make yourself at home' }}
+    <ktob-icon name="arrow-right" [size]="17"
+  /></a>
+</section>

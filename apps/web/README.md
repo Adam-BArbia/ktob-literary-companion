@@ -1,56 +1,53 @@
-# KTOB Angular 22 Frontend — KTOB-002
+# KTOB web app
 
-This is the responsive Angular 22 + Tailwind CSS 4 UI shell for **Keep Thoughts On Books**. It is a genuine Angular SPA with navigation and a real HTTP health probe, not a completed library or an authentication system.
+Angular 22 + Tailwind CSS 4, with a standalone, lazy-loaded route structure and real Supabase email/password authentication. The browser calls the Java API for reader, catalog, and library data; it never connects directly to the private database schema.
 
-## Features implemented
+## Current screens
 
-- Responsive editorial layout with desktop top navigation and an interactive keyboard-accessible mobile menu
-- Angular router: Home, Library, Discover, Collections, Advisor, Settings
-- Honest placeholder screens for future modules; no mocked book records
-- Runtime-configured `GET /api/v1/health` request through `HealthService`
-- Loading, connected, unavailable and retry states in the footer
-- Unit tests via Vitest and production build in CI
-- No Supabase or third-party AI integration; no live bookstore claims or account deletion
+- `/`: editorial home with clear library/discovery actions and explicitly curated reading inspiration.
+- `/auth`: sign in, confirmation recovery and safe internal return navigation.
+- `/auth/sign-up`: dedicated registration with email, password, confirmation, field-linked errors, and a verification-email state. `/sign-up` redirects here.
+- `/library`: private shelf with title/author filtering, grid/list layout, archive confirmation, restore and undo.
+- `/catalog/search`: Open Library search, source-labeled results, individual addition feedback, and private manual entry. Supports `?q=...` and `?manual=true`.
+- `/settings`: persisted display name, account details and a truthful privacy summary.
+- `/about` and `/privacy`: public product and current-data-handling information.
+- `/collections` and `/advisor`: clearly labeled upcoming features.
 
-## Development commands
+There are no fabricated library records, live seller offers, AI interactions, account-deletion controls, or fake social-login buttons. Original typographic cover illustrations are decorative, not publisher-provided artwork. Reader data screens render actual API responses.
 
-Install Node 24.15+ (or a compatible supported Node version). Windows CMD:
+## Development
 
-```bat
-cd /d C:\dev\ktob-literary-companion\apps\web
+Use Node 24 and the committed dependency lockfile:
+
+```sh
+cd apps/web
 npm ci
 npm start
 ```
 
-Open `http://localhost:4200`. In a second window run the Java backend using `apps\api\mvnw.cmd spring-boot:run`. The SPA reads `public/ktob-config.json` and requests `http://localhost:8080/api/v1/health`. Local development CORS for the health endpoint is explicitly limited to `http://localhost:4200`.
+The default public config points at the Java API on `http://localhost:8080/api/v1` and leaves authentication unconfigured. Configure a dedicated test Supabase project before exercising local authentication; never put a privileged key in browser configuration.
 
-Run tests and release compilation:
-
-```bat
+```sh
 npm test -- --watch=false
 npm run build
 ```
 
-## Deployment configuration (not deployed yet)
+## Deployment
 
-The frontend loads a public `/ktob-config.json` file at runtime. A production build must write a real backend URL before building:
+The Vercel build command is:
 
-```bat
-set "KTOB_API_URL=https://YOUR-JAVA-API-HOST/api/v1"
-node scripts/configure-api.mjs
-npm run build
+```sh
+node scripts/configure-api.mjs && npm run build
 ```
 
-`KTOB_API_URL` is a public browser-visible URL, not a secret. The build-time configuration must point to the reachable hosted Java API. **Never publish the default localhost URL as the final production configuration.** Render's `ALLOWED_WEB_ORIGINS` must include the exact Vercel origin; only the health endpoint supports that property at Sprint 0.
+It reads `KTOB_API_URL`, `SUPABASE_URL`, and `SUPABASE_PUBLISHABLE_KEY` and writes the public runtime config. Only a Supabase publishable key belongs here. The deployed frontend is `https://ktob-web-front.vercel.app`; the Java API base is `https://ktob-api.onrender.com/api/v1`.
 
-The `configure-api.mjs` script is intentionally separate from `npm run build` so documentation/tests cannot silently replace the local development config. Later Vercel deployment should use `node scripts/configure-api.mjs && npm run build` with the correct environment variable.
+Supabase Auth URL configuration must include the deployed site and allow `https://ktob-web-front.vercel.app/auth` as a redirect URL. The signup and resend flows request that exact same-origin route. Email delivery and confirmation depend on the project's email/provider configuration and limits; they are separate from UI/SDK test coverage. Preview origins require their own explicit configuration if real authentication is tested there.
 
-Backend/Angular authentication, business CRUD, Supabase storage, and live AI/sellers remain unimplemented. See the [implementation handoff](../../docs/implementation/README.md).
+Render's allowed frontend origin remains the production Vercel origin. Do not broaden CORS or disable email verification to test a preview.
 
-## Sprint 1 — authentication and reader workflows
+## Design and behavior
 
-The UI now has `/auth` for email/password sign-in/sign-up, protected `/library` and `/catalog/search`, and calls to actual Java endpoints. The app uses the official pinned Supabase JS v2 client. **Only public publishable credentials** are included in the browser config.
+See [the UI design guide](../../docs/implementation/16-ui-design-guide.md). Shared colors, text styles, controls and feedback live in `src/styles.css`; SVG icons, decorative covers and the home hero are shared components. Forms use real HTML labels and field-associated validation, the mobile navigation supports Escape, native archive dialogs preserve keyboard focus, reduced motion is respected, and navigation restores scroll/focus.
 
-For a dedicated KTOB project, inject `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, and `KTOB_API_URL` into the build pipeline and run `node scripts/configure-api.mjs` prior to production build. Missing credentials intentionally disable sign-in. Do NOT reuse the existing Hani Maak Supabase instance.
-
-The API needs its own verified `SUPABASE_ISSUER` and `SUPABASE_JWKS_URL` and reviewed JDBC connection to a private `app` schema. This is not yet configured or hosted.
+The Java API currently returns at most 25 library records without paging; the library explicitly discloses that limit when reached and scopes its filters to loaded records. Liveness status describes only API connectivity, not database/provider readiness. Requests have bounded cold-start timeouts.
