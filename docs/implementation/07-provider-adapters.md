@@ -40,6 +40,8 @@ Input includes only: authenticated request text, effective spoiler policy, allow
 
 **Overnight release qualification:** Official Groq model/quota/data-handling references were reviewed, but no user account/key, actual Tunisian access, inference latency or retention configuration was verified. B16 therefore remains unmet and no real inference occurred. See the [sourced qualification record](overnight-release-demo.md#provider-qualification-result-for-this-release). The existing unavailable UI is intentional; this release does not claim an operational AI adapter or conversation API.
 
+The [free AI API comparison](free-ai-api-options.md) recommends evaluating Groq first and Cloudflare Workers AI second, with sourced account, quota and data-handling limitations. That research is a candidate assessment, not an activated provider or a measured literary benchmark; the qualification and consent gates above still apply.
+
 ## Verified bookstore search — source unselected
 
 `BookOfferPort` should expose `search(work, country, format, language, maxPrice, currency, cursor)`, but leave the live provider **disabled** until validated for real Tunisia-first results and legal terms.
