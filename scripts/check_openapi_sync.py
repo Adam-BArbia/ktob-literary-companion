@@ -20,7 +20,10 @@ if len(SPEC["paths"]) != 35 or sum(len(methods) for methods in SPEC["paths"].val
     ERRORS.append("Approved v0.3 API operation inventory changed: review contract first.")
 
 known: dict[str, tuple[str, str]] = {}
-for path, methods in SPEC["paths"].items():
+# Keep the deliberately frozen R1 contract intact; V4 endpoints are an additive extension.
+EXTENSION = json.loads((ROOT / "docs/architecture/openapi-v4-extension.json").read_text(encoding="utf-8")) if (
+    ROOT / "docs/architecture/openapi-v4-extension.json").exists() else {"paths": {}}
+for path, methods in {**SPEC["paths"], **EXTENSION["paths"]}.items():
     for method, operation in methods.items():
         op_id = operation["operationId"]
         if op_id in known:

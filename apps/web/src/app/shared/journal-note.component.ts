@@ -12,7 +12,7 @@ import { IconComponent } from './icon.component';
       <span class="note-type">{{ kindLabel() }}</span
       ><time [attr.datetime]="note().createdAt">{{ note().createdAt | date: 'mediumDate' }}</time
       ><span class="note-private"
-        ><ktob-icon name="lock" [size]="12" /><span class="sr-only">Private entry</span></span
+        ><ktob-icon [name]="note().isPublic ? 'eye' : 'lock'" [size]="12" />{{ note().isPublic ? 'Public note' : 'Private entry' }}</span
       >
     </div>
     <p class="note-content" dir="auto">{{ note().body }}</p>
@@ -31,6 +31,9 @@ import { IconComponent } from './icon.component';
       }}</span>
       @if (!readonly()) {
         <div>
+          <button type="button" class="text-action" [disabled]="busy()" (click)="share.emit()">
+            {{ note().isPublic ? 'Make private' : 'Publish this note' }}
+          </button>
           <button type="button" class="text-action" [disabled]="busy()" (click)="edit.emit()">
             Edit<span class="sr-only"> {{ kindLabel() }}</span></button
           ><button
@@ -51,6 +54,7 @@ export class JournalNoteComponent {
   readonly note = input.required<JournalEntry>();
   readonly readonly = input(false);
   readonly busy = input(false);
+  readonly share = output<void>();
   readonly edit = output<void>();
   readonly remove = output<EventTarget | null>();
   kindLabel(): string {

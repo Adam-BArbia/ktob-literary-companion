@@ -28,6 +28,9 @@
           <a routerLink="/diary" routerLinkActive="active-link" ariaCurrentWhenActive="page"
             >Reading diary</a
           >
+          <a routerLink="/readers" routerLinkActive="active-link" ariaCurrentWhenActive="page"
+            >Readers</a
+          >
           <a routerLink="/advisor" routerLinkActive="active-link" ariaCurrentWhenActive="page"
             >Companion</a
           >
@@ -107,6 +110,13 @@
             ariaCurrentWhenActive="page"
             (click)="closeMenu()"
             ><ktob-icon name="sparkles" /> Literary companion</a
+          >
+          <a
+            routerLink="/readers"
+            routerLinkActive="active-link"
+            ariaCurrentWhenActive="page"
+            (click)="closeMenu()"
+            ><ktob-icon name="users" /> Find readers</a
           >
           <a
             routerLink="/settings"

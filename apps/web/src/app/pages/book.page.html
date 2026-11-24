@@ -309,6 +309,7 @@
               [readonly]="archived()"
               [busy]="busy() || journalSaving()"
               (edit)="openEditor(note.kind, note)"
+              (share)="toggleNoteVisibility(note)"
               (remove)="confirm('delete', $event, note)"
             />
           }
@@ -383,6 +384,12 @@
               <p class="rating-hint">
                 Choose 1–5 stars, including half stars. Use arrow keys to adjust.
               </p>
+              <label class="rating-public-choice">
+                <input type="checkbox" [checked]="reading.ratingPublic ?? false"
+                  [disabled]="busy()" (change)="toggleRatingVisibility(reading)" />
+                <span>Share this reading's rating with other KTOB readers once your
+                  profile is discoverable. Older ratings remain private until you choose.</span>
+              </label>
               <button
                 type="button"
                 class="btn btn-secondary rating-save"

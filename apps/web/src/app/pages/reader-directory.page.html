@@ -1,0 +1,79 @@
+<section class="reader-page">
+  <header class="reader-header">
+    <p class="eyebrow">A COMMUNITY OF READERS</p>
+    <h1 class="page-heading">Reading is personal.<br />Ideas are worth sharing.</h1>
+    <p class="page-description">Discover readers who choose to share their ratings and selected notes. Private journals remain private.</p>
+  </header>
+  <section class="reader-search" aria-label="Find readers">
+    <form (ngSubmit)="search()">
+      <label class="field-label" for="reader-search-input">Search by public name or username</label>
+      <div class="search-controls">
+        <input class="field-input" name="query" id="reader-search-input"
+          [ngModel]="query()" (ngModelChange)="query.set($event)"
+          placeholder="Try a username" maxlength="40" autocomplete="off" />
+        <button class="btn btn-primary" type="submit" [disabled]="searching()">
+          {{ searching() ? 'Searching…' : 'Find readers' }}
+        </button>
+      </div>
+    </form>
+    <p class="field-hint">Only readers who have explicitly enabled discoverability appear here.</p>
+    @if (attempted() && !searching() && !error()) {
+      @if (!people().length) {
+        <p class="empty-note">No readers found. Try another name or username.</p>
+      } @else {
+        <ul class="results">
+          @for (person of people(); track person.username) {
+            <li>
+              <a [routerLink]="['/readers',person.username]">
+                <span class="avatar" aria-hidden="true">{{ person.displayName.slice(0,1).toUpperCase() }}</span>
+                <span><strong>{{ person.displayName }}</strong><small>&#64;{{ person.username }}</small></span>
+                <span class="view-reader">View public profile →</span>
+              </a>
+            </li>
+          }
+        </ul>
+      }
+    }
+  </section>
+  @if (error()) {
+    <p class="notice notice-error" role="alert">{{ error() }}</p>
+  }
+  @if (loading()) {
+    <p class="loading-message" role="status">Opening this reader’s shared shelf…</p>
+  }
+  @if (profile(); as reader) {
+    <section class="profile" aria-labelledby="public-profile-title">
+      <p class="eyebrow">PUBLIC READING PROFILE</p>
+      <h2 id="public-profile-title">{{ reader.displayName }}</h2>
+      <p class="handle">&#64;{{ reader.username }} · Shared only with signed-in readers</p>
+      <h3 class="section-title">Their book ratings</h3>
+      @if (!reader.ratings.length) {
+        <p class="empty-note">No public book ratings yet.</p>
+      } @else {
+        <div class="rating-grid">
+          @for (book of reader.ratings; track $index) {
+            <article class="rating-card">
+              <p class="book-title">{{ book.title }}</p>
+              <p class="book-author">{{ book.authors.join(', ') || 'Author not listed' }}</p>
+              <p class="rating-value"><span aria-hidden="true">★</span> {{ book.rating }} / 5</p>
+            </article>
+          }
+        </div>
+      }
+      <h3 class="section-title">Notes they chose to publish</h3>
+      @if (!reader.notes.length) {
+        <p class="empty-note">This reader hasn't published any notes.</p>
+      } @else {
+        <div class="public-notes">
+          @for (note of reader.notes; track $index) {
+            <article class="public-note">
+              <p class="eyebrow">{{ note.kind }} · {{ note.title }}</p>
+              <p class="public-note-body" dir="auto">{{ note.body }}</p>
+            </article>
+          }
+        </div>
+      }
+      <p class="privacy-reminder">This profile contains only ratings and notes selected for sharing. Private journal entries and account details are never shown.</p>
+    </section>
+  }
+</section>

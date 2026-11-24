@@ -15,10 +15,11 @@ import { KtobApiService, isAuthFailure } from '../core/api/ktob-api.service';
 import { AuthService } from '../core/auth/auth.service';
 import { IconComponent } from '../shared/icon.component';
 import { AiConsentComponent } from '../shared/ai-consent.component';
+import { PublicProfileSettingsComponent } from '../shared/public-profile-settings.component';
 
 @Component({
   selector: 'app-settings-page',
-  imports: [FormsModule, RouterLink, IconComponent, AiConsentComponent],
+  imports: [FormsModule, RouterLink, IconComponent, AiConsentComponent, PublicProfileSettingsComponent],
   templateUrl: './settings.page.html',
   styleUrl: './settings.page.css',
 })
