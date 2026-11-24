@@ -1,5 +1,5 @@
 {
-  "description": "V4 additive opt-in reader discovery. Extends the fixed reviewed R1 57-operation baseline without modifying its original inventory.",
+  "description": "V4 reader profiles and V5 per-work community previews; additive to the frozen approved R1 57-operation inventory.",
   "extensionOf": "docs/architecture/openapi.json",
   "paths": {
     "/me/public-profile": {
@@ -150,6 +150,53 @@
           }
         }
       }
+    },
+    "/catalog/works/{workId}/community": {
+      "get": {
+        "operationId": "getWorkCommunity",
+        "summary": "Read community ratings and individually published notes for a canonical Open Library work",
+        "parameters": [
+          {
+            "name": "workId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Publicly shared community projection, visible only to authenticated KTOB readers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/BookCommunityPreview"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "404": {
+            "description": "No global Open Library work exists for this ID"
+          },
+          "400": {
+            "description": "Invalid work UUID"
+          }
+        },
+        "description": "Returns one snapshot of sharing consent. Each reader contributes only their newest reading for this exact work; an unrated or private newest reading does not reveal an older rating. The average and count include all eligible readers; displayed lists are bounded."
+      }
     }
   },
   "components": {
@@ -282,6 +329,97 @@
             "items": {
               "$ref": "#/components/schemas/PublicNote"
             }
+          }
+        }
+      },
+      "CommunityRating": {
+        "type": "object",
+        "required": [
+          "username",
+          "displayName",
+          "rating"
+        ],
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "rating": {
+            "type": "number"
+          }
+        }
+      },
+      "CommunityNote": {
+        "type": "object",
+        "required": [
+          "username",
+          "displayName",
+          "kind",
+          "body",
+          "createdAt"
+        ],
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "BookCommunityPreview": {
+        "type": "object",
+        "required": [
+          "workId",
+          "averageRating",
+          "ratingCount",
+          "ratings",
+          "notes"
+        ],
+        "properties": {
+          "workId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "averageRating": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Mean across all eligible readers, rounded to one decimal, or null when ratingCount is zero."
+          },
+          "ratingCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Total eligible reader ratings, including ratings beyond the display limit."
+          },
+          "ratings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CommunityRating"
+            },
+            "maxItems": 200,
+            "description": "Up to 200 eligible readers, ordered by descending rating then username."
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CommunityNote"
+            },
+            "maxItems": 30,
+            "description": "Up to the 30 newest individually published notes from discoverable readers."
           }
         }
       }

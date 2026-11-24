@@ -64,10 +64,12 @@ jobs:
           assert not any(k in config for k in ('DATABASE_PASSWORD', 'service_role', 'SUPABASE_SECRET_KEY'))
           print('PASS frontend points to the intended KTOB API and public Supabase project')
 
-          for route in ('/auth', '/auth/sign-up', '/sign-up', '/library', '/catalog/search', '/about', '/privacy'):
+          for route in ('/auth', '/auth/sign-up', '/sign-up', '/library', '/catalog/search',
+                        '/discover/works/00000000-0000-4000-8000-000000000001',
+                        '/readers', '/readers/reader', '/about', '/privacy'):
               status, _, html = fetch(frontend + route)
               assert status == 200 and b'<html' in html.lower(), f'Angular deep link {route}: HTTP {status}'
-          print('PASS Angular SPA deep links for registration, sign-in, library, catalog and public information')
+          print('PASS Angular SPA deep links for registration, sign-in, library, catalog, book preview and readers')
 
           jwks_url = os.environ['SUPABASE_ORIGIN'] + '/auth/v1/.well-known/jwks.json'
           status, _, jwks_body = fetch(jwks_url)
@@ -83,9 +85,13 @@ jobs:
           assert status == 200 and json.loads(body).get('status') == 'ok', f'API health: HTTP {status}'
           print('PASS live Java API health')
 
-          status, _, _ = fetch(api + '/api/v1/me')
-          assert status == 401, f'Protected reader route without token: HTTP {status}'
-          print('PASS anonymous reader API request rejected')
+          for protected in ('/api/v1/me', '/api/v1/readers/search?q=reader',
+                            '/api/v1/catalog/works/00000000-0000-4000-8000-000000000001/community'):
+              status, _, _ = fetch(api + protected)
+              assert status == 401, f'Protected route without token {protected}: HTTP {status}'
+              status, _, _ = fetch(api + protected, headers={'Authorization': 'Bearer invalid-test-token'})
+              assert status == 401, f'Protected route with invalid token {protected}: HTTP {status}'
+          print('PASS reader and community API routes reject anonymous and invalid-token requests')
 
           preflight = {'Origin': frontend, 'Access-Control-Request-Method': 'GET',
                        'Access-Control-Request-Headers': 'authorization'}

@@ -21,8 +21,8 @@
           >
           <a
             routerLink="/catalog/search"
-            routerLinkActive="active-link"
-            ariaCurrentWhenActive="page"
+            [class.active-link]="discoverActive()"
+            [attr.aria-current]="discoverActive() ? 'page' : null"
             >Discover</a
           >
           <a routerLink="/diary" routerLinkActive="active-link" ariaCurrentWhenActive="page"
@@ -91,8 +91,8 @@
         >
         <a
           routerLink="/catalog/search"
-          routerLinkActive="active-link"
-          ariaCurrentWhenActive="page"
+          [class.active-link]="discoverActive()"
+          [attr.aria-current]="discoverActive() ? 'page' : null"
           (click)="closeMenu()"
           ><ktob-icon name="search" /> Discover</a
         >

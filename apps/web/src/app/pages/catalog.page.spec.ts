@@ -27,6 +27,32 @@ describe('Catalog reader workflows', () => {
     });
   });
 
+  it('opens a canonical preview with its search context without adding the book', async () => {
+    const fixture = TestBed.createComponent(CatalogPage);
+    const canonical = {
+      ...work,
+      id: '00000000-0000-4000-8000-000000000001',
+      origin: 'OPEN_LIBRARY' as const,
+      ownerReaderId: null,
+    };
+    fixture.componentInstance.books.set([canonical, work]);
+    fixture.componentInstance.searched.set(true);
+    fixture.componentInstance.lastQuery.set('Jane Austen & classics');
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const cards = fixture.nativeElement.querySelectorAll('.result-card') as NodeListOf<HTMLElement>;
+    for (const link of cards[0].querySelectorAll('a')) {
+      const url = new URL(link.href);
+      expect(url.pathname).toBe('/discover/works/' + canonical.id);
+      expect(url.searchParams.get('q')).toBe('Jane Austen & classics');
+    }
+    expect(cards[0].textContent).toContain('Explore book & community');
+    expect(cards[1].textContent).toContain('Explore your book');
+    expect(cards[1].textContent).not.toContain('Explore book & community');
+    expect(api.addToLibrary).not.toHaveBeenCalled();
+  });
+
   it('retries adding the existing manual work after a partial network failure', async () => {
     const page = TestBed.createComponent(CatalogPage).componentInstance;
     api.createManualWork.mockResolvedValue({ data: work });

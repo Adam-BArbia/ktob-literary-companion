@@ -1,6 +1,6 @@
 {
   "contract": "docs/architecture/openapi.json",
-  "notes": "Only real controller methods with tests are registered. V3 adds six existing privacy/conversation operations; the full R1 design remains 57 operations. DB-dependent routes require KTOB_DB_ENABLED=true and verified JWT. Groq dispatch additionally requires a server-only key, confirmed provider qualification and current reader consent. This registry describes source implementation, not production deployment; see v3-release-demo.md and the historical V2 record. V4 opt-in public reader projections are documented separately in docs/architecture/openapi-v4-extension.json. Publication is gated by discoverability, source, and per-entry flags; production migration must be applied before deploying V4.",
+  "notes": "Only real controller methods with tests are registered. V3 adds six existing privacy/conversation operations; the full R1 design remains 57 operations. DB-dependent routes require KTOB_DB_ENABLED=true and verified JWT. Groq dispatch additionally requires a server-only key, confirmed provider qualification and current reader consent. This registry describes source implementation, not production deployment; see v3-release-demo.md and the historical V2 record. V4 opt-in public reader projections are documented separately in docs/architecture/openapi-v4-extension.json. Publication is gated by discoverability, source, and per-entry flags; production migration must be applied before deploying V4. V5 adds getWorkCommunity for authenticated, owner-consented, canonical-work sharing without a schema migration.",
   "implemented": [
     "liveness",
     "getMyProfile",
@@ -31,6 +31,7 @@
     "getOwnPublicProfile",
     "updateOwnPublicProfile",
     "searchPublicReaders",
-    "getPublicReader"
+    "getPublicReader",
+    "getWorkCommunity"
   ]
 }

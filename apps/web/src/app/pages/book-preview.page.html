@@ -1,0 +1,188 @@
+<section class="preview-page">
+  <a class="back-link" routerLink="/catalog/search" [queryParams]="{ q: searchQuery() || null }"
+    ><ktob-icon name="arrow-left" [size]="16" /> Back to Discover</a
+  >
+  @if (loading()) {
+    <div class="preview-loading" role="status">Opening your book preview…</div>
+  } @else if (error()) {
+    <div role="alert" class="notice notice-error">
+      {{ error() }}
+      <button type="button" class="text-action" (click)="retryBook()">Try again</button>
+    </div>
+  } @else if (book(); as work) {
+    <section class="preview-hero">
+      <div class="preview-art">
+        <ktob-book-cover [title]="work.title" [author]="work.authors[0] || ''" [variant]="2" />
+      </div>
+      <div class="preview-intro">
+        <p class="eyebrow">
+          {{ work.origin === 'OPEN_LIBRARY' ? 'FROM OPEN LIBRARY' : 'YOUR PRIVATE WORK' }}
+        </p>
+        <h1>{{ work.title }}</h1>
+        <p class="author">{{ work.authors.join(', ') || 'Author not listed' }}</p>
+        @if (community(); as shared) {
+          @if (shared.ratingCount > 0) {
+            <p
+              class="community-score"
+              aria-label="Average of {{ shared.averageRating }} out of 5 across {{
+                shared.ratingCount
+              }} readers"
+            >
+              <span aria-hidden="true">★</span> {{ shared.averageRating }}
+              <span class="muted"
+                >/ 5 · {{ shared.ratingCount }}
+                {{ shared.ratingCount === 1 ? 'reader' : 'readers' }}</span
+              >
+            </p>
+          } @else {
+            <p class="unrated">Not rated publicly yet — be the first to share your impression.</p>
+          }
+        }
+        <p class="source-context">
+          {{
+            work.origin === 'OPEN_LIBRARY'
+              ? 'Book information comes from Open Library.'
+              : 'This book information was entered by you and is private to your library.'
+          }}
+          The cover is original KTOB decorative artwork, not the publisher's cover.
+        </p>
+        <div class="hero-actions">
+          <button
+            type="button"
+            class="btn btn-primary"
+            [disabled]="adding() || added()"
+            (click)="add()"
+          >
+            <ktob-icon [name]="added() ? 'check' : 'plus'" [size]="18" />
+            {{ adding() ? 'Adding…' : added() ? 'Added to your shelf' : 'Add to my library' }}
+          </button>
+          <a class="btn btn-secondary" routerLink="/library">My library</a>
+        </div>
+        @if (addError()) {
+          <p class="notice notice-error" role="alert">
+            {{ addError() }}
+            @if (duplicate()) {
+              <a routerLink="/library">Open my library</a>
+            }
+            @if (authExpired()) {
+              <a routerLink="/auth" [queryParams]="{ returnUrl: '/discover/works/' + work.id }"
+                >Sign in again</a
+              >
+            }
+          </p>
+        }
+        @if (added()) {
+          <p class="notice notice-success" role="status">
+            Saved to your private library. Your reading journal is ready whenever you are.
+          </p>
+        }
+      </div>
+    </section>
+
+    @if (work.origin === 'MANUAL') {
+      <section class="section-content">
+        <h2>Just for you.</h2>
+        <p>Private manual books are not part of community discovery and have no public reviews.</p>
+      </section>
+    } @else if (community(); as shared) {
+      <section class="section-content" aria-labelledby="community-heading">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">OTHER READERS' IMPRESSIONS</p>
+            <h2 id="community-heading">The reading room.</h2>
+          </div>
+          <p class="muted">
+            {{
+              shared.notes.length === 30
+                ? 'Latest 30 shared notes'
+                : shared.notes.length +
+                  (shared.notes.length === 1 ? ' shared note' : ' shared notes')
+            }}
+          </p>
+        </div>
+        @if (shared.notes.length === 0) {
+          <p class="empty-notes">
+            No published reviews or notes for this book yet. Your thoughts could be the first to
+            help another reader.
+          </p>
+        } @else {
+          <div class="notes-grid">
+            @for (note of shared.notes; track $index) {
+              <article class="reader-note">
+                <div class="note-meta">
+                  <a [routerLink]="['/readers', note.username]"
+                    >{{ note.displayName }} <small>&#64;{{ note.username }}</small></a
+                  >
+                  <span>{{ note.kind }}</span>
+                </div>
+                <div [id]="'community-note-' + $index">
+                  @if (spoilers().has($index)) {
+                    <p class="note-body" dir="auto">{{ note.body }}</p>
+                  } @else {
+                    <p class="note-preview">
+                      Community notes may contain spoilers. Read only if you're comfortable with
+                      that.
+                    </p>
+                  }
+                </div>
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  [attr.aria-expanded]="spoilers().has($index)"
+                  [attr.aria-controls]="'community-note-' + $index"
+                  [attr.aria-label]="
+                    (spoilers().has($index) ? 'Hide' : 'Reveal') + ' note by ' + note.displayName
+                  "
+                  (click)="toggleSpoiler($index)"
+                >
+                  {{ spoilers().has($index) ? 'Hide this note' : 'Reveal this note' }}
+                </button>
+              </article>
+            }
+          </div>
+        }
+      </section>
+      <section class="section-content" aria-labelledby="rating-heading">
+        <h2 id="rating-heading">Public ratings.</h2>
+        @if (shared.ratings.length === 0) {
+          <p class="empty-notes">There are no public ratings yet.</p>
+        } @else {
+          @if (shared.ratingCount > shared.ratings.length) {
+            <p class="muted">
+              Showing {{ shared.ratings.length }} of {{ shared.ratingCount }} public ratings. The
+              average includes every eligible reader.
+            </p>
+          }
+          <div class="ratings-grid">
+            @for (review of shared.ratings; track review.username) {
+              <article class="rating-item">
+                <a [routerLink]="['/readers', review.username]">{{ review.displayName }}</a>
+                <span class="rating-value"
+                  ><span aria-hidden="true">★</span> {{ review.rating }} / 5</span
+                >
+              </article>
+            }
+          </div>
+        }
+        <p class="sharing-note">
+          Only ratings and notes explicitly shared by discoverable KTOB readers appear here. Each
+          reader contributes at most one current rating to the average.
+        </p>
+      </section>
+    } @else {
+      <section class="section-content">
+        <h2>Community notes.</h2>
+        @if (communityLoading()) {
+          <p role="status" class="muted">Loading readers' ratings and notes…</p>
+        } @else if (socialError()) {
+          <p role="alert" class="notice notice-error">
+            {{ socialError() }}
+            <button type="button" class="text-action" (click)="retryCommunity()">Try again</button>
+          </p>
+        } @else {
+          <p>Community information is not available.</p>
+        }
+      </section>
+    }
+  }
+</section>
