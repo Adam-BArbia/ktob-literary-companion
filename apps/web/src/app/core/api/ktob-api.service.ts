@@ -54,6 +54,25 @@ export interface PublicReaderProfile {
   ratings: PublicRating[];
   notes: PublicNote[];
 }
+export interface CommunityRating {
+  username: string;
+  displayName: string;
+  rating: number;
+}
+export interface CommunityNote {
+  username: string;
+  displayName: string;
+  kind: JournalKind;
+  body: string;
+  createdAt: string;
+}
+export interface BookCommunityPreview {
+  workId: string;
+  averageRating: number | null;
+  ratingCount: number;
+  ratings: CommunityRating[];
+  notes: CommunityNote[];
+}
 export interface PrivacySettings {
   aiProcessingOptIn: boolean;
   personalizationOptIn: boolean;
@@ -267,6 +286,9 @@ export class KtobApiService {
 
   workById(id: string): Promise<ApiData<BookWork>> {
     return this.request('GET', '/catalog/works/' + encodeURIComponent(id));
+  }
+  bookCommunity(workId: string): Promise<ApiData<BookCommunityPreview>> {
+    return this.request('GET', '/catalog/works/' + encodeURIComponent(workId) + '/community');
   }
 
   searchWorks(query: string): Promise<ApiPage<BookWork>> {
