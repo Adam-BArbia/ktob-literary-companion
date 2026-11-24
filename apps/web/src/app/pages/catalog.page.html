@@ -89,13 +89,14 @@
       <div class="book-grid">
         @for (book of books(); track book.id; let i = $index) {
           <article class="result-card">
-            <div class="cover-area">
+            <a class="cover-area book-preview-link" [routerLink]="['/discover/works', book.id]"
+              [attr.aria-label]="'Explore ' + book.title + ' and community impressions'">
               <ktob-book-cover
                 [title]="book.title"
                 [author]="book.authors[0] || ''"
                 [variant]="i"
               />
-            </div>
+            </a>
             <div class="result-details">
               <span class="book-source"
                 ><ktob-icon
@@ -103,8 +104,9 @@
                   [size]="13"
                 />{{ book.origin === 'MANUAL' ? 'Your private entry' : 'Open Library' }}</span
               >
-              <h3>{{ book.title }}</h3>
+              <h3><a class="book-title-link" [routerLink]="['/discover/works', book.id]">{{ book.title }}</a></h3>
               <p class="book-author">{{ book.authors.join(', ') || 'Author not listed' }}</p>
+              <a class="preview-text-link" [routerLink]="['/discover/works', book.id]">Explore book &amp; community <span aria-hidden="true">→</span></a>
               <button
                 type="button"
                 class="btn btn-secondary add-button"
