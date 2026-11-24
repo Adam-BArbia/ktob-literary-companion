@@ -22,25 +22,31 @@ interface BookMetadataPort {
 
 Official Open Library policy: https://openlibrary.org/developers/api
 
-## AI provider — not selected / isolated integration
+## Groq literary companion — scoped V3
 
-The **`LiteraryAiPort`** contract should be implemented as a deny-by-default adapter first:
+The owner selected **GroqCloud / `openai/gpt-oss-120b`**, created an account/key, confirmed model visibility and reported **Global ZDR enabled**. This replaces the V2 unselected-provider state. It is account-control evidence supplied by the owner, not a measured KTOB inference result. Record actual credential-presence metadata, model response, quota/latency observations and release acceptance in the [V3 evidence](v3-release-demo.md).
 
-```java
-interface LiteraryAiPort {
-    AiTurn complete(AiRequest request) throws ProviderUnavailable;
-}
-```
+`LiteraryAiPort` isolates the provider from advisor persistence and consent. The concrete `GroqLiteraryAiAdapter` calls only `https://api.groq.com/openai/v1/chat/completions` from Java, with redirects disabled. It does not activate provider tools, batch jobs, stored provider conversations or a paid fallback. The browser never receives `GROQ_API_KEY`.
 
-Input includes only: authenticated request text, effective spoiler policy, allowed minimal personalization subset, strict content boundaries and bounded token/time budget. Output is untrusted; model claims about content labels, book availability, facts or offers require independent qualification. Configuration `AI_ENABLED=false` by default. With no approved provider, message/recommendation operations return **503** and do not invoke a third-party endpoint; client displays a truthful “AI unavailable” state, while reading and journal operations remain usable.
+Availability requires both a nonblank server-only key and deployment-managed `KTOB_GROQ_QUALIFIED=true`. Qualification defaults false and is set by the authorized release operator only after the account, retention and application checks. The owner is not required to add `AI_ENABLED`. Missing key or qualification returns sanitized `503 AI_PROVIDER_UNAVAILABLE`; core library/journal operations remain independent.
 
-**Required provider decision evidence before enabling:** actual model and account availability on no-credit-card/free constraints, Tunisian/global access, rate/quotas, supported languages, latency and output limits, privacy/data retention terms, safety filters and confirmation that private prompts/journals are permitted under user consent and the provider's contract. Candidate `Groq` is **not** approved as of this handoff; no API key or service setup is implied. Use feature flag and adapter tests; no provider mock exposed as production AI.
+### Request and context policy
 
-**Strict inference boundary:** Do not treat explicit user consent as proof that third-party retention terms are acceptable. Do not quietly transform chat into approved persistent memory. Recommendations remain a 0..N batch with firm content-boundary validation; unknown evidence ≠ safe. A new NO_SPOILERS turn must not receive full-spoiler prior history.
+Before every external dispatch, verify reader ownership, exact per-request spoiler confirmation and current `aiProcessingOptIn`. A completed revocation is checked again immediately before sending. Missing processing consent returns `403 AI_PROCESSING_CONSENT_REQUIRED`; no generic prompt is exempt.
 
-**Overnight release qualification:** Official Groq model/quota/data-handling references were reviewed, but no user account/key, actual Tunisian access, inference latency or retention configuration was verified. B16 therefore remains unmet and no real inference occurred. See the [sourced qualification record](overnight-release-demo.md#provider-qualification-result-for-this-release). The existing unavailable UI is intentional; this release does not claim an operational AI adapter or conversation API.
+V3 context includes only the question, minimal selected-book title/author/language and at most four complete permitted turns from that same conversation. It does not query stored journal, reading history, profile, preferences or memories, regardless of personalization flags. `MessageWrite` accepts no `usePersonalContext` field. Both sides of previous full-spoiler turns are excluded for a new `NO_SPOILERS` request. Submitted questions are not silently truncated: if the required context exceeds the 6,000 UTF-8 byte resource budget, return `422 AI_CONTEXT_TOO_LARGE`.
 
-The [free AI API comparison](free-ai-api-options.md) recommends evaluating Groq first and Cloudflare Workers AI second, with sourced account, quota and data-handling limitations. That research is a candidate assessment, not an activated provider or a measured literary benchmark; the qualification and consent gates above still apply.
+Use `max_completion_tokens=1024`, `reasoning_effort=low`, `include_reasoning=false`, `temperature=0.4` and non-streaming responses. Groq's [reasoning guide](https://console.groq.com/docs/reasoning), rechecked during V3 review, confirms that GPT-OSS does not support `reasoning_format`; do not send that parameter. A 3-second connection timeout, 30-second total bound, 128,000-byte response limit, single admitted inference and minimum request spacing bound resource use. Other requests fail promptly with a retryable `429`, not an unbounded queue. Honor provider cooldown metadata; do not automatically retry.
+
+Only one complete assistant content response for the selected model with a normal stop is accepted. Empty, malformed, reasoning-only, tool-call and incomplete outputs fail as unavailable. Valid reader/assistant messages are committed together after inference succeeds, with idempotency references in the same transaction. Provider failures leave no partially successful turn or fabricated assistant text. No model response is automatically approved as persistent memory; V3 always returns `proposalIds=[]`.
+
+### Data handling and evidence
+
+Groq's [data controls](https://console.groq.com/docs/your-data) describe ZDR for inference content while distinguishing operational metadata and limited exceptions. Its [model catalog](https://console.groq.com/docs/models), [OpenAI compatibility guide](https://console.groq.com/docs/openai) and [quota documentation](https://console.groq.com/docs/rate-limits) are the primary technical references. The owner reports enabling the organization-wide ZDR control; the application must still minimize data and cannot promise that no processing or retention of any kind occurs.
+
+Startup diagnostics may contain only key-present and qualification booleans. Successful request diagnostics may contain model ID, elapsed milliseconds and validated numeric quota limits; errors may contain only status/category and bounded retry delay. Never log key values/prefixes/hashes/lengths, authorization headers, user identity, questions, answers or raw provider error bodies. Live tests use non-sensitive prompts, and mock tests must never be reported as real inference.
+
+The [free API comparison](free-ai-api-options.md) remains a research snapshot of alternatives, not an automatic fallback policy. Stored personalization, memory, recommendations and verified seller offers remain outside V3.
 
 ## Verified bookstore search — source unselected
 
@@ -54,7 +60,7 @@ The [free AI API comparison](free-ai-api-options.md) recommends evaluating Groq 
 
 ## Feature flag / health policy
 
-Feature flags `AI_ENABLED` and `VERIFIED_OFFERS_ENABLED` are backend-only, off by default until provider gates. `/health` reports only service liveness; do not expose third-party API keys or provider configuration publicly. Frontend translates providerStatus into a clear state; don't claim to have prices or recommendations when adapters are disabled.
+The Groq key and `KTOB_GROQ_QUALIFIED` are backend-only; missing qualification fails closed. The historical `AI_ENABLED` suggestion is superseded for V3. Verified seller search stays unconfigured. `/health` reports only service liveness, without keys or provider configuration. The UI distinguishes consent-required, rate-limited and unavailable states and never displays fake model output.
 
 ## Provider qualifications / demo
 

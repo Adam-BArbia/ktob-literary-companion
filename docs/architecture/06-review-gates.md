@@ -1,36 +1,42 @@
-# KTOB — Engineering handoff gates (2026-11-20)
+# KTOB — Engineering readiness and release gates
 
-## Scope of this readiness decision
+## Current scoped authorization — 24 November 2026
 
-On 2026-11-20 the reader requested **all documents needed to begin implementation**. Previously they approved R1 product defaults B01–B12 and B14. The [implementation handoff](../implementation/README.md) is now the actionable baseline for initial engineering work, not a production release certificate.
+**V3 execution is authorized.** The owner explicitly approved the star repair, V2 hardening, real Groq literary chat, consent/spoiler controls, safe tests, reviewed additive migrations, CI-verified PR merges, and deployment to the existing KTOB services. Routine work in this scope does not need repeated confirmation. Mandatory tool review and production migration safety checks still apply; paid services, secret disclosure and destructive data changes are not authorized.
 
-**Gate A documentation:** 16 named UML files, 35-path/57-operation OpenAPI v0.3, conceptual persistence and cross-document consistency tests completed.
+The baseline reading-journal release is deployed. Its evidence is in [V2](../implementation/overnight-release-demo.md); new source, tests, migration, authenticated acceptance and live-provider outcomes are tracked in [V3](../implementation/v3-release-demo.md). Documentation CI alone is not a release certificate.
 
-**Gate B core architecture:** implementation-ready **for M0–M3 / first-party features**, subject to actual test and security verification during coding. The accepted protocol direction is REST/JSON based on the user-shared “SOAP ou REST” assignment; full faculty rubric/deadline not independently reviewed. This is **not** sign-off that provider-dependent full Complete Core Experience is working.
+## Independent feature gates
 
-**Gate C implementation execution:** **ready for local Sprint 0; no application code has yet been created.** Building Java/Angular scaffold, local DB migrations, Open Library adapter, authenticated library, reading, journal, privacy, copies history and essentials export may proceed when coding begins. This documentation request itself did **not** run migrations or deploy anything.
+**B13 and B15 remain CLOSED:**
 
-**Independent feature gates remain CLOSED:**
+- **B13** full account deletion: no DELETE /me route or complete-erasure claim until recent reauthentication, retention, backup and provider policies are approved.
+- **B15** verified live seller search: no invented merchant/price data or functioning-provider claim without a validated source. Historical USER_SUPPLIED offers remain a separate planned feature.
+- **B16** Groq qualification: the owner selected GPT-OSS120B, created an account/key, confirmed model visibility and reported Global ZDR enabled. Before production dispatch, confirm appropriate account/model access, free quota, data controls and application consent/privacy checks. The adapter requires both server-only `GROQ_API_KEY` and operator-controlled `KTOB_GROQ_QUALIFIED=true`; qualification defaults false. The owner is not required to add `AI_ENABLED`. Record actual non-sensitive inference and deployment evidence before calling the integration operational.
 
-- **B13** full account deletion: no DELETE /me route, no UI claim of complete erasure until recent reauth/retention/backup/provider policies are approved.
-- **B15** verified live seller search: return explicit unavailable state, allow labelled USER_SUPPLIED historical saved offers; do not fabricate merchant/price.
-- **B16** AI provider: implement port plus disabled/fail-closed behavior, no live external AI calls until vendor/model access, data retention, privacy and quotas approved.
+A generic AI prompt still needs current processing consent. V3 sends no stored personalization and preserves per-request spoiler acknowledgement. Recommendations, memories and complete reader deletion are outside the scoped V3 release.
 
-## Evidence checklist
+## Historical handoff and current evidence
 
-- [x] Reader approved R1 product defaults B01–B12/B14.
-- [x] Java REST + Angular + Open Library meets the previously user-reported protocol and external-service direction.
-- [x] 16 diagrams, API v0.3, conceptual data model, user privacy and spoofing/IDOR safeguards documented.
-- [x] Implementation handoff covering repository structure, migration blueprint, frontend routes, integration ports, security, tests, deployment, backlog and all 57 API operations.
-- [ ] Actual application scaffold and build CI (Sprint 0).
-- [ ] Nonproduction PostgreSQL migrations reviewed and tested (Sprint 1).
-- [ ] Independent Java↔Open Library call + Angular→Java path demonstrated (Sprint 1).
-- [ ] User-facing and security acceptance tests, provider failure cases, cold-start/deployment verification (later).
-- [ ] Complete official academic rubric, any additional deliverables and final validation date.
-- [ ] B13/B15/B16 external decisions separately approved for respective functionality.
+On 2026-11-20 the reader requested the documents needed to begin implementation, after approving R1 defaults B01–B12 and B14. That decision made the first-party core **ready for local Sprint 0**; it did not itself apply a migration or deploy code.
+
+- **Gate A documentation:** 16 named UML files, 35-path/57-operation OpenAPI v0.3, conceptual persistence and consistency checks formed the baseline.
+- **Gate B core architecture:** M0–M3 first-party features were implementation-ready, with tests and deployment evidence required during coding. REST/JSON follows the user-shared “SOAP ou REST” assignment; the full faculty rubric remains unverified.
+- **Gate C execution:** the subsequent V2 and V3 owner authorizations permit the scoped engineering and releases. Historical proposal labels do not revoke those instructions or establish untested feature completion.
+
+## Release evidence checklist
+
+- [x] Reader-approved R1 defaults and explicit scoped V3 authorization recorded.
+- [x] Actual Java/Angular applications and CI exist; V2 production migration and deployments are recorded.
+- [x] V3 preserves the existing 57-operation inventory and uses six existing privacy/conversation operations.
+- [x] Final V3 backend/frontend tests and independent review recorded (66 Java and 111 Angular tests; production/live acceptance remains separate).
+- [ ] V3 disposable migration/grant tests, production preflight and postchecks recorded.
+- [ ] Star fix, authenticated persistence and two-reader acceptance recorded with precise limitations.
+- [ ] Real Groq model/latency/quota and English/French/Arabic checks recorded.
+- [ ] Final CI-verified merge and existing-service deployment IDs recorded.
+
+Update these checkboxes only from observed results. A provider mock, successful build, owner account-control statement or liveness response alone does not prove live inference or authenticated production correctness.
 
 ## Change control
 
-If implementation discovers a contradictory invariant, update OpenAPI, affected UML, architecture and handoff and run the contract suite in one PR. Do not silently change rating/progress/spoiler policy or reinterpret a soft archive as deletion. A green documentation CI does **not** prove application tests or security in production.
-
-The prior detailed [Gate B product approval register](08-gate-b-decision-review.md) remains historical evidence. This handoff allows work to **start**; it does not declare the project **finished**.
+If implementation finds a contradictory invariant, update OpenAPI, affected UML, architecture and handoff together, then run contract checks. Preserve rating/progress/spoiler semantics and non-destructive archive. The [historical Gate B decision review](08-gate-b-decision-review.md) remains the product-decision record; current scoped authority and current deployment evidence are separated here.

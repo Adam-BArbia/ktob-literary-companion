@@ -8,6 +8,10 @@ All private resources must be fetched and updated through reader-scoped queries;
 
 Proposed `app` PostgreSQL schema is not exposed to Supabase Data API. Use dedicated least-privilege DB credentials; recognize that service/admin roles can bypass RLS. Every exposed schema requires appropriate RLS policies; defense in depth does not replace Java checks.
 
+## V3 scope
+
+The six privacy/conversation operations implement the rules below. V3 sends only the question, bounded permitted same-conversation history, and minimal selected-book metadata to Groq. Stored library history, journals, profiles, preferences and memories are never selected for provider context, even if personalization flags are true. The broader scope/boundary/memory design below remains planned unless registered as implemented. Conversations are saved privately in KTOB; provider ZDR does not erase KTOB records. Current provider and acceptance evidence is in the [V3 release record](../implementation/v3-release-demo.md).
+
 ## Separate consent controls (both default OFF)
 
 | Control | Meaning | Enforcement |

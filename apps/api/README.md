@@ -1,6 +1,6 @@
-# KTOB Java API — Sprint 0 / KTOB-001
+# KTOB Java API — private reading journal and literary companion
 
-**Status:** Spring Boot health endpoint plus shared RFC 9457 errors, response envelopes, bounded pagination and UUID value parsing are implemented. No database, authentication, live AI or seller provider is connected. This backend is intentionally small and can run without secrets or a Supabase project.
+**Implemented:** authenticated reader/catalog/library, reading experiences, private journals, privacy settings and persisted literary conversations. The [operation registry](../../docs/implementation/implemented-operations.json) distinguishes implemented routes from the complete R1 design. Deployment and actual provider inference evidence are recorded separately in the [release guide](../../docs/implementation/overnight-release-demo.md). Public health can still run without a database or secrets.
 
 ## Toolchain
 
@@ -55,9 +55,9 @@ curl.exe -i http://localhost:8080/api/v1/health
 
 Browser: http://localhost:8080/api/v1/health . Stop the server with `Ctrl+C`.
 
-The path and exact response shape are defined by `docs/architecture/openapi.json` (`GET /health` under the `/api/v1` server prefix). Other API operations are not yet available. No Supabase connections, database migrations, external AI keys or live seller source exist in this task.
+The path and exact response shape are defined by `docs/architecture/openapi.json` (`GET /health` under the `/api/v1` server prefix). Health reports liveness only; it does not report private provider configuration or prove database/auth/provider readiness.
 
-## Tests and next steps
+## Tests
 
 - `KtobApplicationTests.contextLoads` — Spring context bootstraps.
 - `HealthControllerTest.livenessMatchesThePublishedOpenApiContract` — verifies HTTP 200, JSON response and expected status.
@@ -65,9 +65,24 @@ The path and exact response shape are defined by `docs/architecture/openapi.json
 - `ApiPrimitivesTest` — pagination bounds, UUIDs and response value objects.
 - `ApiExceptionHandlerTest` — test-only HTTP routes verify RFC 9457 error shape, status, safe details and envelopes.
 
-GitHub Actions workflow `.github/workflows/api-ci.yml` runs `./mvnw -B -ntp verify` on Java 21 for changes to `apps/api`. The full document-only pipeline remains separate.
+GitHub Actions runs `./mvnw -B -ntp verify` on Java 21. Database integration tests run only when `KTOB_TEST_POSTGRES=true` against an explicitly disposable PostgreSQL database. Its configuration supplies `KTOB_AUTO_MIGRATE=true` so Flyway replays V1–V3. Never use this test setup against production.
 
-**Next**: Begin Sprint 1 authentication and Open Library/catalog vertical slice. New controller implementations must be added to `docs/implementation/implemented-operations.json` in lockstep with `docs/architecture/openapi.json`; 56 operations are planned, not yet working. The integrated foundation CI builds both applications and checks only the disposable Postgres service readiness; it does not claim migrations or database integration tests.
+Advisor tests cover owner isolation, consent/revocation, separate personalization settings, scoped pagination, whole-turn spoiler filtering, canonical idempotency, atomic persistence failures, concurrency and migration privileges. The Groq adapter uses a local HTTP stub for controlled failures/timeouts in automated tests. A stub response is not evidence of live Groq inference.
+
+## Groq configuration and operating boundaries
+
+- Store `GROQ_API_KEY` privately on the Render backend. It must never appear in source, logs, frontend settings or a Vercel build.
+- `KTOB_GROQ_QUALIFIED` defaults to `false`. The deployment operator may set this non-secret qualification setting to `true` only after account/model, free-tier, global ZDR, code and consent checks. No separate `AI_ENABLED` variable is required.
+- Both a nonblank key and qualification are required. Startup logs expose only `keyConfigured` and `qualificationConfirmed` booleans; health stays liveness-only. A missing/unqualified provider fails closed with `503 AI_PROVIDER_UNAVAILABLE`.
+- The adapter uses only the fixed Groq chat-completions endpoint and `openai/gpt-oss-120b`, with no tools, provider-stored conversation, paid fallback or automatic retry. It bounds the entire response wait to 30 seconds, returned bytes to 128,000, and completion tokens (including reasoning) to 1,024. Reasoning effort is low and reasoning is excluded from the response.
+- One inference may run per JVM, with at least two seconds between provider dispatches. A provider `429` establishes a bounded cooldown using `Retry-After` (seconds or HTTP date, up to one day); the API exposes the retry delay. Reading and journal operations do not require Groq.
+- Privacy flags all default false. Current AI processing consent is checked immediately before dispatch. Revoking consent cannot undo a request already sent. The privacy row is not locked during inference.
+- V3 sends only the submitted question, minimal selected-book metadata and up to four whole permitted previous turns fitting a 6,000 UTF-8-byte total context budget. It never reads stored journal content, reading history, personal preferences or memories into AI context, even if personalization flags are enabled.
+- `NO_SPOILERS` is the default on every request. Full spoilers require matching explicit confirmation on that request; both sides of prior full-spoiler turns are excluded from later no-spoiler context. Spoiler avoidance remains best effort.
+- Conversations belong directly to a reader and optionally a visible canonical work. They remain independent of library archive; no library row lock is held during inference.
+- A successful turn atomically stores reader and assistant messages. Optional UUID `Idempotency-Key` is scoped to the reader and conversation. Canonical equivalent request/defaults replay the stored result; a changed body or policy conflicts. Replay still requires current processing consent. Failed provider calls create no committed turn or successful idempotency record.
+- Message list order is descending timestamp/UUID; reader and assistant timestamps are strictly ordered so clients may reverse pages for chronological presentation. Conversation creation is local storage and does not itself call Groq.
+- `KTOB_QA_WEB_ORIGIN` optionally appends one exact HTTPS `*.vercel.app` deployment origin to the unchanged `ALLOWED_WEB_ORIGINS`. It rejects wildcards, multiple origins, ports, user information, paths, queries and fragments. The operator must verify the deployment belongs to the existing KTOB Vercel project before setting it, and clear it after preview acceptance. Syntax validation alone does not establish ownership. Browser credentials remain disabled; private calls use verified bearer tokens.
 
 ## Render Docker deployment (Java 21)
 
@@ -83,8 +98,8 @@ On Render, use:
 - **Dockerfile Path:** leave at default `./Dockerfile` when Root Directory is `apps/api` (no manual override necessary).
 - **Port:** `8080` by default; the Spring app also honors Render's `PORT`
 
-Start with no production DB migration. Before enabling database-backed routes,
-apply the reviewed Flyway schema in a controlled KTOB-only migration step,
+Before deploying code that depends on a new schema,
+apply its reviewed additive SQL in a controlled KTOB-only migration step,
 configure production PostgreSQL/JWKS credentials on Render, and set
 `KTOB_DB_ENABLED=true` only after the migration has been verified.
 Never set `KTOB_AUTO_MIGRATE=true` on production. The public health route

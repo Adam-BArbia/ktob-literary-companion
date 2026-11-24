@@ -1,6 +1,6 @@
 {
   "contract": "docs/architecture/openapi.json",
-  "notes": "Only real controller methods with tests are registered. The reading-journal release adds nine operations verified against disposable PostgreSQL 17.12. DB-dependent operations require KTOB_DB_ENABLED=true and verified JWT. This registry describes source implementation, not production deployment; see overnight-release-demo.md.",
+  "notes": "Only real controller methods with tests are registered. V3 adds six existing privacy/conversation operations; the full R1 design remains 57 operations. DB-dependent routes require KTOB_DB_ENABLED=true and verified JWT. Groq dispatch additionally requires a server-only key, confirmed provider qualification and current reader consent. This registry describes source implementation, not production deployment; see v3-release-demo.md and the historical V2 record.",
   "implemented": [
     "liveness",
     "getMyProfile",
@@ -21,6 +21,12 @@
     "listMyJournalEntries",
     "createMyJournalEntry",
     "updateMyJournalEntry",
-    "deleteMyJournalEntry"
+    "deleteMyJournalEntry",
+    "getPrivacySettings",
+    "updatePrivacySettings",
+    "listMyConversations",
+    "createMyConversation",
+    "listMyMessages",
+    "sendMessage"
   ]
 }

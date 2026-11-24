@@ -4,6 +4,8 @@
 
 **Implementation status is separate:** [implemented-operations.json](implemented-operations.json) contains only implemented, tested routes. The reading-journal release uses the existing four Reading operations, four Journal operations and library PATCH; it introduces no new API operation. The integrated book page exposes reading history and journal together, and the diary consumes the same owner-scoped paginated APIs. [Release evidence](overnight-release-demo.md) records validation and deployment status.
 
+**V3 assignment:** privacy GET/PATCH and the four conversation/message operations form the six-operation V3 slice. No new operation IDs are added. Real implementation/test state is in the register and [V3 release evidence](v3-release-demo.md); recommendations and memory operations remain planned. General and book conversations share `/advisor` with query state, not a new backend endpoint.
+
 | operationId | Method & API path | Owner | Milestone | Frontend / evidence |
 |---|---|---|---|---|
 | `getMyProfile` | `GET /me` | Reader | M1 | /settings (profile GET/PATCH: /settings) |
@@ -67,7 +69,7 @@
 ## Read the coverage column correctly
 
 - `GET /catalog/works/{workId}/offers` at **M3** means implementing its documented **UNAVAILABLE** state and request validation; it does **not** mean a verified Tunisia-first live seller provider is configured. B15 remains BLOCKED.
-- All **Advisor M4** endpoints can implement a real local persistence/authorization lifecycle and a **deny-by-default** AI adapter; the external provider and live model processing remain B16 BLOCKED until qualification. No mock model is called “live AI”.
+- All **Advisor M4** endpoints can implement a real local persistence/authorization lifecycle and a **deny-by-default** AI adapter; Groq is selected for V3 but live model processing still requires account/application qualification and recorded real inference. No mock model is called “live AI”.
 - `GET /me/export` is five-array essentials JSON, not full portability; **DELETE /me** is deliberately absent because B13 remains BLOCKED.
 - Milestone assignments indicate earliest practical vertical slice. Every operation still requires its own successful/error/ownership test before being called implemented.
 

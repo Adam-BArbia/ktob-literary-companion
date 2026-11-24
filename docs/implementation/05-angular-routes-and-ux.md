@@ -4,6 +4,8 @@
 
 **Reading-journal release mapping:** `/books/:entryId` integrates book overview, reading history and the selected reading's journal on one responsive page. A `reading` query parameter selects a reading when linking from the diary. `/diary` aggregates actual owned readings with explicit missing dates and no sample data. The nested routes below remain the original R1 navigation plan, not additional implemented endpoints. Actual lazy routes live in `apps/web/src/app/app.routes.ts`.
 
+**V3 route mapping:** `/advisor` provides real general and book-specific conversations, with `conversationId` and `workId` query state. The book-detail action passes only canonical work context. Consent controls use real privacy GET/PATCH; permission changes never send a draft. The UI uses literal escaped message text, `dir=auto`, pagination, explicit full-spoiler acknowledgement that resets per send, and preserved drafts/idempotency keys on recoverable failures. Recommendations, memory pages and profile boundary controls below remain planned. The current companion excludes stored personalization; the UI does not offer a nonfunctional opt-in for it.
+
 | Route | Screen | Primary API operations / UI states |
 |---|---|---|
 | `/auth` | Sign in / register using Supabase Auth | Supabase Auth only; redirects if already signed in |

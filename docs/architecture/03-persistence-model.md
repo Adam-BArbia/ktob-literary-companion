@@ -8,6 +8,7 @@ The relation catalogue below describes the complete R1 design, including planned
 |---|---|
 | `V1__reader_catalog_library.sql` | `reader_profiles`, `privacy_settings`, `catalog_works`, `catalog_editions`, `library_entries` |
 | `V2__reading_experiences_and_journal.sql` | Additive `reading_experiences`, `journal_entries`, and a composite unique key on `library_entries(id,work_id)` |
+| `V3__private_conversations.sql` | Additive `conversations`, `conversation_messages`, `message_idempotency`; production application tracked in the V3 release record |
 
 V1 uses UUID `id` columns for works, editions and library entries. `reader_profiles.reader_id` is established from a verified Supabase JWT subject; the portable migration does **not** create a physical foreign key to `auth.users`. Author names are stored as `catalog_works.authors text[]`; the normalized `contributors`/`work_credits` design remains planned. Do not mistake those conceptual relations for deployed tables.
 
@@ -16,6 +17,16 @@ V2 reading rows contain `id`, `library_entry_id`, `work_id`, optional `edition_i
 V2 journals reference a reading by `experience_id`; ownership follows the reading's library entry. They store one of the five documented kinds, a nonblank body of at most 20,000 characters, `emotion_tags text[]`, a false-by-default personalization flag and immutable `created_at`. The API limits tags to 12 nonblank strings of at most 40 characters each. Journal deletion affects only that note; no cascading library/history deletion is introduced.
 
 V2 revokes new-table access from PUBLIC and, when present, Supabase `anon` and `authenticated`. The restricted `ktob_app` role receives SELECT/INSERT/UPDATE on experiences and SELECT/INSERT/UPDATE/DELETE on journals. The schema remains private and must not be exposed through the browser Data API. Production application still requires the migration preflight and deployment verification; automatic production migration remains disabled.
+
+### V3 physical conversation mapping
+
+`conversations` stores direct `reader_id`, kind, optional canonical `work_id`, local title (1–160 characters), and creation time. A check requires GENERAL with null work and BOOK_MAIN with nonnull work; the service checks global/private work visibility. Conversations are not library-entry descendants and remain usable if a library entry is archived. No reader history or journal is read for V3 AI context.
+
+`conversation_messages` stores one READER and one ASSISTANT row per internal `turn_id`, effective spoiler level, per-reader-turn confirmation and strictly ordered creation timestamps. Reader body is bounded at 12,000 characters; assistant body at 16,000. An assistant's confirmation field is null, while the reader's boolean must match whether this turn allows full spoilers. The Java transaction atomically inserts both rows only after successful inference. Context reads select complete same-conversation pairs and exclude full-spoiler pairs for a no-spoiler request.
+
+`message_idempotency` keys reader/conversation/request UUID and stores a canonical request fingerprint plus references to both messages. Composite references bind owner, conversation and message identities. There is no duplicate prompt/response body in this table. Records remain with the conversation for at least 24 hours; V3 does not provide chat deletion or a retention-purge workflow.
+
+V3 only creates new structures and does not update existing reader rows or consent defaults. PUBLIC, `anon` and `authenticated` receive no new-table access. `ktob_app` receives SELECT/INSERT plus column-scoped `UPDATE(title)` on conversations to support row locking; no DELETE privilege is added. The private-schema access model is retained, with Java ownership and current-consent checks. Actual deployment requires the [V3 preflight and postchecks](../implementation/v3-release-demo.md#additive-migration-and-rollback).
 
 ## Ownership and canonical identity
 
@@ -42,7 +53,8 @@ V2 revokes new-table access from PUBLIC and, when present, Supabase `anon` and `
 | `reading_experiences` | entry -> reader | status never WANT_TO_READ; preserve rerereads; no concurrent open |
 | `journal_entries` | experience -> entry -> reader | kind, body, tags, allow_for_personalization |
 | `conversations` | direct `reader_id` | kind GENERAL/BOOK_MAIN; optional work access check |
-| `conversation_messages` | conversation -> reader | role USER/ASSISTANT equivalent to READER/ASSISTANT UML |
+| `conversation_messages` | conversation -> reader | READER/ASSISTANT roles; complete atomically persisted pairs and per-turn spoiler policy |
+| `message_idempotency` (V3) | reader + owned conversation | canonical request hash and same-conversation message references, no prompt copies |
 | `memory_proposals` | source assistant message -> conversation -> reader | one reader, lifecycle; no direct approval without action |
 | `approved_memories` | proposal and direct reader | unique proposal ID, approved_at; revoked_at null unless terminal |
 | `recommendation_requests` | direct reader | mode, use_personal_context, consent audit |
