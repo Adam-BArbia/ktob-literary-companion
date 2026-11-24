@@ -24,7 +24,7 @@ import { KtobApiService, apiFailure } from '../core/api/ktob-api.service';
         <form (ngSubmit)="save()" novalidate>
           <label class="field-label" for="public-handle">Choose a public username</label>
           <div class="username-field">
-            <span aria-hidden="true">@</span>
+            <span aria-hidden="true">&#64;</span>
             <input id="public-handle" name="username" class="field-input"
               [ngModel]="username()" (ngModelChange)="username.set($event)"
               autocapitalize="none" autocomplete="off" spellcheck="false"
