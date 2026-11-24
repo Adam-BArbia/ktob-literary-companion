@@ -1,0 +1,12 @@
+:host { display:block; }
+.reader-sharing { max-width:860px; padding:30px; margin:30px auto 0; background:var(--color-paper); border:1px solid var(--color-line); border-radius:16px; }
+h2 { font:400 30px/1.2 var(--font-serif); margin:9px 0 16px; }
+.description { color:var(--color-muted); line-height:1.8; margin-bottom:23px; }
+.username-field { display:flex; align-items:center; gap:8px; max-width:430px; }
+.username-field > span { font:400 23px var(--font-serif); color:var(--color-accent); }
+.sharing-toggle { display:flex; gap:14px; align-items:flex-start; margin:25px 0; padding:18px; background:var(--color-sage); border-radius:10px; cursor:pointer; }
+.sharing-toggle input { width:19px; height:19px; accent-color:var(--color-primary); flex:none; }
+.sharing-toggle span { display:flex; flex-direction:column; gap:5px; }
+.sharing-toggle small { color:var(--color-muted); line-height:1.6; }
+.sharing-actions { display:flex; gap:20px; align-items:center; flex-wrap:wrap; }
+@media(max-width:600px) { .reader-sharing { padding:22px; } h2 { font-size:26px; } }
