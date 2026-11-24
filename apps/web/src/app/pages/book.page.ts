@@ -327,6 +327,30 @@ export class BookPage {
     );
   }
 
+  async toggleRatingVisibility(reading: ReadingExperience): Promise<void> {
+    await this.patchReading(reading.id, { ratingPublic: !reading.ratingPublic },
+      reading.ratingPublic ? 'This reading rating is private.' :
+        'This reading rating is shared when your profile is discoverable.');
+  }
+
+  async toggleNoteVisibility(note: JournalEntry): Promise<void> {
+    if (this.journalSaving() || this.busy() || this.archived()) return;
+    if (!note.isPublic && !window.confirm(
+      'Publish this specific note? Other signed-in readers may see its full text on your public profile once you enable discoverability. Private notes remain private.'
+    )) return;
+    this.journalSaving.set(true);
+    this.error.set('');
+    try {
+      const { data } = await this.api.updateJournal(note.id, { isPublic: !note.isPublic });
+      this.journalEntries.update(items => items.map(item => item.id === note.id ? data : item));
+      this.notice.set(data.isPublic ? 'This note is now published individually.' : 'This note is private again.');
+    } catch (error) {
+      this.setError(error);
+    } finally {
+      this.journalSaving.set(false);
+    }
+  }
+
   async saveRating(): Promise<void> {
     const reading = this.selected();
     if (reading)
