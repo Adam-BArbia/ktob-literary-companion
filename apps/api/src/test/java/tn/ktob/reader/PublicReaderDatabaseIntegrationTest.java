@@ -62,10 +62,10 @@ class PublicReaderDatabaseIntegrationTest {
     @Test void discoverabilityIsVoluntaryAndNeverExposesEmailOrHiddenProfiles() throws Exception {
         call(get("/api/v1/me/public-profile"),owner,null,200);
         assertFalse(call(get("/api/v1/me/public-profile"),owner,null,200).path("data").path("discoverable").asBoolean());
-        assertTrue(call(get("/api/v1/readers/search").param("q","read"),stranger,null,200).path("data").isEmpty());
+        assertTrue(call(get("/api/v1/readers/search").param("q",username()),stranger,null,200).path("data").isEmpty());
         call(get("/api/v1/readers/"+username()),stranger,null,404);
         discoverable();
-        var list=call(get("/api/v1/readers/search").param("q",username().substring(0,5)),stranger,null,200).path("data");
+        var list=call(get("/api/v1/readers/search").param("q",username()),stranger,null,200).path("data");
         assertEquals(username(),list.get(0).path("username").asText());
         String publicJson=call(get("/api/v1/readers/"+username()),stranger,null,200).toString();
         assertFalse(publicJson.contains(owner.toString()));
@@ -73,7 +73,7 @@ class PublicReaderDatabaseIntegrationTest {
         assertFalse(publicJson.contains("aiProcessingOptIn"));
         call(patch("/api/v1/me/public-profile"),owner,"{\"discoverable\":false}",200);
         call(get("/api/v1/readers/"+username()),stranger,null,404);
-        assertTrue(call(get("/api/v1/readers/search").param("q",username().substring(0,5)),stranger,null,200).path("data").isEmpty());
+        assertTrue(call(get("/api/v1/readers/search").param("q",username()),stranger,null,200).path("data").isEmpty());
         call(get("/api/v1/readers/search").param("q","re"),null,null,401);
         call(get("/api/v1/me/public-profile"),null,null,401);
     }
