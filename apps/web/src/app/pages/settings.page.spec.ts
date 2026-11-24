@@ -7,7 +7,12 @@ import { AuthService } from '../core/auth/auth.service';
 import { SettingsPage } from './settings.page';
 
 describe('Account and privacy settings', () => {
-  const api = { profile: vi.fn(), updateProfile: vi.fn() };
+  const api = {
+    profile: vi.fn(),
+    updateProfile: vi.fn(),
+    privacy: vi.fn(),
+    updatePrivacy: vi.fn(),
+  };
   let fixture: ComponentFixture<SettingsPage>;
 
   beforeEach(async () => {
@@ -15,6 +20,19 @@ describe('Account and privacy settings', () => {
     api.updateProfile.mockReset().mockImplementation(async (displayName: string) => ({
       data: { id: 'reader-1', displayName },
     }));
+    api.privacy
+      .mockReset()
+      .mockResolvedValue({
+        data: {
+          aiProcessingOptIn: false,
+          personalizationOptIn: false,
+          useReadingHistory: false,
+          useAllowedJournal: false,
+          useExplicitPreferences: false,
+          useApprovedMemories: false,
+        },
+      });
+    api.updatePrivacy.mockReset();
     await TestBed.configureTestingModule({
       imports: [SettingsPage],
       providers: [
@@ -33,13 +51,16 @@ describe('Account and privacy settings', () => {
     return fixture.componentInstance;
   }
 
-  it('loads the persisted profile without fabricating an editable email or privacy toggles', async () => {
+  it('loads the persisted profile and real unchecked AI permission without an editable email', async () => {
     await render();
     const element = fixture.nativeElement as HTMLElement;
     expect((element.querySelector('#display-name') as HTMLInputElement).value).toBe('Reader');
     expect(element.textContent).toContain('reader@example.test');
     expect(element.querySelector('input[type="email"]')).toBeNull();
-    expect(element.querySelector('input[type="checkbox"]')).toBeNull();
+    expect(
+      (element.querySelector('input[name="aiProcessingConsent"]') as HTMLInputElement).checked,
+    ).toBe(false);
+    expect(api.updatePrivacy).not.toHaveBeenCalled();
     expect((element.querySelector('button[type="submit"]') as HTMLButtonElement).disabled).toBe(
       true,
     );
@@ -104,7 +125,7 @@ describe('Account and privacy settings', () => {
     api.profile.mockRejectedValueOnce(new HttpErrorResponse({ status: 401 }));
     await render();
     const element = fixture.nativeElement as HTMLElement;
-    expect(element.querySelector('form')).toBeNull();
+    expect(element.querySelector('.profile-panel form')).toBeNull();
     expect(element.querySelector('[role="alert"]')?.textContent).toContain('session has expired');
     expect(element.querySelector('[role="alert"] a')?.getAttribute('href')).toBe(
       '/auth?returnUrl=%2Fsettings',

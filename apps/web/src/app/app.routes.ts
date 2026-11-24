@@ -58,15 +58,16 @@ export const routes: Routes = [
   },
   {
     path: 'advisor',
-    loadComponent: () => import('./pages/section.page').then((m) => m.SectionPage),
+    loadComponent: () => import('./pages/advisor.page').then((m) => m.AdvisorPage),
     canActivate: [authGuard],
-    data: {
-      title: 'A little more perspective.',
-      icon: 'sparkles',
-      description:
-        'A thoughtful space for literary conversations is on its way. The advisor is not available yet, and your books are not being sent to an AI service.',
-    },
-    title: 'Literary advisor · KTOB',
+    canDeactivate: [
+      (page: { hasUnsavedDraft(): boolean }) =>
+        !page.hasUnsavedDraft() ||
+        window.confirm(
+          'Leave this conversation and discard your unsent draft? A request already sent may still finish.',
+        ),
+    ],
+    title: 'Literary companion · KTOB',
   },
   {
     path: 'collections',

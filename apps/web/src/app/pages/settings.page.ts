@@ -14,10 +14,11 @@ import { RouterLink } from '@angular/router';
 import { KtobApiService, isAuthFailure } from '../core/api/ktob-api.service';
 import { AuthService } from '../core/auth/auth.service';
 import { IconComponent } from '../shared/icon.component';
+import { AiConsentComponent } from '../shared/ai-consent.component';
 
 @Component({
   selector: 'app-settings-page',
-  imports: [FormsModule, RouterLink, IconComponent],
+  imports: [FormsModule, RouterLink, IconComponent, AiConsentComponent],
   templateUrl: './settings.page.html',
   styleUrl: './settings.page.css',
 })

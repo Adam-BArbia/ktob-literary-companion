@@ -73,6 +73,10 @@ describe('AuthService configuration boundaries', () => {
     await ready;
   }
 
+  function authEvent(readerId: string | null, event = 'SIGNED_IN'): void {
+    sdk.onAuthStateChange.mock.calls[0][0](event, readerId ? { user: { id: readerId } } : null);
+  }
+
   it('leaves sign-in available when the stored session has been revoked', async () => {
     sdk.getSession.mockResolvedValue({
       data: { session: null },
@@ -205,7 +209,7 @@ describe('AuthService configuration boundaries', () => {
 
   it('reports a missing session with a typed error and clears stale signed-in UI', async () => {
     await configure();
-    service.user.set({ id: 'reader-id' } as User);
+    authEvent('reader-id');
     sdk.getSession.mockResolvedValue({ data: { session: null }, error: null });
     await expect(service.accessToken()).rejects.toBeInstanceOf(AuthRequiredError);
     expect(service.user()).toBeNull();
@@ -214,7 +218,7 @@ describe('AuthService configuration boundaries', () => {
 
   it('does not expose an expired token and requests a new sign-in', async () => {
     await configure();
-    service.user.set({ id: 'reader-id' } as User);
+    authEvent('reader-id');
     sdk.getSession.mockResolvedValue({
       data: {
         session: {
@@ -237,7 +241,7 @@ describe('AuthService configuration boundaries', () => {
 
   it('recognizes a revoked refresh session without leaking provider details', async () => {
     await configure();
-    service.user.set({ id: 'reader-id' } as User);
+    authEvent('reader-id');
     sdk.getSession.mockResolvedValue({
       data: { session: null },
       error: {
@@ -252,7 +256,7 @@ describe('AuthService configuration boundaries', () => {
   it('does not sign out a reader because of a temporary session-check failure', async () => {
     await configure();
     const reader = { id: 'reader-id' } as User;
-    service.user.set(reader);
+    authEvent(reader.id);
     sdk.getSession.mockResolvedValue({
       data: { session: null },
       error: {
@@ -271,5 +275,89 @@ describe('AuthService configuration boundaries', () => {
     }
     expect(service.user()).toEqual(reader);
     http.expectNone((request) => request.url.includes('/api/v1'));
+  });
+
+  it('invalidates changed readers synchronously while keeping same-reader token refreshes', async () => {
+    await configure();
+    const invalidated = vi.fn();
+    service.sessionInvalidated.subscribe(invalidated);
+    authEvent('reader-a');
+    authEvent('reader-a', 'TOKEN_REFRESHED');
+    expect(service.sessionRevision()).toBe(0);
+    expect(invalidated).not.toHaveBeenCalled();
+
+    authEvent('reader-b');
+    expect(service.user()?.id).toBe('reader-b');
+    expect(service.sessionRevision()).toBe(1);
+    expect(invalidated).toHaveBeenCalledOnce();
+    authEvent(null, 'SIGNED_OUT');
+    authEvent('reader-b');
+    expect(service.user()?.id).toBe('reader-b');
+    expect(service.sessionRevision()).toBe(2);
+    expect(invalidated).toHaveBeenCalledTimes(2);
+  });
+
+  it('rejects an old token check after sign-out and sign-in to the same reader', async () => {
+    await configure();
+    authEvent('reader-a');
+    let complete!: (value: object) => void;
+    sdk.getSession.mockImplementationOnce(() => new Promise((resolve) => (complete = resolve)));
+    const pending = service.accessToken();
+    await vi.waitFor(() => expect(complete).toBeDefined());
+    authEvent(null, 'SIGNED_OUT');
+    authEvent('reader-a');
+    complete({
+      data: { session: { user: { id: 'reader-a' }, access_token: 'old-session-token' } },
+      error: null,
+    });
+    await expect(pending).rejects.toBeInstanceOf(AuthRequiredError);
+    expect(service.user()?.id).toBe('reader-a');
+  });
+
+  it('rejects a delayed token from an account that changed during the session check', async () => {
+    await configure();
+    authEvent('reader-a');
+    let complete!: (value: object) => void;
+    sdk.getSession.mockImplementationOnce(() => new Promise((resolve) => (complete = resolve)));
+    const pending = service.accessToken();
+    await vi.waitFor(() => expect(complete).toBeDefined());
+    authEvent('reader-b');
+    complete({
+      data: { session: { user: { id: 'reader-b' }, access_token: 'new-reader-token' } },
+      error: null,
+    });
+    await expect(pending).rejects.toBeInstanceOf(AuthRequiredError);
+    expect(service.user()?.id).toBe('reader-b');
+  });
+
+  it('does not let a stale revoked-session error sign out a newer reader', async () => {
+    await configure();
+    authEvent('reader-a');
+    let complete!: (value: object) => void;
+    sdk.getSession.mockImplementationOnce(() => new Promise((resolve) => (complete = resolve)));
+    const pending = service.accessToken();
+    await vi.waitFor(() => expect(complete).toBeDefined());
+    authEvent('reader-b');
+    complete({
+      data: { session: null },
+      error: { code: 'refresh_token_not_found', message: 'Stale private error' },
+    });
+    await expect(pending).rejects.toBeInstanceOf(AuthRequiredError);
+    expect(service.user()?.id).toBe('reader-b');
+    expect(service.sessionRevision()).toBe(1);
+  });
+
+  it('invalidates a fetched different-reader session before its auth event arrives', async () => {
+    await configure();
+    authEvent('reader-a');
+    const invalidated = vi.fn();
+    service.sessionInvalidated.subscribe(invalidated);
+    sdk.getSession.mockResolvedValueOnce({
+      data: { session: { user: { id: 'reader-b' }, access_token: 'new-reader-token' } },
+      error: null,
+    });
+    await expect(service.accessToken()).rejects.toBeInstanceOf(AuthRequiredError);
+    expect(service.user()?.id).toBe('reader-b');
+    expect(invalidated).toHaveBeenCalledOnce();
   });
 });

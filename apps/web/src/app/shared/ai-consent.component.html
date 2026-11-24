@@ -1,0 +1,93 @@
+<section
+  class="consent-panel"
+  [attr.aria-labelledby]="consentId + '-title'"
+  [attr.aria-busy]="loading() || saving()"
+>
+  <div class="consent-heading">
+    <span class="consent-icon"><ktob-icon name="shield" [size]="21" /></span>
+    <div>
+      <h2 [id]="consentId + '-title'">Your choice, before the conversation.</h2>
+      <p>AI processing is optional. Your library and journal work without it.</p>
+    </div>
+  </div>
+  <p class="consent-copy">
+    When you choose Send, KTOB sends your question, a limited part of this conversation, and the
+    selected book’s title, author and language to Groq. Your conversations are saved privately in
+    KTOB.
+  </p>
+  <p class="consent-copy">
+    <strong
+      >Your saved journal, reading history and account details are not automatically added.</strong
+    >
+    Personalization is not used in this version, even if a previous personalization preference is
+    on.
+  </p>
+  @if (loading()) {
+    <p class="consent-state" role="status">Checking your saved permission…</p>
+  } @else if (saved(); as settings) {
+    <form (ngSubmit)="save()">
+      <label class="consent-choice" [for]="consentId + '-choice'">
+        <input
+          [id]="consentId + '-choice'"
+          name="aiProcessingConsent"
+          type="checkbox"
+          [(ngModel)]="choice"
+          [disabled]="saving()"
+          [attr.aria-describedby]="consentId + '-hint'"
+        />
+        <span>Allow KTOB to send my conversation requests to Groq.</span>
+      </label>
+      <p class="consent-hint" [id]="consentId + '-hint'">
+        Off by default. You can turn this off here at any time. Revocation stops future requests; it
+        cannot recall data already sent or erase saved conversations.
+      </p>
+      <div class="consent-actions">
+        <button
+          class="btn btn-secondary"
+          type="submit"
+          [disabled]="saving() || choice === settings.aiProcessingOptIn"
+        >
+          {{ saving() ? 'Saving…' : 'Save AI permission' }}
+        </button>
+        <span class="saved-permission"
+          >Saved: AI processing {{ settings.aiProcessingOptIn ? 'on' : 'off' }}</span
+        >
+      </div>
+    </form>
+    @if (hasPersonalization()) {
+      <div class="personalization-note">
+        <p>You have saved personalization preferences. They are unused in this release.</p>
+        <button
+          type="button"
+          class="text-action"
+          (click)="revokePersonalization()"
+          [disabled]="saving()"
+        >
+          Turn off saved personalization permissions
+        </button>
+      </div>
+    }
+  }
+  @if (error()) {
+    <div class="notice notice-error consent-notice" role="alert">
+      <p>{{ error() }}</p>
+      @if (needsSignIn()) {
+        <a routerLink="/auth" [queryParams]="{ returnUrl: returnUrl() }" class="text-link"
+          >Sign in again</a
+        >
+      } @else {
+        <button type="button" class="text-action" (click)="load()" [disabled]="saving()">
+          Reload permission
+        </button>
+      }
+    </div>
+  }
+  @if (notice()) {
+    <p class="notice notice-success consent-notice" role="status">{{ notice() }}</p>
+  }
+  <p class="consent-footnote">
+    Groq processes requests under its data policies. KTOB uses its global Zero Data Retention
+    setting for inference; limited provider operational or legal exceptions may apply.
+    <a routerLink="/privacy" class="text-link">Read about privacy</a>.
+  </p>
+</section>

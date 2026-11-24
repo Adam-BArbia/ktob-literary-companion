@@ -52,6 +52,16 @@
       />
     </div>
 
+    <div class="book-discussion-action">
+      <a
+        routerLink="/advisor"
+        [queryParams]="{ workId: bookEntry.workId }"
+        class="btn btn-secondary"
+        ><ktob-icon name="sparkles" [size]="17" /> Discuss this book</a
+      >
+      <p>Bring a question. Your saved journal is not added automatically.</p>
+    </div>
+
     @if (archived()) {
       <div class="archive-banner">
         <ktob-icon name="archive" />
@@ -157,8 +167,7 @@
         </div>
         @if (selected(); as reading) {
           <div class="journal-context">
-            <span>{{ statusLabel(reading.status) }}</span
-            ><span aria-hidden="true">·</span
+            <span>{{ statusLabel(reading.status) }}</span><span aria-hidden="true">·</span
             ><span>{{ formatDate(reading.finishedOn || reading.startedOn) }}</span
             ><ktob-icon name="lock" [size]="13" />
           </div>
@@ -473,9 +482,12 @@
         <section class="companion-note">
           <ktob-icon name="sparkles" [size]="20" />
           <h3>A little more perspective.</h3>
-          <p>The literary companion is currently unavailable. Your journal stays private.</p>
-          <a routerLink="/advisor" class="text-link"
-            >About the companion<ktob-icon name="arrow-up-right" [size]="14"
+          <p>
+            Explore a theme, question a narrator, or discuss a passage you provide. AI permission is
+            your choice.
+          </p>
+          <a routerLink="/advisor" [queryParams]="{ workId: bookEntry.workId }" class="text-link"
+            >Open this book’s conversation<ktob-icon name="arrow-up-right" [size]="14"
           /></a>
         </section>
         @if (!archived()) {
