@@ -85,7 +85,7 @@ jobs:
           assert status == 200 and json.loads(body).get('status') == 'ok', f'API health: HTTP {status}'
           print('PASS live Java API health')
 
-          for protected in ('/api/v1/me', '/api/v1/readers',
+          for protected in ('/api/v1/me', '/api/v1/readers/search?q=reader',
                             '/api/v1/catalog/works/00000000-0000-4000-8000-000000000001/community'):
               status, _, _ = fetch(api + protected)
               assert status == 401, f'Protected route without token {protected}: HTTP {status}'
