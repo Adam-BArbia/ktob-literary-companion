@@ -26,7 +26,7 @@
             <li>
               <a [routerLink]="['/readers',person.username]">
                 <span class="avatar" aria-hidden="true">{{ person.displayName.slice(0,1).toUpperCase() }}</span>
-                <span><strong>{{ person.displayName }}</strong><small>@{{ person.username }}</small></span>
+                <span><strong>{{ person.displayName }}</strong><small>&#64;{{ person.username }}</small></span>
                 <span class="view-reader">View public profile →</span>
               </a>
             </li>
@@ -45,7 +45,7 @@
     <section class="profile" aria-labelledby="public-profile-title">
       <p class="eyebrow">PUBLIC READING PROFILE</p>
       <h2 id="public-profile-title">{{ reader.displayName }}</h2>
-      <p class="handle">@{{ reader.username }} · Shared only with signed-in readers</p>
+      <p class="handle">&#64;{{ reader.username }} · Shared only with signed-in readers</p>
       <h3 class="section-title">Their book ratings</h3>
       @if (!reader.ratings.length) {
         <p class="empty-note">No public book ratings yet.</p>
