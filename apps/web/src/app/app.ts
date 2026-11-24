@@ -51,6 +51,9 @@ export class App implements OnInit {
   readonly authLayout = computed(() =>
     /^\/(auth|sign-up|sign-in)(\/|\?|$)/.test(this.currentUrl()),
   );
+  readonly discoverActive = computed(() =>
+    /^\/(catalog\/search|discover\/works)(\/|\?|$)/.test(this.currentUrl()),
+  );
   readonly accountInitial = computed(() =>
     (this.auth.user()?.email?.charAt(0) || 'R').toUpperCase(),
   );

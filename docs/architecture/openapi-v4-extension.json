@@ -190,8 +190,12 @@
           },
           "404": {
             "description": "No global Open Library work exists for this ID"
+          },
+          "400": {
+            "description": "Invalid work UUID"
           }
-        }
+        },
+        "description": "Returns one snapshot of sharing consent. Each reader contributes only their newest reading for this exact work; an unrated or private newest reading does not reveal an older rating. The average and count include all eligible readers; displayed lists are bounded."
       }
     }
   },
@@ -379,6 +383,7 @@
         "type": "object",
         "required": [
           "workId",
+          "averageRating",
           "ratingCount",
           "ratings",
           "notes"
@@ -392,23 +397,29 @@
             "type": [
               "number",
               "null"
-            ]
+            ],
+            "description": "Mean across all eligible readers, rounded to one decimal, or null when ratingCount is zero."
           },
           "ratingCount": {
             "type": "integer",
-            "minimum": 0
+            "minimum": 0,
+            "description": "Total eligible reader ratings, including ratings beyond the display limit."
           },
           "ratings": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/CommunityRating"
-            }
+            },
+            "maxItems": 200,
+            "description": "Up to 200 eligible readers, ordered by descending rating then username."
           },
           "notes": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/CommunityNote"
-            }
+            },
+            "maxItems": 30,
+            "description": "Up to the 30 newest individually published notes from discoverable readers."
           }
         }
       }

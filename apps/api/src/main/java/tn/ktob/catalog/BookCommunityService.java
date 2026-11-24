@@ -9,6 +9,9 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.support.TransactionTemplate;
 import tn.ktob.api.shared.ApiException;
 
 /**
@@ -19,8 +22,15 @@ import tn.ktob.api.shared.ApiException;
 @ConditionalOnProperty(name="ktob.persistence.enabled", havingValue="true")
 public final class BookCommunityService {
     private final JdbcTemplate db;
+    private final TransactionTemplate snapshot;
 
-    public BookCommunityService(JdbcTemplate db) { this.db = db; }
+    public BookCommunityService(JdbcTemplate db, PlatformTransactionManager manager) {
+        this.db = db;
+        snapshot = new TransactionTemplate(manager);
+        snapshot.setReadOnly(true);
+        snapshot.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+        snapshot.setTimeout(15);
+    }
 
     public record CommunityRating(String username, String displayName, BigDecimal rating) {}
     public record CommunityNote(String username, String displayName, String kind,
@@ -29,6 +39,13 @@ public final class BookCommunityService {
                                    List<CommunityRating> ratings, List<CommunityNote> notes) {}
 
     public CommunityPreview preview(UUID workId) {
+        // All projections use one database snapshot, so a concurrent publishing
+        // change cannot produce a count, average and list from different states.
+        // There is no cache: a completed revocation is visible on the next request.
+        return snapshot.execute(status -> readPreview(workId));
+    }
+
+    private CommunityPreview readPreview(UUID workId) {
         Boolean sourced = db.query("""
             SELECT origin='OPEN_LIBRARY' AND owner_reader_id IS NULL
             FROM app.catalog_works WHERE id=?
