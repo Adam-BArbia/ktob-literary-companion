@@ -1,6 +1,18 @@
 :host {
   display: block;
 }
+.book-discussion-action {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin: 20px 0;
+}
+.book-discussion-action p {
+  font-size: 12px;
+  line-height: 1.7;
+  color: #64736b;
+}
 .book-page {
   max-width: 1120px;
   margin: auto;

@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { DOCUMENT } from '@angular/common';
 import { DestroyRef, Injectable, inject, signal } from '@angular/core';
-import { firstValueFrom, timeout } from 'rxjs';
+import { Subject, firstValueFrom, timeout } from 'rxjs';
 import type { SupabaseClient, User } from '@supabase/supabase-js';
 import { AuthRequiredError } from './auth-required.error';
 
@@ -34,11 +34,27 @@ export class AuthService {
   private authSubscription?: { unsubscribe(): void };
   private pending?: Promise<void>;
   private runtime?: KtobRuntimeConfig;
-  readonly user = signal<User | null>(null);
+  private readonly currentUser = signal<User | null>(null);
+  private readonly revision = signal(0);
+  private readonly invalidated = new Subject<void>();
+  readonly user = this.currentUser.asReadonly();
+  readonly sessionRevision = this.revision.asReadonly();
+  readonly sessionInvalidated = this.invalidated.asObservable();
   readonly status = signal<AuthStatus>('loading');
 
   constructor() {
     this.destroyRef.onDestroy(() => void this.disposeClient());
+  }
+
+  private setUser(user: User | null): void {
+    const previousId = this.currentUser()?.id;
+    this.currentUser.set(user);
+    if (previousId && previousId !== user?.id) {
+      // A sign-out followed by the same account still starts a new private session.
+      // Token refreshes for the same reader do not discard their current work.
+      this.revision.update((value) => value + 1);
+      this.invalidated.next();
+    }
   }
 
   ensureReady(): Promise<void> {
@@ -85,7 +101,7 @@ export class AuthService {
       const { data: listener } = client.auth.onAuthStateChange((_event, session) => {
         if (this.destroyRef.destroyed || this.client !== client) return;
         receivedAuthEvent = true;
-        this.user.set(session?.user ?? null);
+        this.setUser(session?.user ?? null);
       });
       this.authSubscription = listener.subscription;
       const { data, error } = await client.auth.getSession();
@@ -93,11 +109,11 @@ export class AuthService {
       // An expired or revoked stored session should leave sign-in available.
       if (error && !isMissingSession(error)) throw error;
       // A newer cross-tab event must win over an older in-flight session read.
-      if (!receivedAuthEvent) this.user.set(error ? null : (data.session?.user ?? null));
+      if (!receivedAuthEvent) this.setUser(error ? null : (data.session?.user ?? null));
       this.status.set('ready');
     } catch {
       await this.disposeClient();
-      this.user.set(null);
+      this.setUser(null);
       this.status.set('error');
     }
   }
@@ -124,7 +140,7 @@ export class AuthService {
       password,
     });
     if (error) throw error;
-    this.user.set(data.user);
+    this.setUser(data.user);
   }
 
   async signUp(email: string, password: string): Promise<boolean> {
@@ -136,7 +152,7 @@ export class AuthService {
       options: { emailRedirectTo: this.confirmationRedirect() },
     });
     if (error) throw error;
-    if (data.session) this.user.set(data.session.user);
+    if (data.session) this.setUser(data.session.user);
     return data.session === null; // email verification may be required
   }
 
@@ -158,10 +174,15 @@ export class AuthService {
   async accessToken(): Promise<string> {
     await this.ensureReady();
     if (!this.client) throw new Error('KTOB authentication has not been configured.');
+    const readerId = this.user()?.id;
+    const revision = this.sessionRevision();
     const { data, error } = await this.client.auth.getSession();
+    // A stale read or error must not disclose a token or clear a newer session.
+    if (revision !== this.sessionRevision() || readerId !== this.user()?.id)
+      throw new AuthRequiredError();
     if (error) {
       if (isMissingSession(error)) {
-        this.user.set(null);
+        this.setUser(null);
         throw new AuthRequiredError();
       }
       throw new Error('We could not check your session. Check your connection and try again.');
@@ -171,7 +192,11 @@ export class AuthService {
       (data.session.expires_at !== undefined &&
         data.session.expires_at <= Math.floor(Date.now() / 1000))
     ) {
-      this.user.set(null);
+      this.setUser(null);
+      throw new AuthRequiredError();
+    }
+    if (!readerId || data.session.user.id !== readerId) {
+      this.setUser(data.session.user);
       throw new AuthRequiredError();
     }
     return data.session.access_token;
@@ -181,6 +206,6 @@ export class AuthService {
     if (!this.client) return;
     const { error } = await this.client.auth.signOut();
     if (error) throw error;
-    this.user.set(null);
+    this.setUser(null);
   }
 }

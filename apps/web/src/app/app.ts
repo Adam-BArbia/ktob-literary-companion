@@ -3,7 +3,9 @@ import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  InjectionToken,
   OnInit,
+  ViewChild,
   computed,
   inject,
   signal,
@@ -14,6 +16,17 @@ import { filter } from 'rxjs';
 import { HealthService } from './core/health/health.service';
 import { AuthService } from './core/auth/auth.service';
 import { IconComponent } from './shared/icon.component';
+
+export const REPLACE_SESSION_DOCUMENT = new InjectionToken<(path: '/auth' | '/library') => void>(
+  'Replace the document after a reader session changes',
+  {
+    providedIn: 'root',
+    factory: () => {
+      const document = inject(DOCUMENT);
+      return (path) => document.location.replace(path);
+    },
+  },
+);
 
 @Component({
   selector: 'app-root',
@@ -28,6 +41,9 @@ export class App implements OnInit {
   private readonly router = inject(Router);
   private readonly document = inject(DOCUMENT);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly replaceSessionDocument = inject(REPLACE_SESSION_DOCUMENT);
+  @ViewChild(RouterOutlet) private outlet?: RouterOutlet;
+  readonly sessionResetting = signal(false);
   readonly menuOpen = signal(false);
   readonly signOutBusy = signal(false);
   readonly signOutError = signal('');
@@ -40,6 +56,16 @@ export class App implements OnInit {
   );
 
   constructor() {
+    this.auth.sessionInvalidated.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      if (this.sessionResetting()) return;
+      this.sessionResetting.set(true);
+      this.closeMenu();
+      this.signOutError.set('');
+      // Destroy private view state before navigation, including a pending draft.
+      // A document replacement clears every page cache and bypasses SPA draft guards.
+      this.outlet?.deactivate();
+      this.replaceSessionDocument(this.auth.user() ? '/library' : '/auth');
+    });
     this.router.events
       .pipe(
         filter((event): event is NavigationEnd => event instanceof NavigationEnd),
@@ -80,7 +106,6 @@ export class App implements OnInit {
     try {
       await this.auth.signOut();
       this.closeMenu();
-      await this.router.navigateByUrl('/auth');
     } catch {
       this.signOutError.set('We could not sign you out. Please try again.');
     } finally {

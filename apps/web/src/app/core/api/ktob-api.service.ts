@@ -1,6 +1,6 @@
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { firstValueFrom, timeout } from 'rxjs';
+import { firstValueFrom, takeUntil, timeout } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
 import { AuthRequiredError } from '../auth/auth-required.error';
 
@@ -27,6 +27,47 @@ export interface LibraryEntry {
 export interface ReaderProfile {
   id: string;
   displayName: string;
+}
+export interface PrivacySettings {
+  aiProcessingOptIn: boolean;
+  personalizationOptIn: boolean;
+  useReadingHistory: boolean;
+  useAllowedJournal: boolean;
+  useExplicitPreferences: boolean;
+  useApprovedMemories: boolean;
+}
+export type SpoilerLevel = 'NO_SPOILERS' | 'FULL_BOOK_SPOILERS';
+export interface Conversation {
+  id: string;
+  kind: 'GENERAL' | 'BOOK_MAIN';
+  workId?: string | null;
+  title: string;
+  createdAt: string;
+}
+export interface ConversationCreate {
+  kind: Conversation['kind'];
+  workId?: string | null;
+  title?: string | null;
+}
+export interface ConversationMessage {
+  id: string;
+  conversationId: string;
+  role: 'READER' | 'ASSISTANT';
+  body: string;
+  createdAt: string;
+  spoilerLevel?: SpoilerLevel;
+  fullBookSpoilersConfirmed?: boolean;
+}
+export interface MessageWrite {
+  body: string;
+  spoilerLevel: SpoilerLevel;
+  fullBookSpoilersConfirmed: boolean;
+}
+export interface ConversationTurn {
+  userMessage: ConversationMessage;
+  assistantMessage: ConversationMessage;
+  proposalIds: string[];
+  spoilerLevel: SpoilerLevel;
 }
 export type ReadingStatus = 'CURRENTLY_READING' | 'PAUSED' | 'FINISHED' | 'DID_NOT_FINISH';
 export interface ReadingExperience {
@@ -100,14 +141,37 @@ export class KtobApiService {
     path: string,
     params?: HttpParams,
     body?: object,
+    idempotencyKey?: string,
   ): Promise<T> {
-    const token = await this.auth.accessToken();
-    const headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
-    return firstValueFrom(
-      this.http
-        .request<T>(method, this.auth.apiBaseUrl() + path, { headers, params, body })
-        .pipe(timeout(75000)),
-    );
+    const readerId = this.auth.user()?.id;
+    const revision = this.auth.sessionRevision();
+    const requireOriginalSession = (): void => {
+      if (
+        !readerId ||
+        this.auth.user()?.id !== readerId ||
+        this.auth.sessionRevision() !== revision
+      )
+        throw new AuthRequiredError();
+    };
+    requireOriginalSession();
+    try {
+      const token = await this.auth.accessToken();
+      requireOriginalSession();
+      let headers = new HttpHeaders({ Authorization: `Bearer ${token}` });
+      if (idempotencyKey) headers = headers.set('Idempotency-Key', idempotencyKey);
+      const result = await firstValueFrom(
+        this.http
+          .request<T>(method, this.auth.apiBaseUrl() + path, { headers, params, body })
+          .pipe(timeout(75000), takeUntil(this.auth.sessionInvalidated)),
+      );
+      requireOriginalSession();
+      return result;
+    } catch (error) {
+      // Invalidation unsubscribes HTTP immediately. Convert its empty completion
+      // into the same safe auth failure as a token or response identity mismatch.
+      requireOriginalSession();
+      throw error;
+    }
   }
 
   profile(): Promise<ApiData<ReaderProfile>> {
@@ -116,6 +180,44 @@ export class KtobApiService {
 
   updateProfile(displayName: string): Promise<ApiData<ReaderProfile>> {
     return this.request('PATCH', '/me', undefined, { displayName: displayName.trim() });
+  }
+
+  privacy(): Promise<ApiData<PrivacySettings>> {
+    return this.request('GET', '/me/privacy');
+  }
+
+  updatePrivacy(patch: Partial<PrivacySettings>): Promise<ApiData<PrivacySettings>> {
+    return this.request('PATCH', '/me/privacy', undefined, patch);
+  }
+
+  conversations(cursor?: string): Promise<ApiPage<Conversation>> {
+    return this.request('GET', '/conversations', this.pageParams(cursor));
+  }
+
+  createConversation(body: ConversationCreate): Promise<ApiData<Conversation>> {
+    return this.request('POST', '/conversations', undefined, body);
+  }
+
+  conversationMessages(id: string, cursor?: string): Promise<ApiPage<ConversationMessage>> {
+    return this.request(
+      'GET',
+      '/conversations/' + encodeURIComponent(id) + '/messages',
+      this.pageParams(cursor),
+    );
+  }
+
+  sendMessage(
+    id: string,
+    body: MessageWrite,
+    idempotencyKey: string,
+  ): Promise<ApiData<ConversationTurn>> {
+    return this.request(
+      'POST',
+      '/conversations/' + encodeURIComponent(id) + '/messages',
+      undefined,
+      body,
+      idempotencyKey,
+    );
   }
 
   workById(id: string): Promise<ApiData<BookWork>> {

@@ -28,6 +28,9 @@
           <a routerLink="/diary" routerLinkActive="active-link" ariaCurrentWhenActive="page"
             >Reading diary</a
           >
+          <a routerLink="/advisor" routerLinkActive="active-link" ariaCurrentWhenActive="page"
+            >Companion</a
+          >
         </nav>
       }
       <div class="header-actions">
@@ -99,6 +102,13 @@
             ><ktob-icon name="book-open" /> Reading diary</a
           >
           <a
+            routerLink="/advisor"
+            routerLinkActive="active-link"
+            ariaCurrentWhenActive="page"
+            (click)="closeMenu()"
+            ><ktob-icon name="sparkles" /> Literary companion</a
+          >
+          <a
             routerLink="/settings"
             routerLinkActive="active-link"
             ariaCurrentWhenActive="page"
@@ -119,7 +129,11 @@
     @if (signOutError()) {
       <p class="notice notice-error shell-error" role="alert">{{ signOutError() }}</p>
     }
-    <router-outlet />
+    @if (sessionResetting()) {
+      <p class="notice" role="status">Your session changed. Opening a fresh page…</p>
+    } @else {
+      <router-outlet />
+    }
   </main>
 
   <footer class="site-footer" [class.auth-footer]="authLayout()">

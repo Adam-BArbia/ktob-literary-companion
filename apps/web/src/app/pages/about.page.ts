@@ -25,16 +25,17 @@ import { IconComponent } from '../shared/icon.component';
       </p>
     </div>
     <div class="info-block">
-      <h2>More room to grow.</h2>
+      <h2>Keep what the story leaves behind.</h2>
       <p>
-        Personal collections, reading reflections, and a literary advisor are planned for future
-        chapters of KTOB. They are not available yet.
+        Give each reading its own rating, keep private reviews and reflections, and revisit your
+        reading diary. If you choose to enable AI processing, the literary companion offers another
+        perspective on a book or an idea. Your saved journal is not added automatically.
       </p>
       <div class="info-links">
         <a routerLink="/collections"
           >About collections <ktob-icon name="arrow-up-right" [size]="16" /></a
         ><a routerLink="/advisor"
-          >About the advisor <ktob-icon name="arrow-up-right" [size]="16"
+          >Explore the companion <ktob-icon name="arrow-up-right" [size]="16"
         /></a>
       </div>
     </div>

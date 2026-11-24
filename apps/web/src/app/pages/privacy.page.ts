@@ -32,10 +32,26 @@ import { IconComponent } from '../shared/icon.component';
       </p>
     </div>
     <div class="info-block">
-      <h2>No AI processing is enabled</h2>
+      <h2>AI only with your permission</h2>
       <p>
-        The literary advisor is not available yet. The app does not currently send your books or
-        personal reading data to an AI provider.
+        The literary companion uses Groq only after you explicitly allow AI processing. When you
+        send a question, KTOB shares that question, limited eligible conversation history, and the
+        selected book’s title, author and language. Your account details, saved journal and reading
+        history are not automatically added. Anything you choose to type or paste into a question is
+        part of that request. Personalization settings are separate and are not used in this
+        version.
+      </p>
+      <p>
+        Conversations are saved privately in your KTOB account. Groq’s global Zero Data Retention
+        setting is enabled for inference; operational metadata and limited legal or security
+        exceptions remain subject to its data policies. Turning off your permission stops future
+        requests. It cannot recall data already sent and does not erase saved conversations.
+      </p>
+      <p>
+        No spoilers is the default for every question, with best-effort protection rather than a
+        guarantee. Full-book spoilers require a fresh confirmation for that question. Earlier
+        full-spoiler turns are excluded from later no-spoiler requests. AI answers can contain
+        mistakes; check facts and quotations.
       </p>
     </div>
     <div class="info-block">

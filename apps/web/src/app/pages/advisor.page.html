@@ -1,0 +1,324 @@
+<section class="advisor-page" aria-labelledby="advisor-heading">
+  <header class="advisor-heading">
+    <div>
+      <p class="eyebrow">THE LITERARY COMPANION</p>
+      <h1 id="advisor-heading" class="page-heading">Think a little <em>further.</em></h1>
+      <p class="page-description">
+        A space to question, interpret, and discover what a book means to you.
+      </p>
+    </div>
+    <a routerLink="/library" class="back-library"
+      ><ktob-icon name="arrow-left" [size]="16" /> Your library</a
+    >
+  </header>
+
+  <details id="ai-permission" class="permission-details" [open]="!hasConsent()">
+    <summary>
+      <span><ktob-icon name="shield" [size]="17" /> AI permission &amp; privacy</span
+      ><span class="permission-label">{{
+        privacy()
+          ? hasConsent()
+            ? 'On · manage'
+            : 'Off · review before sending'
+          : 'Checking permission'
+      }}</span>
+    </summary>
+    <ktob-ai-consent #consentPanel [returnUrl]="returnUrl()" (changed)="privacy.set($event)" />
+  </details>
+
+  <div class="advisor-layout">
+    <aside class="history-panel" aria-labelledby="conversation-list-heading">
+      <button
+        type="button"
+        class="btn btn-primary new-conversation"
+        [disabled]="sending() || loading()"
+        (click)="newConversation()"
+      >
+        <ktob-icon name="plus" [size]="17" /> New conversation
+      </button>
+      <details class="history-details" open>
+        <summary id="conversation-list-heading">
+          Your conversations <span>{{ conversations().length }}</span>
+        </summary>
+        @if (historyError()) {
+          <div class="notice notice-error history-error" role="alert">
+            <p>{{ historyError() }}</p>
+            <button
+              type="button"
+              class="text-action"
+              [disabled]="historyLoading()"
+              (click)="loadConversations()"
+            >
+              Reload history
+            </button>
+          </div>
+        }
+        @if (historyLoading() && !conversations().length) {
+          <p class="history-state" role="status">Opening your conversations…</p>
+        }
+        <div class="conversation-list">
+          @for (item of conversations(); track item.id) {
+            <button
+              type="button"
+              class="conversation-link"
+              [class.selected]="conversation()?.id === item.id"
+              [attr.aria-current]="conversation()?.id === item.id ? 'true' : null"
+              [disabled]="sending() || loading()"
+              (click)="chooseConversation(item)"
+            >
+              <span class="conversation-kind"
+                ><ktob-icon
+                  [name]="item.kind === 'BOOK_MAIN' ? 'book-open' : 'sparkles'"
+                  [size]="14"
+                />
+                {{
+                  item.kind === 'BOOK_MAIN' ? 'Book conversation' : 'Literary conversation'
+                }}</span
+              >
+              <span class="conversation-title" dir="auto">{{ item.title }}</span><span
+                class="conversation-date"
+                >{{ formatDate(item.createdAt) }}</span
+              >
+            </button>
+          }
+        </div>
+        @if (!historyLoading() && !historyError() && !conversations().length) {
+          <p class="history-state">
+            Your conversations will appear here after you begin. Only you can open them.
+          </p>
+        }
+        @if (conversationCursor()) {
+          <button
+            type="button"
+            class="text-action load-history"
+            [disabled]="historyLoading() || loading() || sending()"
+            (click)="loadConversations(true)"
+          >
+            {{ historyLoading() ? 'Loading…' : 'Load earlier conversations' }}
+          </button>
+        }
+      </details>
+    </aside>
+
+    <section
+      class="conversation-panel"
+      aria-labelledby="current-conversation-heading"
+      [attr.aria-busy]="loading()"
+    >
+      <header class="conversation-header">
+        @if (work(); as book) {
+          <div class="book-context">
+            <div class="context-cover">
+              <ktob-book-cover
+                [title]="book.title"
+                [author]="book.authors.join(', ')"
+                [compact]="true"
+              />
+            </div>
+            <div>
+              <p class="eyebrow">DISCUSSING THIS BOOK</p>
+              <h2 id="current-conversation-heading" dir="auto">{{ book.title }}</h2>
+              <p class="context-author" dir="auto">
+                {{ book.authors.length ? book.authors.join(', ') : 'Author not recorded' }}
+              </p>
+            </div>
+          </div>
+          <p class="context-note">
+            The companion receives book metadata, not a full copy of the book. Share a passage when
+            you want a close reading.
+          </p>
+          @if (conversation()) {
+            <button
+              type="button"
+              class="text-action another-book-chat"
+              [disabled]="sending() || loading()"
+              (click)="newConversation(true)"
+            >
+              Start another conversation about this book
+            </button>
+          }
+        } @else {
+          <div class="general-context">
+            <span class="conversation-emblem"><ktob-icon name="sparkles" [size]="23" /></span>
+            <div>
+              <p class="eyebrow">A LITTLE MORE PERSPECTIVE</p>
+              <h2 id="current-conversation-heading" dir="auto">{{ title() }}</h2>
+            </div>
+          </div>
+        }
+      </header>
+
+      @if (loading()) {
+        <div class="conversation-loading" role="status">
+          <span class="loading-ring" aria-hidden="true"></span>
+          <p>Opening this conversation…</p>
+        </div>
+      } @else if (viewError()) {
+        <div class="notice notice-error view-error" role="alert">
+          <p>{{ viewError() }}</p>
+          @if (needsSignIn()) {
+            <a routerLink="/auth" [queryParams]="{ returnUrl: returnUrl() }" class="text-link"
+              >Sign in again</a
+            >
+          } @else {
+            <button type="button" class="text-action" (click)="reload()">Try again</button>
+          }
+        </div>
+      } @else {
+        <div
+          #transcript
+          class="transcript"
+          role="log"
+          aria-label="Conversation messages"
+          aria-live="polite"
+          aria-relevant="additions"
+        >
+          @if (messageCursor()) {
+            <div class="earlier-messages">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                [disabled]="earlierLoading() || sending()"
+                (click)="loadEarlier()"
+              >
+                {{ earlierLoading() ? 'Loading…' : 'Read earlier messages' }}
+              </button>
+            </div>
+          }
+          @if (earlierError()) {
+            <p class="notice notice-error" role="alert">{{ earlierError() }}</p>
+          }
+          @for (message of messages(); track message.id) {
+            <ktob-conversation-message [message]="message" />
+          }
+          @if (!messages().length) {
+            <div class="conversation-empty">
+              <h3>Every good reading<br />leaves a question.</h3>
+              <p>
+                {{
+                  work()
+                    ? 'Explore a theme, question a narrator, or bring a passage that stayed with you.'
+                    : 'Explore literary ideas and traditions, compare perspectives, or reflect on your reading.'
+                }}
+              </p>
+              <p class="empty-hint">Choose a question to make it your own.</p>
+              <div class="starter-prompts">
+                @for (prompt of starterPrompts(); track prompt) {
+                  <button type="button" [disabled]="sending()" (click)="useStarter(prompt)">
+                    {{ prompt }}<ktob-icon name="arrow-up-right" [size]="14" />
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        </div>
+        @if (sending()) {
+          <div class="thinking-state" role="status">
+            <span class="loading-ring" aria-hidden="true"></span>
+            <p>
+              The companion is considering your question…<small
+                >Waiting for a real response. Your words remain in the editor until it
+                arrives.</small
+              >
+            </p>
+          </div>
+        }
+        @if (notice()) {
+          <p class="conversation-notice" role="status">
+            <ktob-icon name="check" [size]="15" /> {{ notice() }}
+          </p>
+        }
+
+        <form class="composer-panel" (ngSubmit)="send()" aria-labelledby="composer-heading">
+          <div class="composer-label">
+            <label id="composer-heading" for="advisor-question" class="field-label"
+              >Your question</label
+            ><span>{{ draft.length.toLocaleString() }} / 12,000</span>
+          </div>
+          <textarea
+            #composer
+            id="advisor-question"
+            name="question"
+            class="field-input composer-input"
+            [(ngModel)]="draft"
+            [disabled]="sending()"
+            rows="4"
+            maxlength="12000"
+            dir="auto"
+            placeholder="What would you like to explore? You can write in English, français or العربية."
+            aria-describedby="composer-hint advisor-send-error"
+            [attr.aria-invalid]="!!sendError()"
+            (keydown)="onComposerKey($event)"
+          ></textarea>
+          <div class="spoiler-controls">
+            <label class="spoiler-choice"
+              ><input
+                type="checkbox"
+                name="fullSpoilers"
+                [ngModel]="fullSpoilers"
+                (ngModelChange)="changeSpoilerChoice($event)"
+                [disabled]="sending()"
+              /><span>Allow full-book spoilers for this question</span></label
+            >
+            @if (fullSpoilers) {
+              <label class="spoiler-confirmation"
+                ><input
+                  type="checkbox"
+                  name="spoilerConfirmed"
+                  [(ngModel)]="spoilerConfirmed"
+                  [disabled]="sending()"
+                /><span
+                  >I understand that this reply may reveal the ending and major plot events.</span
+                ></label
+              >
+            }
+          </div>
+          <p id="composer-hint" class="composer-hint">
+            <ktob-icon name="shield" [size]="13" />
+            {{
+              fullSpoilers
+                ? 'Full spoilers require your confirmation above, for this question only.'
+                : 'No spoilers by default. Avoidance is best effort, so tell the companion where you are in the book.'
+            }}
+          </p>
+          @if (sendError()) {
+            <div id="advisor-send-error" class="notice notice-error send-error" role="alert">
+              <p>{{ sendError() }}</p>
+              @if (needsSignIn()) {
+                <a routerLink="/auth" [queryParams]="{ returnUrl: returnUrl() }" class="text-link"
+                  >Sign in again</a
+                >
+              }
+            </div>
+          }
+          <div class="composer-actions">
+            <p>
+              {{
+                hasConsent()
+                  ? 'Ctrl / ⌘ + Enter to send. Enter adds a new line.'
+                  : 'Review your AI permission above before sending.'
+              }}
+            </p>
+            <button
+              type="submit"
+              class="btn btn-primary send-button"
+              [disabled]="sending() || !hasConsent() || !draft.trim() || retryAfterSeconds() > 0"
+            >
+              {{
+                sending()
+                  ? 'Waiting for a reply…'
+                  : retryAfterSeconds() > 0
+                    ? 'Retry in ' + retryLabel()
+                    : 'Send question'
+              }}<ktob-icon [name]="sending() ? 'clock' : 'arrow-up-right'" [size]="17" />
+            </button>
+          </div>
+          <p class="ai-disclosure">
+            AI can be mistaken. Check facts and quotations. Your saved journal is not automatically
+            added to these requests.
+          </p>
+        </form>
+      }
+    </section>
+  </div>
+</section>

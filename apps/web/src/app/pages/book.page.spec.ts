@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, ParamMap, convertToParamMap, provideRouter } from '@angular/router';
 import { Subject } from 'rxjs';
@@ -52,6 +52,7 @@ const note: JournalEntry = {
 
 describe('Private book reading and journal', () => {
   let page: BookPage;
+  let fixture: ComponentFixture<BookPage>;
   let params: Subject<ParamMap>;
   const api = {
     libraryEntry: vi.fn(),
@@ -89,7 +90,8 @@ describe('Private book reading and journal', () => {
         },
       ],
     });
-    page = TestBed.createComponent(BookPage).componentInstance;
+    fixture = TestBed.createComponent(BookPage);
+    page = fixture.componentInstance;
     page.entryId = 'entry';
     await page.load();
   });
@@ -108,6 +110,21 @@ describe('Private book reading and journal', () => {
     });
     expect(page.selectedId()).toBe('past');
     expect(page.readings().find((r) => r.id === 'reading')?.rating).toBe(4.5);
+  });
+
+  it('links a book discussion using only the work ID, independently of the private journal or archive', () => {
+    fixture.detectChanges();
+    const links = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('a[href^="/advisor"]'),
+    );
+    expect(links.length).toBeGreaterThan(0);
+    expect(links.every((link) => link.getAttribute('href') === '/advisor?workId=work')).toBe(true);
+    expect(links.some((link) => link.textContent?.includes('Discuss this book'))).toBe(true);
+    page.entry.set({ ...entry, archivedAt: '2026-11-24T00:00:00Z' });
+    fixture.detectChanges();
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector('a[href="/advisor?workId=work"]'),
+    ).not.toBeNull();
   });
 
   it('changes and clears a per-reading rating without modifying status or journal', async () => {
