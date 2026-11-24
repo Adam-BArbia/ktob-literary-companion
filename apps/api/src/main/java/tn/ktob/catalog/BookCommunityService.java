@@ -47,12 +47,12 @@ public final class BookCommunityService {
                 e.reader_id, r.rating, r.rating_public
               FROM app.reading_experiences r
               JOIN app.library_entries e ON e.id=r.library_entry_id
-              WHERE e.work_id=? AND e.archived_at IS NULL AND r.rating IS NOT NULL
+              WHERE e.work_id=? AND e.archived_at IS NULL
               ORDER BY e.reader_id, r.created_at DESC, r.id DESC
             )
             SELECT p.username, p.display_name, n.rating FROM newest n
             JOIN app.reader_profiles p ON p.reader_id=n.reader_id
-            WHERE n.rating_public AND p.discoverable AND p.username IS NOT NULL
+            WHERE n.rating_public AND n.rating IS NOT NULL AND p.discoverable AND p.username IS NOT NULL
             ORDER BY n.rating DESC, p.username
             LIMIT 200
             """, (rs,i) -> new CommunityRating(rs.getString("username"),
@@ -65,12 +65,12 @@ public final class BookCommunityService {
                 e.reader_id,r.rating,r.rating_public
               FROM app.reading_experiences r
               JOIN app.library_entries e ON e.id=r.library_entry_id
-              WHERE e.work_id=? AND e.archived_at IS NULL AND r.rating IS NOT NULL
+              WHERE e.work_id=? AND e.archived_at IS NULL
               ORDER BY e.reader_id,r.created_at DESC,r.id DESC
             )
             SELECT AVG(n.rating) FROM newest n
             JOIN app.reader_profiles p ON p.reader_id=n.reader_id
-            WHERE n.rating_public AND p.discoverable AND p.username IS NOT NULL
+            WHERE n.rating_public AND n.rating IS NOT NULL AND p.discoverable AND p.username IS NOT NULL
             """, BigDecimal.class, workId);
         Integer count = db.queryForObject("""
             WITH newest AS (
@@ -78,12 +78,12 @@ public final class BookCommunityService {
                 e.reader_id,r.rating,r.rating_public
               FROM app.reading_experiences r
               JOIN app.library_entries e ON e.id=r.library_entry_id
-              WHERE e.work_id=? AND e.archived_at IS NULL AND r.rating IS NOT NULL
+              WHERE e.work_id=? AND e.archived_at IS NULL
               ORDER BY e.reader_id,r.created_at DESC,r.id DESC
             )
             SELECT count(*) FROM newest n
             JOIN app.reader_profiles p ON p.reader_id=n.reader_id
-            WHERE n.rating_public AND p.discoverable AND p.username IS NOT NULL
+            WHERE n.rating_public AND n.rating IS NOT NULL AND p.discoverable AND p.username IS NOT NULL
             """, Integer.class, workId);
 
         List<CommunityNote> notes = db.query("""
