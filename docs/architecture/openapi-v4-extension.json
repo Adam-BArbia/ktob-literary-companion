@@ -1,0 +1,290 @@
+{
+  "description": "V4 additive opt-in reader discovery. Extends the fixed reviewed R1 57-operation baseline without modifying its original inventory.",
+  "extensionOf": "docs/architecture/openapi.json",
+  "paths": {
+    "/me/public-profile": {
+      "get": {
+        "operationId": "getOwnPublicProfile",
+        "summary": "Read own public username and discovery opt-in",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/OwnPublicProfile"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateOwnPublicProfile",
+        "summary": "Configure own handle and profile discoverability",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicProfilePatch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/OwnPublicProfile"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      }
+    },
+    "/readers/search": {
+      "get": {
+        "operationId": "searchPublicReaders",
+        "summary": "Search only opted-in reader profiles",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 40
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ReaderSearchHit"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      }
+    },
+    "/readers/{username}": {
+      "get": {
+        "operationId": "getPublicReader",
+        "summary": "View a discoverable reader's specifically shared ratings and notes",
+        "parameters": [
+          {
+            "name": "username",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data"
+                  ],
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/PublicReaderProfile"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "OwnPublicProfile": {
+        "type": "object",
+        "required": [
+          "username",
+          "discoverable"
+        ],
+        "properties": {
+          "username": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "discoverable": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PublicProfilePatch": {
+        "type": "object",
+        "minProperties": 1,
+        "additionalProperties": false,
+        "properties": {
+          "username": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "discoverable": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ReaderSearchHit": {
+        "type": "object",
+        "required": [
+          "username",
+          "displayName"
+        ],
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          }
+        }
+      },
+      "PublicRating": {
+        "type": "object",
+        "required": [
+          "title",
+          "authors",
+          "rating"
+        ],
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "authors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "rating": {
+            "type": "number"
+          },
+          "finishedOn": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          }
+        }
+      },
+      "PublicNote": {
+        "type": "object",
+        "required": [
+          "title",
+          "kind",
+          "body",
+          "createdAt"
+        ],
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PublicReaderProfile": {
+        "type": "object",
+        "required": [
+          "username",
+          "displayName",
+          "ratings",
+          "notes"
+        ],
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "ratings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublicRating"
+            }
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublicNote"
+            }
+          }
+        }
+      }
+    }
+  }
+}
