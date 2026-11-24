@@ -51,6 +51,18 @@ export const routes: Routes = [
     title: 'Discover your next read · KTOB',
   },
   {
+    path: 'readers',
+    loadComponent: () => import('./pages/reader-directory.page').then((m) => m.ReaderDirectoryPage),
+    canActivate: [authGuard],
+    title: 'Find readers · KTOB',
+  },
+  {
+    path: 'readers/:username',
+    loadComponent: () => import('./pages/reader-directory.page').then((m) => m.ReaderDirectoryPage),
+    canActivate: [authGuard],
+    title: 'Reader profile · KTOB',
+  },
+  {
     path: 'settings',
     loadComponent: () => import('./pages/settings.page').then((m) => m.SettingsPage),
     canActivate: [authGuard],
