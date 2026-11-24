@@ -1,8 +1,8 @@
 # KTOB — Architecture and service contracts v0.2
 
-**Status:** R1 product defaults approved, core architecture ready for local implementation through the [engineering handoff](../implementation/README.md). Independent B13/B15/B16 provider/deletion gates remain closed. This repository still has no application runtime, SQL migration applied, or deployment.
+**Status (24 November 2026):** the V2 reading-journal application is deployed. The owner authorized scoped V3 implementation and release: star repair plus consent-gated Groq conversations. [V3 release evidence](../implementation/v3-release-demo.md) separates source, tests, migration, live provider checks and deployment. B13 account deletion and B15 verified seller research remain closed; Groq qualification is independently checked before activation.
 
-This architecture package must be reviewed together with the [16 PlantUML diagrams](../uml/README.md). The [OpenAPI 3.1 design contract](openapi.json) describes the exact proposed HTTP operations. It does **not** describe a running API.
+This architecture package must be reviewed together with the [16 PlantUML diagrams](../uml/README.md). The [OpenAPI 3.1 design contract](openapi.json) describes the exact proposed HTTP operations. Only the [implemented-operation register](../implementation/implemented-operations.json) identifies real controller implementations; the release records establish which were deployed.
 
 ## Documents
 
@@ -22,7 +22,7 @@ This architecture package must be reviewed together with the [16 PlantUML diagra
 - KTOB (*Keep Thoughts On Books*) — private reader-focused literary companion.
 - Angular/TypeScript/Tailwind on Vercel; Java 21/Spring Boot on Render Free; Supabase Auth and PostgreSQL.
 - Initial Spring Boot topology: **one modular deployable**, not independent network microservices. REST/JSON `/api/v1` is **PROPOSED**; the earlier user-provided assignment says **"SOAP ou REST"**, so REST is permitted under the supplied wording. Additional/full formal rubric details remain unverified. See Gate B review.
-- Bibliographic data via Open Library (with manual fallback). AI provider/model is **PROPOSED**, not confirmed. Live verified seller-research source is **BLOCKED**; never invent offer data.
+- Bibliographic data via Open Library (with manual fallback). Groq with GPT-OSS 120B is selected for scoped V3 qualification. Live verified seller-research source is **BLOCKED**; never invent offer data.
 - R1: library, private/manual work entry, editions (possibly unknown metadata), reading and rereading, journal, reader collections, AI conversation and recommendations with explicit processing consent, approved memory, content boundaries, R1 essentials export, historical offers and explicit acquisitions. Approved product defaults: optional 1–5 half-star rating, optional integer 0–100% progress, minimal optional onboarding, NO_SPOILERS default with explicit per-request full-book spoilers.
 - R2: in-depth edition comparisons, multiple themed chats per book, fuller exports/imports, automatic offer rechecks, alerts and advanced lending analytics.
 
@@ -37,4 +37,4 @@ This architecture package must be reviewed together with the [16 PlantUML diagra
 7. A memory proposal remains pending until explicit acceptance. Revocation is terminal; editing never reactivates it.
 8. Saved offers are immutable historical observations and do not imply purchase; acquisition never changes reading state. Provider-unavailable results are empty with explicit metadata.
 
-**Core implementation can begin** under the scoped [handoff](../implementation/README.md); neither a green documentation build nor this handoff approves external AI calls, verified live seller claims, or full account deletion. See the [decision register](../implementation/11-risk-and-decision-register.md).
+**Implementation and release are authorized** for the scoped V3 work. A green documentation build alone does not establish live provider qualification, verified seller data, or full account deletion. See the [decision register](../implementation/11-risk-and-decision-register.md).

@@ -22,7 +22,7 @@ The current repository's GitHub workflow validates 16 PlantUML diagrams and the 
 | A14 | Spoilers | Default NO_SPOILERS; explicit full spoilers with true confirmed; missing/inconsistent 422; prior full-spoiler history not reused when back to NO_SPOILERS | M4 |
 | A15 | Firm boundaries | SURPRISE cannot bypass firm boundary; unknown warnings never certified safe | M4 |
 | A16 | Memory | Proposals PENDING, approve/edit once; dismissed/revoked never silently reactivated | M4 |
-| A17 | Provider unavailable | With AI_ENABLED=false, no calls, API 503; with seller source unset, truthful empty/unavailable metadata | M3–M4 |
+| A17 | Provider unavailable | With missing Groq key or KTOB_GROQ_QUALIFIED=false, no calls and API503; with seller source unset, truthful empty/unavailable metadata | M3–M4 |
 | A18 | Monetary | Offer maxPrice requires currency 400; no FX; paidPrice decimal string/currency pair validation on create and merged PATCH | M3 |
 | A19 | Export | Five owner-only arrays exactly, includes owned archived data, excludes B's data; label as partial JSON essentials | M3 |
 | A20 | Idempotency | Same reader/key/body retry returns prior response; different payload with same key 409 | M3–M4 |

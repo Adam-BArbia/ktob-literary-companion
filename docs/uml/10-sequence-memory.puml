@@ -1,5 +1,5 @@
 @startuml KTOB_10_sequence_memory
-title KTOB - AI Conversation Turn and Explicit Memory Approval
+title KTOB - V3 AI Conversation Turn and Future Memory Approval
 actor Reader
 participant "Angular" as UI
 participant "Spring API" as API
@@ -30,16 +30,16 @@ API --> UI : 403; no persisted turn / call
    Advisor --> API : provider unavailable
 API --> UI : 503; no committed turn
   else Provider reply
-   AI --> Advisor : reply + optional memory suggestions
-   Advisor -> DB : atomically persist reader+assistant messages and pending proposals
+   AI --> Advisor : complete final reply
+   Advisor -> DB : atomically persist reader+assistant and idempotency references
    DB --> Advisor : saved turn
-   Advisor --> API : ConversationTurn(userMessage, assistantMessage, proposalIds)
+   Advisor --> API : ConversationTurn(userMessage, assistantMessage, proposalIds=[] in V3)
 API --> UI : 201 ConversationTurn
   end
  end
 end
 end
-opt Reader later reviews pending proposal
+opt Future memory feature, not implemented in V3
  Reader -> UI : Accept/edit OR dismiss
  UI -> API : POST /memory-proposals/{id}/decision
  API -> Privacy : verify proposal and source message ownership
@@ -56,6 +56,11 @@ NO_SPOILERS default; FULL_BOOK_SPOILERS requires one-turn confirmation.
 For a NO_SPOILERS turn, older FULL_BOOK_SPOILERS history is filtered
 or redacted from AI context (no accidental reuse).
 Spoiler request does not change privacy consent or content boundaries.
+V3 uses only current question, minimal selected-book metadata,
+and up to four permitted complete turns within 6000 UTF-8 bytes.
+Oversized required context: 422 before dispatch, no silent truncation.
+Busy/quota: 429 with Retry-After, no automatic retry.
+Valid idempotency replay returns the same stored pair without a new call.
 Chats never silently create permanent approved memories.
 Revocation via DELETE /memories/{id} is terminal.
 end note

@@ -4,6 +4,12 @@
 
 Untrusted Angular browser → **verified Supabase Auth user JWT** → Spring Boot authentication filter/security context → owner-scoped application services → private non-exposed `app` schema → PostgreSQL. No direct business-table writes from the browser, no browser-held database credentials or AI keys. Open Library sees book-search metadata only. Selected AI provider (later) sees only explicitly authorized prompt/context.
 
+## V3 implementation scope
+
+V3 implements current reader privacy GET/PATCH and owned conversation/message operations. Personalization flags remain separate and default false, but the context builder deliberately has no journal, reading, profile, preference or memory inputs. It sends only the question, minimal selected-book metadata and bounded permitted history from the same conversation. Thus saved notes remain excluded even if a reader previously enabled broader flags.
+
+Privacy PATCH serializes changes to avoid lost revocations; inference does not hold the privacy row or a library entry locked. The service checks current processing consent immediately before external dispatch. A prior authorized request may complete after revocation because already transmitted processing cannot be undone. Chat content is stored privately in KTOB; provider ZDR does not erase those records. The owner-authorized V3 provider configuration and operational evidence are in the [release record](v3-release-demo.md).
+
 ## Auth implementation acceptance
 
 1. Choose the actual project's Supabase signing mode before configuration. For asymmetric signing, verify access tokens against that project's JWKS (key rotation, `kid`, accepted algorithm). For legacy symmetric signing, use a reviewed server-only verification approach; never accept unsigned/HS tokens on an assumed JWKS path.

@@ -25,7 +25,10 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<ProblemDetail> handleApiError(ApiException ex) {
-        return problem(ex.status(), ex.code(), ex.getMessage());
+        var response=problem(ex.status(), ex.code(), ex.getMessage());
+        if(ex.retryAfterSeconds()==null) return response;
+        return ResponseEntity.status(response.getStatusCode()).headers(response.getHeaders())
+            .header("Retry-After",Integer.toString(ex.retryAfterSeconds())).body(response.getBody());
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)

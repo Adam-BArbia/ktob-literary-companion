@@ -38,6 +38,8 @@ class Conversation {
  +conversationId: UUID
  +kind: ConversationKind
  +workId: UUID [0..1]
+ +title: String
+ +createdAt: DateTime
 }
 enum ConversationKind {
  GENERAL
@@ -47,6 +49,7 @@ class Message {
  +messageId: UUID
  +role: MessageRole
  +body: Text
+ +createdAt: DateTime
  +spoilerLevel: SpoilerLevel [0..1]
  +fullBookSpoilersConfirmed: Boolean [0..1]
 }
@@ -127,11 +130,21 @@ Before dispatch, verify AI processing opt-in.
 Personalization requires separate authorization
 and journal-specific exclusion filtering.
 end note
+note right of Conversation
+GENERAL has no work; BOOK_MAIN requires visible canonical work.
+Direct reader ownership; independent of library archive.
+V3 title is nonblank, at most 160 characters.
+V3 stores atomic reader/assistant pairs and no memory proposals.
+Idempotency uses reader/conversation/key plus hash and message IDs.
+end note
 note right of Message
 Spoiler metadata is recorded on reader messages / turns.
 NO_SPOILERS by default for each AI call; explicit
 FULL_BOOK_SPOILERS confirmation is per message request.
 No permanent spoiler setting is inferred.
+V3 excludes stored journal/history/profile/memory context.
+At most four permitted complete prior turns, within 6000 UTF-8 bytes.
+Both sides of FULL_BOOK_SPOILERS turns are excluded on downgrade.
 end note
 note bottom of ApprovedMemory
 One per approved proposal; revoked is terminal.

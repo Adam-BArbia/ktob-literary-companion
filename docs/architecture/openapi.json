@@ -180,7 +180,8 @@
               }
             }
           }
-        }
+        },
+        "description": "Returns the current reader's six independent consent/scope flags. First access provisions false defaults; no AI provider call occurs."
       },
       "patch": {
         "tags": [
@@ -229,7 +230,8 @@
               }
             }
           }
-        }
+        },
+        "description": "Atomically changes only supplied boolean flags for the verified reader. All flags default false and remain independent. Revoking aiProcessingOptIn prevents future dispatch, but cannot undo already transmitted processing or erase saved conversations. V3 excludes stored personalization regardless of these flags."
       }
     },
     "/me/boundaries": {
@@ -2284,7 +2286,8 @@
               }
             }
           }
-        }
+        },
+        "description": "Creates a private conversation without calling the AI provider. GENERAL requires workId omitted/null; BOOK_MAIN requires a visible work. No AI consent is inferred from creating a conversation. Owner-only access applies to all subsequent messages."
       }
     },
     "/conversations/{conversationId}/messages": {
@@ -2399,10 +2402,10 @@
             }
           }
         ],
-        "description": "AI processing consent verified before external dispatch. Personalization requires separate authorization. On provider error no committed turn; idempotent retry with same key may replay saved result. Memory proposals remain PENDING until explicit approval. Spoilers: omitted spoilerLevel means NO_SPOILERS; FULL_BOOK_SPOILERS requires fullBookSpoilersConfirmed=true in the same request; reject otherwise with 422 SPOILER_CONFIRMATION_REQUIRED before any external AI call. Never infer permission from reading progress, chat history or user profile. Firm content boundaries still apply. The model cannot guarantee absence of all spoilers.",
+        "description": "Owner and request validation precede current AI-processing consent checks. Consent is rechecked immediately before every external dispatch. V3 context contains only the current question, minimal selected-book title/author/language and at most four complete permitted turns within 6000 UTF-8 bytes; no journal, reading history, profile, preferences or memories are read for context. On provider error no turn or idempotency result is committed. A UUID Idempotency-Key replays the same saved pair for the same canonical body/spoiler request; changed payload returns 409 IDEMPOTENCY_KEY_REUSED. Fingerprints and message references are retained with the conversation for at least 24 hours. Missing consent returns 403 AI_PROCESSING_CONSENT_REQUIRED, unavailable/unqualified provider returns 503, and busy/quota state returns 429. Spoilers default to NO_SPOILERS. FULL_BOOK_SPOILERS requires fullBookSpoilersConfirmed=true in that request; inconsistent pairs return 422 SPOILER_CONFIRMATION_REQUIRED before dispatch. Both sides of previous FULL_BOOK_SPOILERS turns are excluded from later NO_SPOILERS context. Spoiler avoidance remains best effort. V3 creates no memory proposals and returns proposalIds=[].",
         "responses": {
           "201": {
-            "description": "Atomically persisted user+assistant turn and optional pending proposal IDs",
+            "description": "Atomically persisted reader+assistant turn; V3 returns proposalIds=[] and creates no memory proposals.",
             "content": {
               "application/json": {
                 "schema": {
@@ -2431,7 +2434,7 @@
             }
           },
           "422": {
-            "description": "Full-book spoilers requested without explicit same-request confirmation (SPOILER_CONFIRMATION_REQUIRED); no provider call",
+            "description": "Invalid request/spoiler pair (SPOILER_CONFIRMATION_REQUIRED) or required context exceeds the bounded budget (AI_CONTEXT_TOO_LARGE); no provider call.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2452,6 +2455,26 @@
           },
           "default": {
             "description": "RFC 9457 error; includes 401/403/404/409/422/429/502/503 as applicable",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "AI request is busy or provider quota is exhausted. Retry manually after the bounded Retry-After delay; no automatic provider retries.",
+            "headers": {
+              "Retry-After": {
+                "description": "Suggested delay in seconds before retrying; also exposed to the allowed browser origin.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 86400
+                }
+              }
+            },
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -4526,7 +4549,9 @@
             "format": "uuid"
           },
           "title": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
           },
           "createdAt": {
             "type": "string",
@@ -4562,13 +4587,62 @@
             "type": [
               "string",
               "null"
-            ]
+            ],
+            "minLength": 1,
+            "maxLength": 160,
+            "pattern": "\\S",
+            "description": "Omit or send null for a local default title; otherwise provide a nonblank title of at most 160 characters."
           }
         },
         "required": [
           "kind"
         ],
-        "additionalProperties": false
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "kind": {
+                  "const": "BOOK_MAIN"
+                }
+              },
+              "required": [
+                "kind"
+              ]
+            },
+            "then": {
+              "required": [
+                "workId"
+              ],
+              "properties": {
+                "workId": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "kind": {
+                  "const": "GENERAL"
+                }
+              },
+              "required": [
+                "kind"
+              ]
+            },
+            "then": {
+              "properties": {
+                "workId": {
+                  "type": "null"
+                }
+              }
+            }
+          }
+        ],
+        "description": "GENERAL has no workId. BOOK_MAIN requires a canonical work visible to the authenticated reader. Conversations are directly reader-owned and independent of library archive; they do not read stored journal or reading context in V3. Multiple conversations may reference the same work."
       },
       "Message": {
         "type": "object",
@@ -4589,7 +4663,9 @@
             ]
           },
           "body": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16000
           },
           "createdAt": {
             "type": "string",
@@ -4597,7 +4673,7 @@
           },
           "spoilerLevel": {
             "$ref": "#/components/schemas/SpoilerLevel",
-            "description": "Effective spoiler policy on a reader message/turn; may be omitted for older assistant message records."
+            "description": "Effective policy for this turn. V3 records it on both reader and assistant messages; older contract consumers may omit it."
           },
           "fullBookSpoilersConfirmed": {
             "type": "boolean",
@@ -4619,7 +4695,8 @@
           "body": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 12000
+            "maxLength": 12000,
+            "pattern": "\\S"
           },
           "spoilerLevel": {
             "type": "string",
@@ -4686,7 +4763,7 @@
             }
           }
         ],
-        "description": " Default NO_SPOILERS if omitted. FULL_BOOK_SPOILERS is allowed only with an explicit true confirmation in this request; it does not override content boundaries or AI-processing consent."
+        "description": "Question must be nonblank and at most 12000 characters. V3 additionally bounds the complete provider context to 6000 UTF-8 bytes and returns 422 AI_CONTEXT_TOO_LARGE rather than silently truncating the question. No stored personalization field is accepted or transmitted. Default NO_SPOILERS if omitted. FULL_BOOK_SPOILERS requires explicit true confirmation in the same request; it does not override AI-processing consent."
       },
       "MemoryProposal": {
         "type": "object",

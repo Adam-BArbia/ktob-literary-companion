@@ -2,6 +2,8 @@ package tn.ktob.security;
 
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.URI;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -65,16 +67,34 @@ public class SecurityConfiguration {
 
     @Bean
     CorsConfigurationSource corsConfigurationSource(
-            @Value("${ALLOWED_WEB_ORIGINS:http://localhost:4200}") String origins) {
+            @Value("${ALLOWED_WEB_ORIGINS:http://localhost:4200}") String origins,
+            @Value("${KTOB_QA_WEB_ORIGIN:}") String qaOrigin) {
         CorsConfiguration conf = new CorsConfiguration();
-        List<String> trusted = Arrays.stream(origins.split(","))
-            .map(String::trim).filter(x -> !x.isBlank()).toList();
+        List<String> trusted = new ArrayList<>(Arrays.stream(origins.split(","))
+            .map(String::trim).filter(x -> !x.isBlank()).toList());
         if (trusted.isEmpty() || trusted.stream().anyMatch(x -> x.contains("*"))) {
             throw new IllegalStateException("Explicit CORS origins required");
         }
+        if(qaOrigin!=null && !qaOrigin.isBlank()) {
+            // Operator must verify this one deployment belongs to KTOB; syntax alone proves no ownership.
+            String candidate=qaOrigin.trim();
+            try {
+                URI parsed=URI.create(candidate);
+                String host=parsed.getHost();
+                if(!"https".equals(parsed.getScheme()) || host==null ||
+                    !host.matches("[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.vercel\\.app") ||
+                    parsed.getPort()!=-1 || parsed.getUserInfo()!=null || parsed.getRawQuery()!=null ||
+                    parsed.getRawFragment()!=null || !parsed.getRawPath().isEmpty() ||
+                    !candidate.equals("https://"+host))throw new IllegalArgumentException();
+            } catch(RuntimeException ex) {
+                throw new IllegalStateException("KTOB_QA_WEB_ORIGIN must be one exact HTTPS Vercel deployment origin");
+            }
+            if(!trusted.contains(candidate))trusted.add(candidate);
+        }
         conf.setAllowedOrigins(trusted);
         conf.setAllowedMethods(List.of("GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"));
-        conf.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
+        conf.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "Idempotency-Key"));
+        conf.setExposedHeaders(List.of("Retry-After"));
         conf.setMaxAge(3600L);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/api/v1/**", conf);

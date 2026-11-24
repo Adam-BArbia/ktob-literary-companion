@@ -1,5 +1,7 @@
 # KTOB — Gate B Decision Review (2026-11-20)
 
+**V3 status update (24 November 2026):** the owner explicitly authorized scoped execution and selected Groq with reported Global ZDR enabled. This file retains the historical product approval discussion; current authority and provider gates are in [release gates](06-review-gates.md), with actual evidence in [V3](../implementation/v3-release-demo.md). Historical “not authorized” statements do not override the later owner instruction.
+
 > **Status:** **R1 product defaults B01–B12 and B14 APPROVED by the reader on 2026-11-20.** Final architecture Gate B remains **OPEN** and Gate C remains **CLOSED**. This approval does not authorize implementation.
 > Prepared after the 16/16 UML and 57-operation OpenAPI consistency pass at commit `7f3a3bcc13226a968dd2e67115000389e5da0018`.
 > The professor's exact document was not uploaded with this decision review; academic facts below reproduce the **earlier user-provided assignment wording**, not an independently authenticated rubric.

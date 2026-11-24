@@ -1,5 +1,7 @@
 # Free AI API options for KTOB
 
+**V3 update:** the owner has since selected Groq, created an account/key and reported Global ZDR enabled. This comparison remains the V2 research snapshot; current qualification, secret-presence checks and real inference evidence belong to the [V3 release record](v3-release-demo.md). V3 uses a deployment-managed qualification setting plus a server-only key, without requiring the owner to add `AI_ENABLED`.
+
 **Research checked:** 23 November 2026 UTC / 24 November 2026 Africa/Tunis. **Status:** recommendation only; B16 remains open. No account signup, API-key configuration, inference request, latency measurement or provider activation was performed. Published limits can change, and account eligibility is distinct from a provider's public offer.
 
 **Recommendation:** evaluate **GroqCloud with GPT-OSS 120B first**, enabling Zero Data Retention (ZDR), then **Cloudflare Workers AI with Mistral Small 3.1**. Gemini Free is restricted to suitable nonpersonal use; OpenRouter Free is experimental. Cerebras currently fails the requirement for recurring free API access without a payment method.
@@ -62,4 +64,4 @@ This ranking is **product judgment from documentation, not a literary benchmark*
 
 Preserve [KTOB's consent rules](../architecture/01-architecture-decisions.md): AI processing opt-in is separate from personalization, and both default off. Personal context additionally requires the request's context flag, applicable scope permissions and each journal note's `allowForPersonalization`. No automatic journal transfer, whole-library upload or persistent memory inference follows from selecting a provider. Consent alone does not override unacceptable provider terms.
 
-Keep `AI_ENABLED=false` until account/model availability, retention settings, consent enforcement and bounded behavior are verified. Spoiler permission is per request; a new no-spoiler turn must exclude earlier full-spoiler history. Bound input/output, handle quota exhaustion truthfully, and keep reading/journal functions usable. These recurring free offers support a prototype; none promises indefinite free capacity or production availability.
+Keep provider dispatch unavailable until account/model availability, retention settings, consent enforcement and bounded behavior are verified. The current V3 controls are documented in the provider guide; the older `AI_ENABLED` suggestion is superseded. Spoiler permission is per request; a new no-spoiler turn must exclude earlier full-spoiler history. Bound input/output, handle quota exhaustion truthfully, and keep reading/journal functions usable. These recurring free offers support a prototype; none promises indefinite free capacity or production availability.

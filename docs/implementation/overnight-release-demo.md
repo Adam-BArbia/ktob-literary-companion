@@ -2,6 +2,8 @@
 
 Demo: **Tuesday, 24 November 2026**, Tunisia time.
 
+**Historical scope:** this is the V2 release record. Subsequent star repair, authenticated acceptance and Groq integration are recorded in [KTOB V3](v3-release-demo.md); V2 provider and acceptance limitations below describe the evidence at the time of that release.
+
 ## Release scope and evidence
 
 The prepared release expands the existing authenticated library into a private reading journal: separate reading experiences, half-star ratings, reviews/reflections/quotes/notes/emotions, favorites, book details and a diary. Each reread has its own rating and journal. AI remains a separate provider qualification gate; the main demonstration does not require it.

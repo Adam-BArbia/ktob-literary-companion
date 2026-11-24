@@ -4,7 +4,7 @@ left to right direction
 skinparam packageStyle rectangle
 actor Reader
 actor "Open Library [EXT]" as Catalog
-actor "AI provider [PROPOSED]" as AI
+actor "Groq [V3 qualification]" as AI
 actor "Seller source [BLOCKED]" as Seller
 rectangle "KTOB" {
  usecase "Sign in / register" as UAuth
@@ -66,6 +66,8 @@ AI processing consent gates every provider call, even generic chat.
 Personalization consent is separate and optional;
 per-entry journal exclusions always prevail.
 NO_SPOILERS by default, regardless of AI consent.
+V3 chat uses only question, minimal book metadata and permitted history.
+Stored personalization, recommendations and memories remain planned.
 end note
 note bottom of UAcquire
 Seller click / saving offer does not imply acquisition.

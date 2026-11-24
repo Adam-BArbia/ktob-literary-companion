@@ -59,6 +59,13 @@ jobs:
           test "$actual" = "ktob_test"
           echo "Ephemeral Postgres reachable; no application schema or migrations installed."
 
+      - name: Create roles for disposable migration privilege tests
+        run: |
+          docker exec "${{ job.services.postgres.id }}" psql -U ktob_test -d ktob_test -v ON_ERROR_STOP=1 \
+            -c 'CREATE ROLE ktob_app;' \
+            -c 'CREATE ROLE anon;' \
+            -c 'CREATE ROLE authenticated;'
+
       - name: Set up Java 21
         uses: actions/setup-java@v4
         with:

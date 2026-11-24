@@ -16,7 +16,7 @@ node "Spring Boot runtime [Render]" {
 database "Supabase Postgres [private app schema]" as DB
 component "Supabase Auth [EXT]" as Auth
 component "Open Library [EXT]" as OL
-component "AI provider [PROPOSED]" as AI
+component "Groq [V3 qualification]" as AI
 component "Seller source [BLOCKED]" as Sellers
 Reader --> Web
 Web --> API : HTTPS / JSON
@@ -44,6 +44,8 @@ Adapters --> AI
 Adapters ..> Sellers : unconfigured
 note right of API
 One modular JVM, NOT network microservices.
-REST is provisional pending course rubric.
+REST follows the user-reported SOAP ou REST assignment.
+V3 Groq requires qualified server config and current reader consent.
+No stored personalization is sent in this release.
 end note
 @enduml

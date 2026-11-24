@@ -1,5 +1,7 @@
 # Architecture decision record — remediation v0.2
 
+**Current execution status (24 November 2026):** V2 is deployed. The owner explicitly authorized the scoped V3 star repair and Groq literary companion, including reviewed migrations and CI-verified releases. Historical proposal/gate wording below records the earlier design stage; it does not rescind that authorization. [V3 evidence](../implementation/v3-release-demo.md) records current implementation, provider qualification and deployment separately. B13 account deletion and B15 verified seller integration remain closed.
+
 All decisions in this document are either **CONFIRMED product invariants**, **PROPOSED design rules** awaiting human approval, or **BLOCKED** by external evidence.
 
 ## ADR-001 — Deployable structure [PROPOSED]

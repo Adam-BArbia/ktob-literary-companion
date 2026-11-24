@@ -13,8 +13,8 @@ Each row identifies which UML, OpenAPI contract, persistence rule and policy rep
 | Reread or historical import | 02,08,14 | same POST; `historicalImport`, `ExperiencePatch` | new experience, previous records untouched; deterministic selection | Terminal finished/DNF, explicit historical init, no concurrent open |
 | Journal entry | 02,03,08 | `POST /experiences/{experienceId}/journal`; `JournalWrite` | Owned experience; `allow_for_personalization` default false | Scope flag + personal opt-in AND journal exclusion |
 | Request-level spoiler safeguard | 01,03,09,10,13 | `SpoilerLevel` and `fullBookSpoilersConfirmed` on `MessageWrite` / `RecommendationRequest`; effective level in outputs | Effective turn/request policy recorded; no account-wide spoiler flag | NO_SPOILERS default, FULL_BOOK_SPOILERS needs same-request confirmation; 422 before AI; firm boundaries and consent persist |
-| Optional personalized chat | 01,03,10 | Conversation messages and privacy settings | Scopes restrict context and excluded journal entries | `UContext` optionally extends UChat and URecommend; processing consent mandatory for both |
-| Conversation with AI | 03,04,05,10 | `POST /conversations/{id}/messages`; `ConversationTurn` | Atomic two messages + optional pending proposals | Processing opt-in checked at dispatch; 403 missing, 503 provider |
+| Optional personalized chat (planned; excluded in V3) | 01,03,10 | Conversation messages and privacy settings | Future scopes restrict stored context; V3 queries no journal/history/profile/memory | `UContext` is a future extension; current processing consent remains mandatory |
+| Conversation with AI (V3) | 03,04,05,10 | Six existing privacy/conversation ops; `ConversationCreate`, `MessageWrite`, `ConversationTurn` | Direct reader owner, work visibility, atomic two messages, ordered timestamps, idempotency hash/IDs; no proposals in V3 | Current consent checked at dispatch; 403 missing, 429 busy/quota, 503 unavailable; no library lock or stored personalization |
 | Recommendation | 03,09,13 | `POST /recommendations`; `RecommendationResult.items[]` | `recommendation_requests` 1:N `recommendation_items`; boundary exceptions scoped to request | AI consent, separate personalization, firm boundary, unknown warning not safe |
 | Memory approval/revoke | 03,10,15 | `POST /memory-proposals/{id}/decision`; `PATCH/DELETE /memories/{id}` | proposal belongs to own assistant message; `UNIQUE(proposal_id)`; revoked_at terminal | Explicit approval only, no reactivation |
 | Create/manage collection | 01,02 | `GET /collections/{id}/entries`, `PUT/DELETE /collections/{id}/entries/{entryId}` | membership requires same-reader collection and library entry | Owner-scope and deterministic member pagination; PUT 204 |
@@ -46,10 +46,10 @@ Each row identifies which UML, OpenAPI contract, persistence rule and policy rep
 ## Explicitly unresolved BLOCKED issues
 
 - The user-reported assignment explicitly allows **SOAP ou REST**; REST protocol is therefore an allowed choice under that text. Complete original grading/deployment rubric and validation date remain unverified (see [Gate B review](08-gate-b-decision-review.md)).
-- AI provider/model, account free-tier availability, privacy and retention.
+- Groq is selected for V3; account-specific availability, quota and live inference evidence require qualification recorded in the V3 release guide.
 - Reliable and lawful Tunisian seller/price search service.
 - Full account deletion/re-auth/retention and complete archive behavior.
 
-**APPROVED R1 product defaults (2026-11-20):** shelf projection and historical imports, nullable 1–5 half-star ratings, nullable 0–100 integer progress, minimal optional profile, per-call spoiler policy, reversible archive, five-array JSON essentials export, privacy and idempotency rules. **Not approved:** AI provider, verified seller provider, full account deletion/retention, and overall Gate B/Gate C.
+**APPROVED R1 product defaults (2026-11-20):** shelf projection and historical imports, nullable 1–5 half-star ratings, nullable 0–100 integer progress, minimal optional profile, per-call spoiler policy, reversible archive, five-array JSON essentials export, privacy and idempotency rules. **Later scoped authorization:** V3 engineering and release with Groq qualification were authorized on 24 November. Verified seller provider and full account deletion/retention remain unapproved.
 
-No implementation, live migration or provider deployment is authorized by this matrix.
+This matrix provides traceability; current owner authorization and actual deployment evidence are recorded in the release gates and V3 record.

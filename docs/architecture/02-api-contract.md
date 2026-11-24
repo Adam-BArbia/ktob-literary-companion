@@ -82,6 +82,18 @@ Only actual verified provider results may use `VERIFIED_PROVIDER` here. `POST /l
 
 These approved product defaults are a **contract change**, not implementation approval; `GET /me/export` remains the five-set JSON essentials export. External-provider and full-account-deletion policies remain unresolved and are not added as endpoints.
 
+## V3 conversation and privacy implementation
+
+V3 implements the six existing privacy/conversation operations; it adds no paths. `GENERAL` conversation creation accepts no work ID, while `BOOK_MAIN` requires an owner-visible canonical work. An optional local title is nonblank and at most 160 characters; omitted/null titles are generated locally. Multiple conversations may reference the same book. Conversations are directly reader-owned, independent of a library entry's archived state, and do not lock that entry during inference.
+
+The initial chat implementation sends no stored personalization. `MessageWrite` accepts only `body`, `spoilerLevel` and `fullBookSpoilersConfirmed`; `usePersonalContext` is not an accepted field. Six privacy flags remain independent, false by default, and atomically patchable. Processing consent is checked before dispatch, while personalization flags remain unused by V3. Creating a conversation or reading its history makes no provider call.
+
+A question is nonblank and at most 12,000 characters. A separate resource bound limits required question, minimal selected-book metadata and system instructions to 6,000 UTF-8 bytes; exceeding it returns `422 AI_CONTEXT_TOO_LARGE` without silently shortening the question. At most four complete permitted prior turns fit within that same budget. Both sides of full-spoiler history are excluded for a no-spoiler request. Valid provider output alone produces the atomic pair and `proposalIds=[]`; memory proposal routes remain planned.
+
+Optional UUID idempotency keys bind verified reader, conversation path and canonical body/spoiler settings. The replay record stores only a SHA-256 fingerprint and message references, retained with the conversation for at least 24 hours. Equal payloads replay the same pair; different payloads yield `409 IDEMPOTENCY_KEY_REUSED`. Busy or provider quota state yields `429 AI_RATE_LIMITED` with a bounded `Retry-After`; incomplete provider output, timeout or unavailable configuration yields sanitized `503`, with no partial committed turn. The allowed browser origin can send `Idempotency-Key` and read `Retry-After`.
+
+See [V3 release evidence](../implementation/v3-release-demo.md) for actual test, migration, provider and deployment results. A designed route or a passing stub test is not evidence of live inference.
+
 ## Unresolved BLOCKED areas
 
-Complete professor rubric/deadline unverified (REST permitted by user-reported wording); external AI provider/retention; verified seller data; full account deletion and complete archival export. Product defaults for ratings, percentage progress, profile and spoilers are **APPROVED**, but Gate B and Gate C remain open/closed respectively. See [review gates](06-review-gates.md).
+The owner supplied the 24 November demonstration date and authorized V3 execution. The full formal rubric remains unverified, while REST is permitted by the user-reported wording. Groq is selected for V3, with qualification and live inference tracked separately; verified seller data, full account deletion and complete archival export remain unresolved. Earlier Gate B/C wording does not override the scoped V3 authorization. See [review gates](06-review-gates.md).

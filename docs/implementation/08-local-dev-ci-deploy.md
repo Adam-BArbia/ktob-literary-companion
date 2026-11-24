@@ -1,6 +1,8 @@
-# Local Windows setup, CI and eventual deployment
+# Local Windows setup, CI and deployment
 
 **No commands below have been run on the user's Windows machine during documentation handoff.** These are implementation preparation steps. Windows CMD is the primary user workflow; project path known from previous work is `C:\dev\ktob-literary-companion`.
+
+**V3 update:** the Java/Angular applications, Maven wrapper, npm lockfile, production V2 deployment and automated database integration tests now exist. The initial Windows preparation remains useful, but “before scaffold” instructions below are historical setup context. Current release evidence and the owner's scoped migration/deployment authorization are recorded in [V3](v3-release-demo.md).
 
 ## Toolchain versions / constraints (checked 2026-11-20)
 
@@ -35,7 +37,8 @@ Preferred initial testing: disposable local PostgreSQL container matching hosted
 
 Required secrets as **placeholders**, not values:
 - Angular public build config: `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `KTOB_API_URL`.
-- Java local/Render: `DATABASE_JDBC_URL`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`, `SUPABASE_ISSUER`, `SUPABASE_JWKS_URL` when asymmetric signing, `ALLOWED_WEB_ORIGINS`, `OPENLIBRARY_CONTACT`, optional `AI_PROVIDER_KEY`, flags `AI_ENABLED=false`, `VERIFIED_OFFERS_ENABLED=false`.
+- Java local/Render: `DATABASE_JDBC_URL`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`, `SUPABASE_ISSUER`, `SUPABASE_JWKS_URL` when asymmetric signing, `ALLOWED_WEB_ORIGINS`, `OPENLIBRARY_CONTACT`, optional server-only `GROQ_API_KEY`, deployment-managed non-secret `KTOB_GROQ_QUALIFIED=false` until qualification, and `VERIFIED_OFFERS_ENABLED=false`. V3 does not require an owner-managed `AI_ENABLED` variable.
+- Optional V3 preview acceptance: `KTOB_QA_WEB_ORIGIN` is empty by default. Set only one exact HTTPS origin of a verified KTOB-owned Vercel preview; no wildcard, port, path, query, fragment or credentials are accepted. This appends to, and does not overwrite, the production origin configuration. Clear it after acceptance.
 - Never place database passwords, service-role keys, private JWT signing secrets or real AI keys in GitHub.
 
 ## Local start and validation order (after M0 scaffold exists)
@@ -49,11 +52,12 @@ Required secrets as **placeholders**, not values:
 
 ## CI pipeline design for application code
 
-GitHub Actions now include documentation validation, Java CI, Angular CI and an integrated foundation job with disposable PostgreSQL **readiness check only**. Sprint 1 must add actual reviewed SQL migrations, authentication isolation tests and transactional integration tests. Remaining acceptance tasks:
-- Java JDK21 dependency build, unit tests, formatting/static analysis, slice integration tests with disposable PostgreSQL, migrations tested from empty schema;
-- Angular supported Node setup, `npm ci`, typecheck, unit tests, production build and accessibility smoke;
-- OpenAPI spec validation and client/DTO compatibility (the existing `validate_contract.py`);
-- secrets/dependency checks; branch protection requiring jobs.
+GitHub Actions include documentation validation, Java CI, Angular CI, a container build and an integrated foundation job using disposable PostgreSQL. The integrated job runs real migrations and database integration tests with `KTOB_TEST_POSTGRES=true`, while the independent Java job can run database-free tests. Its disposable database must create the conditional `ktob_app`, `anon` and `authenticated` test roles before migration so the grants and browser-role denial tests exercise their actual permissions.
+
+- Java uses JDK 21 and the committed Maven wrapper for unit and transactional integration tests, including fresh migration replay, reader isolation and consent enforcement.
+- Angular uses supported Node, `npm ci`, tests and the production build with existing component size budgets.
+- Documentation CI checks OpenAPI schema/references, all operation assignments, meaningful JSON Schema examples, and syntax/rendering of all 16 UML diagrams.
+- Browser accessibility, real provider calls and live authenticated persistence remain separate acceptance evidence; a green build does not establish those results.
 
 Fail on tests, do not mark skipping tests as success. Provider live calls should be rare, explicit and not part of every CI build.
 
@@ -61,4 +65,4 @@ Fail on tests, do not mark skipping tests as success. Provider live calls should
 
 Deploy Angular static assets to Vercel and the single Java container/service to Render. Keep external base URLs and CORS configured for both production and explicitly allowed previews. Render may sleep on free tier; browser should show a cold-start retry/reconnect state, not an infinite spinner. Add bounded DB pool, JVM heap and request limits based on actual Render instance capacity (measure; do not invent concurrent-user guarantees). Validate TLS DB connection and JWKS/token verification in staging before public URL launch.
 
-Use safe `/health` liveness; no database credentials or provider diagnostics returned. Database migrations run from controlled pipeline with reviewed permissions, **not** automatically as a destructive action on every app instance restart without policy. Require a deployment checklist and a separate production data-change approval for first live migration.
+Use safe `/health` liveness; no database credentials or provider diagnostics returned. Production automatic Flyway migration remains disabled. Apply reviewed additive SQL through the existing migration mechanism only after target, ledger, lock, grant and recovery checks, then verify postconditions without reading private row contents. The current owner authorization covers the scoped V3 migration and existing-service deployment; it does not authorize destructive schema or data changes.

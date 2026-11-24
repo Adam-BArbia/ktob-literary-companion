@@ -275,8 +275,10 @@ check("SPOILER_CONFIRMATION_REQUIRED" in u09 and
 gate = (ROOT / "docs/architecture/06-review-gates.md").read_text(encoding="utf-8")
 check("ready for local Sprint 0" in gate and
       all(token in gate for token in ("B13", "B15", "B16")) and
-      "Independent feature gates remain CLOSED" in gate,
-      "local implementation is allowed only with B13/B15/B16 feature gates closed")
+      "B13 and B15 remain CLOSED" in gate and
+      "V3 execution is authorized" in gate and
+      "KTOB_GROQ_QUALIFIED" in gate,
+      "scoped V3 authorization must preserve independent deletion, seller and provider qualification gates")
 review = (ROOT / "docs/architecture/08-gate-b-decision-review.md").read_text(encoding="utf-8")
 check("APPROVED by the reader" in review and "B13" in review and "BLOCKED" in review,
       "review register must distinguish approved R1 defaults from provider/deletion blockers")
@@ -363,6 +365,35 @@ if 'Draft202012Validator' in globals():
         ):
             check(not accepts(name, bad),
                   f"unconfirmed or invalid spoiler policy accepted: {name} {bad}")
+
+    # V3 must not accidentally accept a mismatched book context or silent personalization.
+    for name in ("ConversationCreate", "PrivacyPatch"):
+        Draft202012Validator.check_schema(SCHEMAS[name])
+    work_id = "ef8954cd-3869-40b3-aaf1-95d502e150ab"
+    for good in (
+        {"kind": "GENERAL"},
+        {"kind": "GENERAL", "workId": None, "title": None},
+        {"kind": "GENERAL", "title": "x" * 160},
+        {"kind": "BOOK_MAIN", "workId": work_id},
+    ):
+        check(accepts("ConversationCreate", good), "valid V3 conversation creation rejected")
+    for bad in (
+        {}, {"kind": "OTHER"}, {"kind": "GENERAL", "workId": work_id},
+        {"kind": "BOOK_MAIN"}, {"kind": "BOOK_MAIN", "workId": None},
+        {"kind": "GENERAL", "title": " "},
+        {"kind": "GENERAL", "title": "x" * 161},
+        {"kind": "GENERAL", "readerId": work_id},
+    ):
+        check(not accepts("ConversationCreate", bad), "invalid V3 book/kind/title/owner input accepted")
+    for bad in ({"body": " "}, {"body": "x" * 12001},
+                {"body": "Discuss this", "usePersonalContext": False}):
+        check(not accepts("MessageWrite", bad), "invalid or undocumented V3 message input accepted")
+    check(accepts("PrivacyPatch", {"aiProcessingOptIn": False}) and
+          accepts("PrivacyPatch", {"personalizationOptIn": True}),
+          "independent consent changes must be representable")
+    for bad in ({}, {"aiProcessingOptIn": None}, {"aiProcessingOptIn": "true"},
+                {"readerId": work_id}):
+        check(not accepts("PrivacyPatch", bad), "invalid privacy patch accepted")
 
 print(f"Checked {len(diagrams)} named UML diagrams, {operations} OpenAPI operations, "
       f"{len(SCHEMAS)} schemas, {list_count} cursor-paginated GET routes.")

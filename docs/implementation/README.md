@@ -1,6 +1,6 @@
 # KTOB — Implementation Handoff (2026-11-20)
 
-**Status:** IMPLEMENTATION UNDERWAY. The authenticated catalog/library foundation is followed by the reading-journal release: per-reading ratings, lifecycle, private journal entries, favorites and reading views. The [operation register](implemented-operations.json) identifies implemented routes; [release evidence and demonstration](overnight-release-demo.md) distinguishes tests, previews and production deployment. Do not present the remaining R1 design, unselected AI/seller providers or unapproved account deletion as operational.
+**Status:** V2 is deployed; scoped V3 execution is authorized. The [V2 record](overnight-release-demo.md) covers ratings, reading lifecycle, private journal, favorites and diary. [V3 evidence](v3-release-demo.md) covers the star repair and Groq conversations with explicit consent, spoiler rules and separate live-provider verification. The [operation register](implemented-operations.json) identifies implemented routes; remaining R1 design, unqualified provider behavior and account deletion must not be presented as operational.
 
 This directory transforms the approved [Gate B product decisions](../architecture/08-gate-b-decision-review.md), [16 UML models](../uml/README.md), [OpenAPI 3.1 v0.3](../architecture/openapi.json) and [conceptual persistence design](../architecture/03-persistence-model.md) into a sequential implementation contract.
 
@@ -25,7 +25,8 @@ This directory transforms the approved [Gate B product decisions](../architectur
 | 15 | [Sprint 1 authenticated foundation](15-sprint1-progress.md) | Baseline SOA slice and its original verification boundaries |
 | 16 | [Editorial UI design guide](16-ui-design-guide.md) | Palette, components, interaction and accessibility |
 | Release | [Reading-journal release and demonstration](overnight-release-demo.md) | Release evidence, demo sequence, fallbacks and SOA explanation |
-| Research | [Free AI API options](free-ai-api-options.md) | Current candidate comparison, no-card evidence, quotas and privacy limits; B16 remains open |
+| V3 | [Literary companion release and demonstration](v3-release-demo.md) | Star repair, real Groq qualification, consent, migration, deployment and authenticated acceptance |
+| Research | [Free AI API options](free-ai-api-options.md) | V2 research snapshot; current selected-provider evidence is in the V3 record |
 
 ## Source-of-truth and change control
 
