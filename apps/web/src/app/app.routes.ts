@@ -45,6 +45,12 @@ export const routes: Routes = [
     title: 'My reading diary · KTOB',
   },
   {
+    path: 'discover/works/:workId',
+    loadComponent: () => import('./pages/book-preview.page').then((m) => m.BookPreviewPage),
+    canActivate: [authGuard],
+    title: 'Explore a book · KTOB',
+  },
+  {
     path: 'catalog/search',
     loadComponent: () => import('./pages/catalog.page').then((m) => m.CatalogPage),
     canActivate: [authGuard],
