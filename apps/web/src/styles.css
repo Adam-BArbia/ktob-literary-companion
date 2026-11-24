@@ -363,3 +363,13 @@ main:focus {
   height: 17px;
   margin-top: 1px;
 }
+
+/* Discovery book preview links preserve the existing card layout. */
+.book-preview-link { display:flex; text-decoration:none; color:inherit; }
+.book-preview-link:focus-visible, .book-title-link:focus-visible, .preview-text-link:focus-visible {
+  outline:3px solid #a45e3d; outline-offset:3px; border-radius:3px;
+}
+.book-title-link { color:inherit; text-decoration:none; }
+.book-title-link:hover { text-decoration:underline; text-underline-offset:3px; }
+.preview-text-link { display:inline-block; color:var(--color-primary); font-weight:650; font-size:12px; margin:12px 0; text-decoration:none; }
+.preview-text-link:hover { text-decoration:underline; }
