@@ -28,6 +28,32 @@ export interface ReaderProfile {
   id: string;
   displayName: string;
 }
+export interface PublicProfileSettings {
+  username: string | null;
+  discoverable: boolean;
+}
+export interface ReaderSearchHit {
+  username: string;
+  displayName: string;
+}
+export interface PublicRating {
+  title: string;
+  authors: string[];
+  rating: number;
+  finishedOn: string | null;
+}
+export interface PublicNote {
+  title: string;
+  kind: JournalKind;
+  body: string;
+  createdAt: string;
+}
+export interface PublicReaderProfile {
+  username: string;
+  displayName: string;
+  ratings: PublicRating[];
+  notes: PublicNote[];
+}
 export interface PrivacySettings {
   aiProcessingOptIn: boolean;
   personalizationOptIn: boolean;
@@ -79,6 +105,7 @@ export interface ReadingExperience {
   finishedOn?: string | null;
   rating?: number | null;
   progressPercent?: number | null;
+  ratingPublic?: boolean;
 }
 export interface ExperienceWrite {
   status: ReadingStatus;
@@ -87,6 +114,7 @@ export interface ExperienceWrite {
   finishedOn?: string | null;
   rating?: number | null;
   progressPercent?: number | null;
+  ratingPublic?: boolean;
 }
 export type ExperiencePatch = Partial<Omit<ExperienceWrite, 'historicalImport'>>;
 export type JournalKind = 'REVIEW' | 'REFLECTION' | 'QUOTE' | 'NOTE' | 'EMOTION';
@@ -95,6 +123,7 @@ export interface JournalWrite {
   body: string;
   emotionTags: string[];
   allowForPersonalization: boolean;
+  isPublic?: boolean;
 }
 export interface JournalEntry extends JournalWrite {
   id: string;
@@ -180,6 +209,22 @@ export class KtobApiService {
 
   updateProfile(displayName: string): Promise<ApiData<ReaderProfile>> {
     return this.request('PATCH', '/me', undefined, { displayName: displayName.trim() });
+  }
+
+  ownPublicProfile(): Promise<ApiData<PublicProfileSettings>> {
+    return this.request('GET', '/me/public-profile');
+  }
+
+  updatePublicProfile(patch: Partial<PublicProfileSettings>): Promise<ApiData<PublicProfileSettings>> {
+    return this.request('PATCH', '/me/public-profile', undefined, patch);
+  }
+
+  searchReaders(q: string): Promise<ApiData<ReaderSearchHit[]>> {
+    return this.request('GET', '/readers/search', new HttpParams().set('q', q.trim()));
+  }
+
+  publicReader(username: string): Promise<ApiData<PublicReaderProfile>> {
+    return this.request('GET', '/readers/' + encodeURIComponent(username));
   }
 
   privacy(): Promise<ApiData<PrivacySettings>> {
