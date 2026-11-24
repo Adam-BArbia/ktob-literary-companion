@@ -104,3 +104,8 @@
 button:disabled {
   opacity: 0.55;
 }
+
+/* Every note owns its publication state; keep actions legible on narrow screens. */
+.note-private { display: inline-flex; align-items: center; gap: 5px; }
+.note-footer { flex-wrap: wrap; }
+.note-footer > div { flex-wrap: wrap; justify-content: flex-end; }
