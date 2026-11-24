@@ -10,6 +10,8 @@ V3 implements current reader privacy GET/PATCH and owned conversation/message op
 
 Privacy PATCH serializes changes to avoid lost revocations; inference does not hold the privacy row or a library entry locked. The service checks current processing consent immediately before external dispatch. A prior authorized request may complete after revocation because already transmitted processing cannot be undone. Chat content is stored privately in KTOB; provider ZDR does not erase those records. The owner-authorized V3 provider configuration and operational evidence are in the [release record](v3-release-demo.md).
 
+The frontend also enforces a private-session boundary. Sign-out or a change of reader synchronously invalidates pending requests, destroys the active page and replaces the document at a fixed same-origin destination, bypassing draft guards. API calls remain bound to the initiating reader/session revision across token acquisition and response delivery; stale errors cannot clear a newer session. Same-reader token refresh preserves drafts. This client-side protection prevents private UI/cache reuse and complements the Java ownership checks; it does not revoke a JWT or undo a request already dispatched to the backend.
+
 ## Auth implementation acceptance
 
 1. Choose the actual project's Supabase signing mode before configuration. For asymmetric signing, verify access tokens against that project's JWKS (key rotation, `kid`, accepted algorithm). For legacy symmetric signing, use a reviewed server-only verification approach; never accept unsigned/HS tokens on an assumed JWKS path.

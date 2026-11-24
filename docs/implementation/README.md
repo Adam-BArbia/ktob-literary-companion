@@ -1,6 +1,6 @@
 # KTOB — Implementation Handoff (2026-11-20)
 
-**Status:** V2 is deployed; scoped V3 execution is authorized. The [V2 record](overnight-release-demo.md) covers ratings, reading lifecycle, private journal, favorites and diary. [V3 evidence](v3-release-demo.md) covers the star repair and Groq conversations with explicit consent, spoiler rules and separate live-provider verification. The [operation register](implemented-operations.json) identifies implemented routes; remaining R1 design, unqualified provider behavior and account deletion must not be presented as operational.
+**Status, 24 November 2026:** V3 is deployed and its recorded preview/production acceptance has passed, including real Groq inference, persistence, consent revocation and final removal of temporary preview access. The [V2 record](overnight-release-demo.md) preserves the earlier ratings, reading lifecycle, private journal, favorites and diary release. [V3 evidence](v3-release-demo.md) records the star repair, subsequent authenticated V2 acceptance, Groq conversations and remaining verification limits. The [operation register](implemented-operations.json) identifies 26 implemented routes out of 57; remaining R1 design, alternative providers and account deletion must not be presented as operational.
 
 This directory transforms the approved [Gate B product decisions](../architecture/08-gate-b-decision-review.md), [16 UML models](../uml/README.md), [OpenAPI 3.1 v0.3](../architecture/openapi.json) and [conceptual persistence design](../architecture/03-persistence-model.md) into a sequential implementation contract.
 
@@ -26,7 +26,7 @@ This directory transforms the approved [Gate B product decisions](../architectur
 | 16 | [Editorial UI design guide](16-ui-design-guide.md) | Palette, components, interaction and accessibility |
 | Release | [Reading-journal release and demonstration](overnight-release-demo.md) | Release evidence, demo sequence, fallbacks and SOA explanation |
 | V3 | [Literary companion release and demonstration](v3-release-demo.md) | Star repair, real Groq qualification, consent, migration, deployment and authenticated acceptance |
-| Research | [Free AI API options](free-ai-api-options.md) | V2 research snapshot; current selected-provider evidence is in the V3 record |
+| Research | [Free AI API options](free-ai-api-options.md) | Primary-source comparison refreshed 24 November 2026; actual selected-provider evidence is in the V3 record |
 
 ## Source-of-truth and change control
 
@@ -35,7 +35,7 @@ This directory transforms the approved [Gate B product decisions](../architectur
 - **PostgreSQL design:** this handoff is a **blueprint**, not executable migrations. Build migrations in implementation according to the chosen toolchain and test before deployment. Never edit the connected production database during documentation handoff.
 - **Privacy:** only Supabase Auth is browser-facing; Spring Boot controls all business tables in a non-exposed `app` schema. All private requests are checked against the verified reader identity.
 - **Engineering scope:** first get an integrated, demonstrable path: Angular → Java REST → Open Library and authenticated Java ↔ PostgreSQL. Then cover the rest of the approved R1 core.
-- **External dependencies:** AI provider B16, verified Tunisian seller research B15, and full account deletion policy B13 remain separate gates. Their adapters/contracts can be built, but cannot be called functioning integrations or active deletion before review.
+- **External dependencies:** AI provider B16 is verified for the scoped Groq V3 release; provider changes or broader data use need their own qualification. Verified Tunisian seller research B15 and full account deletion policy B13 remain unresolved and must not be presented as functioning integrations or active deletion.
 
 ## Completion criteria of this handoff
 
@@ -45,4 +45,4 @@ This directory transforms the approved [Gate B product decisions](../architectur
 4. CI validates UML syntax/rendering, OpenAPI/JSON Schema and design consistency.
 5. The [first-sprint checklist](12-start-implementation-checklist.md) identifies an unambiguous starting point.
 
-This is sufficient to **start local application implementation**; it is not a claim that feature delivery, security audits, academic rubric verification, or provider selection has already occurred.
+The original planning documents support staged implementation of the remaining R1 scope. Current delivery and provider claims must use the release evidence above; this handoff does not establish a complete security audit, full R1 delivery or verified academic rubric.
