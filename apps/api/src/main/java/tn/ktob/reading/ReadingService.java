@@ -18,8 +18,8 @@ import tn.ktob.library.LibraryService;
 @Service
 @ConditionalOnProperty(name="ktob.persistence.enabled",havingValue="true")
 public class ReadingService {
-    private static final Set<String> FIELDS=Set.of("editionId","status","startedOn","finishedOn","rating","progressPercent");
-    private static final Set<String> CREATE_FIELDS=Set.of("editionId","status","startedOn","finishedOn","rating","progressPercent","historicalImport");
+    private static final Set<String> FIELDS=Set.of("editionId","status","startedOn","finishedOn","rating","progressPercent","ratingPublic");
+    private static final Set<String> CREATE_FIELDS=Set.of("editionId","status","startedOn","finishedOn","rating","progressPercent","ratingPublic","historicalImport");
     private static final String SELECT="""
         SELECT r.* FROM app.reading_experiences r
         JOIN app.library_entries e ON e.id=r.library_entry_id
@@ -33,7 +33,7 @@ public class ReadingService {
         return new ReadingExperience(r.getObject("id",UUID.class),r.getObject("library_entry_id",UUID.class),
             r.getObject("edition_id",UUID.class),ReadingStatus.valueOf(r.getString("status")),
             r.getObject("started_on",LocalDate.class),r.getObject("finished_on",LocalDate.class),
-            r.getBigDecimal("rating"),r.getObject("progress_percent",Integer.class));
+            r.getBigDecimal("rating"),r.getObject("progress_percent",Integer.class),r.getBoolean("rating_public"));
     }
 
     public ReadingExperience get(UUID reader,UUID id){
@@ -73,16 +73,17 @@ public class ReadingService {
         UUID edition=fields.uuid("editionId");
         library.validateEdition(edition,parent.workId());
         ReadingExperience reading=new ReadingExperience(UUID.randomUUID(),entry,edition,status,
-            fields.date("startedOn"),fields.date("finishedOn"),fields.decimal("rating"),fields.integer("progressPercent"));
+            fields.date("startedOn"),fields.date("finishedOn"),fields.decimal("rating"),fields.integer("progressPercent"),
+            fields.has("ratingPublic")?fields.bool("ratingPublic"):true);
         validate(reading);
         if(status.open()) ensureNoOpen(entry,null);
         try {
             db.update("""
                 INSERT INTO app.reading_experiences
-                (id,library_entry_id,work_id,edition_id,status,started_on,finished_on,rating,progress_percent)
-                VALUES (?,?,?,?,?,?,?,?,?)
+                (id,library_entry_id,work_id,edition_id,status,started_on,finished_on,rating,progress_percent,rating_public)
+                VALUES (?,?,?,?,?,?,?,?,?,?)
                 """,reading.id(),entry,parent.workId(),edition,status.name(),reading.startedOn(),reading.finishedOn(),
-                reading.rating(),reading.progressPercent());
+                reading.rating(),reading.progressPercent(),reading.ratingPublic());
         } catch(DuplicateKeyException ex){throw openConflict();}
         return get(reader,reading.id());
     }
@@ -103,15 +104,16 @@ public class ReadingService {
             patch.has("startedOn")?patch.date("startedOn"):current.startedOn(),
             patch.has("finishedOn")?patch.date("finishedOn"):current.finishedOn(),
             patch.has("rating")?patch.decimal("rating"):current.rating(),
-            patch.has("progressPercent")?patch.integer("progressPercent"):current.progressPercent());
+            patch.has("progressPercent")?patch.integer("progressPercent"):current.progressPercent(),
+            patch.has("ratingPublic")?patch.bool("ratingPublic"):current.ratingPublic());
         validate(merged);
         library.validateEdition(merged.editionId(),parent.workId());
         if(status.open())ensureNoOpen(current.libraryEntryId(),id);
         db.update("""
-            UPDATE app.reading_experiences SET edition_id=?,status=?,started_on=?,finished_on=?,rating=?,progress_percent=?
+            UPDATE app.reading_experiences SET edition_id=?,status=?,started_on=?,finished_on=?,rating=?,progress_percent=?,rating_public=?
             WHERE id=? AND library_entry_id=?
             """,merged.editionId(),status.name(),merged.startedOn(),merged.finishedOn(),merged.rating(),
-            merged.progressPercent(),id,current.libraryEntryId());
+            merged.progressPercent(),merged.ratingPublic(),id,current.libraryEntryId());
         return get(reader,id);
     }
 
