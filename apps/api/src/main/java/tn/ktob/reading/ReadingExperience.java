@@ -7,4 +7,11 @@ import java.util.UUID;
 /** The public OpenAPI DTO deliberately omits internal creation time and work FK. */
 public record ReadingExperience(UUID id, UUID libraryEntryId, UUID editionId,
     ReadingStatus status, LocalDate startedOn, LocalDate finishedOn,
-    BigDecimal rating, Integer progressPercent) {}
+    BigDecimal rating, Integer progressPercent, boolean ratingPublic) {
+    // Preserve source/test compatibility for existing constructors.
+    public ReadingExperience(UUID id, UUID libraryEntryId, UUID editionId,
+            ReadingStatus status, LocalDate startedOn, LocalDate finishedOn,
+            BigDecimal rating, Integer progressPercent) {
+        this(id,libraryEntryId,editionId,status,startedOn,finishedOn,rating,progressPercent,false);
+    }
+}
