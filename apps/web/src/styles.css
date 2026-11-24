@@ -295,3 +295,23 @@ main:focus {
     scroll-behavior: auto !important;
   }
 }
+
+/* Shared per-reading visibility choice. */
+
+.rating-public-choice {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  margin-top: 13px;
+  font-size: 11px;
+  line-height: 1.65;
+  color: var(--color-muted);
+  cursor: pointer;
+}
+.rating-public-choice input {
+  accent-color: var(--color-primary);
+  flex: none;
+  width: 17px;
+  height: 17px;
+  margin-top: 1px;
+}
