@@ -8,7 +8,7 @@ Demo: **Tuesday, 24 November 2026**, Tunisia time.
 
 The prepared release expands the existing authenticated library into a private reading journal: separate reading experiences, half-star ratings, reviews/reflections/quotes/notes/emotions, favorites, book details and a diary. Each reread has its own rating and journal. AI remains a separate provider qualification gate; the main demonstration does not require it.
 
-**Current release status: DEPLOYED; AUTHENTICATED ACCEPTANCE STILL OUTSTANDING.** The owner explicitly authorized publication, merging after CI, the additive migration after safety checks, and deployment to the existing services. Backend PR #3 and frontend PR #4 passed their checks and were merged. Supabase V2, the Render backend and the Vercel production frontend are deployed. Public API and production-page checks passed. No signed-in reader session was available, so authenticated journal interaction, refresh persistence and live two-account verification remain unexecuted.
+**Status at V2 completion: DEPLOYED; AUTHENTICATED ACCEPTANCE THEN OUTSTANDING.** The owner explicitly authorized publication, merging after CI, the additive migration after safety checks, and deployment to the existing services. Backend PR #3 and frontend PR #4 passed their checks and were merged. Supabase V2, the Render backend and the Vercel production frontend were deployed. Public API and production-page checks passed. No signed-in reader session was available then, so authenticated journal interaction, refresh persistence and live two-account verification were unexecuted at that point. The [V3 record](v3-release-demo.md) now records subsequent authenticated journal/rating persistence acceptance; live two-account testing remains unexecuted.
 
 The repository's [implemented operations](implemented-operations.json) lists implemented Java routes. It does not prove that a migration or deployment has been applied. The complete OpenAPI design still contains 57 operations, including planned features.
 
@@ -127,9 +127,9 @@ If AI is unavailable, show its honest unavailable state briefly and continue wit
 
 ### Provider qualification result for this release
 
-**Gate B16 remains unmet. No real inference was performed, and no live AI adapter is claimed.** The existing honest unavailable interface remains the appropriate product state.
+**At V2 completion, Gate B16 was unmet. No real inference had been performed, and no live AI adapter was claimed.** The honest unavailable interface was the appropriate product state at that time; current provider evidence is recorded in [V3](v3-release-demo.md).
 
-The [free AI API comparison](free-ai-api-options.md) evaluates current alternatives, no-card evidence, quotas and data handling. It recommends candidates for later evaluation; no provider has been activated or qualified for this account.
+At V2 completion, the [free AI API comparison](free-ai-api-options.md) recommended candidates for later evaluation; no provider had been activated or qualified for this account. That comparison has since been refreshed during V3. Current selected-provider and release evidence belong to the [V3 record](v3-release-demo.md).
 
 Groq's [production models](https://console.groq.com/docs/models) include `openai/gpt-oss-20b` and `openai/gpt-oss-120b`. Its [published free-plan limits](https://console.groq.com/docs/rate-limits) list 30 requests/minute, 1,000 requests/day, 8,000 tokens/minute and 200,000 tokens/day for these models; the actual account/organization quota remains authoritative. The [billing FAQ](https://console.groq.com/docs/billing-faqs) describes adding a payment method when upgrading to Developer. These references make Groq a candidate, not evidence that this account has working access.
 
