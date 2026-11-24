@@ -16,7 +16,7 @@ import tn.ktob.reading.ReadingService;
 @Service
 @ConditionalOnProperty(name="ktob.persistence.enabled",havingValue="true")
 public class JournalService {
-    private static final Set<String> FIELDS=Set.of("kind","body","emotionTags","allowForPersonalization");
+    private static final Set<String> FIELDS=Set.of("kind","body","emotionTags","allowForPersonalization","isPublic");
     private static final Set<String> KINDS=Set.of("REVIEW","REFLECTION","QUOTE","NOTE","EMOTION");
     private static final String SELECT="""
         SELECT j.* FROM app.journal_entries j
@@ -34,7 +34,7 @@ public class JournalService {
     private JournalEntry map(java.sql.ResultSet r,int ignored)throws java.sql.SQLException {
         return new JournalEntry(r.getObject("id",UUID.class),r.getObject("experience_id",UUID.class),
             r.getString("kind"),r.getString("body"),List.of((String[])r.getArray("emotion_tags").getArray()),
-            r.getBoolean("allow_for_personalization"),r.getTimestamp("created_at").toInstant());
+            r.getBoolean("allow_for_personalization"),r.getTimestamp("created_at").toInstant(),r.getBoolean("is_public"));
     }
 
     private JournalEntry get(UUID reader,UUID id){
@@ -70,15 +70,17 @@ public class JournalService {
         String kind=fields.text("kind",false),text=fields.text("body",false);
         List<String> tags=fields.has("emotionTags")?fields.strings("emotionTags"):List.of();
         boolean allowed=fields.bool("allowForPersonalization");
+        boolean isPublic=fields.has("isPublic")&&fields.bool("isPublic");
         validate(kind,text,tags);
+        validatePublication(reader,experience,isPublic);
         UUID id=UUID.randomUUID();
         db.update(con->{
             var ps=con.prepareStatement("""
-                INSERT INTO app.journal_entries(id,experience_id,kind,body,emotion_tags,allow_for_personalization)
-                VALUES (?,?,?,?,?,?)
+                INSERT INTO app.journal_entries(id,experience_id,kind,body,emotion_tags,allow_for_personalization,is_public)
+                VALUES (?,?,?,?,?,?,?)
                 """);
             ps.setObject(1,id);ps.setObject(2,experience);ps.setString(3,kind);ps.setString(4,text);
-            ps.setArray(5,con.createArrayOf("text",tags.toArray(String[]::new)));ps.setBoolean(6,allowed);
+            ps.setArray(5,con.createArrayOf("text",tags.toArray(String[]::new)));ps.setBoolean(6,allowed);ps.setBoolean(7,isPublic);
             return ps;
         });
         return get(reader,id);
@@ -95,14 +97,16 @@ public class JournalService {
         String text=patch.has("body")?patch.text("body",false):current.body();
         List<String> tags=patch.has("emotionTags")?patch.strings("emotionTags"):current.emotionTags();
         boolean allowed=patch.has("allowForPersonalization")?patch.bool("allowForPersonalization"):current.allowForPersonalization();
+        boolean isPublic=patch.has("isPublic")?patch.bool("isPublic"):current.isPublic();
         validate(kind,text,tags);
+        validatePublication(reader,current.experienceId(),isPublic);
         db.update(con->{
             var ps=con.prepareStatement("""
-                UPDATE app.journal_entries SET kind=?,body=?,emotion_tags=?,allow_for_personalization=?
+                UPDATE app.journal_entries SET kind=?,body=?,emotion_tags=?,allow_for_personalization=?,is_public=?
                 WHERE id=? AND experience_id=?
                 """);
             ps.setString(1,kind);ps.setString(2,text);ps.setArray(3,con.createArrayOf("text",tags.toArray(String[]::new)));
-            ps.setBoolean(4,allowed);ps.setObject(5,id);ps.setObject(6,current.experienceId());
+            ps.setBoolean(4,allowed);ps.setBoolean(5,isPublic);ps.setObject(6,id);ps.setObject(7,current.experienceId());
             return ps;
         });
         return get(reader,id);
@@ -116,6 +120,18 @@ public class JournalService {
         // A competing deletion may have completed while waiting for the parent lock.
         get(reader,id);
         db.update("DELETE FROM app.journal_entries WHERE id=? AND experience_id=?",id,current.experienceId());
+    }
+
+    private void validatePublication(UUID reader,UUID experience,boolean isPublic) {
+        if(!isPublic)return;
+        Integer count=db.queryForObject("""
+            SELECT count(*) FROM app.reading_experiences r
+            JOIN app.library_entries e ON e.id=r.library_entry_id
+            JOIN app.catalog_works w ON w.id=e.work_id
+            WHERE r.id=? AND e.reader_id=? AND w.origin='OPEN_LIBRARY'
+            """,Integer.class,experience,reader);
+        if(count==null || count!=1)throw RequestFields.invalid(
+            "Only notes on sourced Open Library books can be shared with other readers.");
     }
 
     static void validate(String kind,String body,List<String> tags){
